@@ -27,19 +27,22 @@ struct ControllerPanelViewMacOS: View {
         VStack(spacing: 0) {
             topBar
                 .padding(.horizontal, 10)
-                .padding(.top, geometry.safeAreaInsets.top + 10)
 
             Spacer()
 
             bottomControlArea
                 .padding(.bottom, max(geometry.safeAreaInsets.bottom, 10))
-                .onHover { hovering in
-                    if hovering {
-                        playerMaskModel.disableAutoHide()
-                    } else {
-                        playerMaskModel.enableAutoHide()
-                    }
-                }
+        }
+        // 顶部贴边显示，忽略窗口安全区顶部间距
+        .padding(.top, -geometry.safeAreaInsets.top)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            // 与 cinemore-apple 一致：鼠标在整块控制面板上时禁用自动隐藏，避免点击按钮时控件消失
+            if hovering {
+                playerMaskModel.disableAutoHide()
+            } else {
+                playerMaskModel.enableAutoHide()
+            }
         }
         .onAppear {
             syncFullScreenState()
@@ -53,13 +56,17 @@ struct ControllerPanelViewMacOS: View {
     }
 
     private var topBar: some View {
-        ZStack(alignment: .top) {
+        VStack(spacing: 8) {
+            // 第一行：标题，单独占一行居中显示
             HStack {
                 Spacer()
                 PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
+                    .lineLimit(1)
+                        .padding(.top, 8)
                 Spacer()
             }
 
+            // 第二行：按钮区域
             HStack(spacing: 8) {
                 PlayerCloseButton {
                     playerModel.close()

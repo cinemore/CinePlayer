@@ -21,7 +21,7 @@ struct CinePlayerApp: App {
         Window("CinePlayer", id: "main-window") {
             rootContentView
         }
-        .windowToolbarStyle(.unified)
+        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(after: .newItem) {
                 Button("打开文件…") {

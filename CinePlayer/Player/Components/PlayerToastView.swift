@@ -135,21 +135,53 @@ struct PlayerToastView: View {
                     .frame(width: 120)
                 }
             case .networkConnecting:
-                label(icon: "antenna.radiowaves.left.and.right", text: "正在连接...")
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("正在连接...")
+                        .f14m()
+                }
             case let .networkRetrying(attempt, total):
-                label(icon: "arrow.clockwise", text: "重试中 (\(attempt)/\(total))")
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("网络重试中 (\(attempt)/\(total))")
+                        .f14m()
+                }
             case let .networkSwitchingURL(currentIndex, totalURLs):
-                label(icon: "point.3.connected.trianglepath.dotted", text: "切换线路 (\(currentIndex)/\(totalURLs))")
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("切换备用源 (\(currentIndex)/\(totalURLs))")
+                        .f14m()
+                }
             case let .networkError(message):
-                label(icon: "wifi.exclamationmark", text: message)
+                HStack(spacing: 6) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .foregroundStyle(.red)
+                    Text(message)
+                        .f14m()
+                        .lineLimit(2)
+                }
             case .networkStable:
-                label(icon: "checkmark.circle", text: "连接稳定")
+                HStack(spacing: 6) {
+                    Image(systemName: "wifi")
+                        .foregroundStyle(.green)
+                    Text("连接稳定")
+                        .f14m()
+                }
             }
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-        .modifier(GlassEffectModifier(cornerRadius: 24, useCapsule: true))
+        .modifier(GlassEffectModifier(cornerRadius: 24))
+        #if os(macOS)
+        .shadow(radius: 10)
+        #endif
     }
 
     private func label(icon: String, text: String) -> some View {

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import CinePlayerSDK
 
 #if !os(tvOS)
     struct SubtitleBitmapControls: View {

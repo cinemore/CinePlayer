@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CinePlayerSDK
 
 struct SubtitleHorizontalAlignment: View {
     @EnvironmentObject var subtitleStyle: SubtitleStyleModel

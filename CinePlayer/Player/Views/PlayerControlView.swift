@@ -16,9 +16,6 @@ struct PlayerControlView: View {
     @StateObject private var remoteCommandService = PurePlayerRemoteCommandService()
 
     @State private var isPlayerInitializing = true
-    @State private var showPlayerError = false
-    @State private var playerErrorMessage = "播放错误，请稍后重试"
-    @State private var loadingMessage = "初始化中..."
     @State private var brightness: CGFloat = 0.5
 
     private var controlConfig: PlayerControlConfig {
@@ -29,6 +26,92 @@ struct PlayerControlView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            #if os(macOS)
+            // macOS: 对齐 cinemore 布局，将控制面板与 SiderView 放在同一个 overlay geometry 下
+            playerSurface(geometry: geometry)
+                .overlay {
+                    GeometryReader { overlayGeometry in
+                        ZStack {
+                            if playerMaskModel.isMaskShow {
+                                controlOverlay(geometry: overlayGeometry)
+                                    .transition(.opacity)
+                            }
+
+                            if playerControlModel.showMediaInfoCard {
+                                Color.black.opacity(mediaInfoMaskOpacity)
+                                    .ignoresSafeArea()
+                                    .onTapGesture {
+                                        playerControlModel.showMediaInfoCard = false
+                                        playerMaskModel.showMask()
+                                    }
+
+                                PlayerMediaInfoCardView {
+                                    playerControlModel.showMediaInfoCard = false
+                                    playerMaskModel.showMask()
+                                }
+                                .environmentObject(playerModel.playerCoordinator)
+                                .padding(.horizontal, 16)
+                            }
+
+                            SiderView(geometry: overlayGeometry)
+                                .environmentObject(sessionStore)
+                                .environmentObject(playerControlModel)
+                                .environmentObject(playerMaskModel)
+                                .environmentObject(playerModel.playerCoordinator)
+                                .environmentObject(playerModel.config.subtitleStyle)
+
+                            if let toast = toastModel.presentedToast {
+                                VStack {
+                                    PlayerToastView(
+                                        toast: toast,
+                                        progress: playerModel.playerCoordinator.progress,
+                                        playbackRate: playerModel.playerCoordinator.playbackRate,
+                                        brightness: brightness
+                                    )
+                                    Spacer()
+                                }
+                                .padding(.top, 28)
+                            }
+                        }
+                    }
+                }
+                .background(.black)
+                .onAppear {
+                    brightness = PlatformServices.screenBrightness(default: brightness)
+                    openCurrentSource(resetPlayerState: true)
+                    remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
+                }
+                .onDisappear {
+                    remoteCommandService.deactivate()
+                }
+                .compatibleOnChange(of: sessionStore.currentSource?.id) { _ in
+                    openCurrentSource(resetPlayerState: true)
+                }
+                .onReceive(playerModel.playerCoordinator.progress.$currentTime) { _ in
+                    remoteCommandService.refreshNowPlayingInfo()
+                }
+                .onReceive(playerModel.playerCoordinator.$playbackRate) { _ in
+                    remoteCommandService.refreshNowPlayingInfo()
+                }
+                .onReceive(playerModel.playerCoordinator.$playbackState) { _ in
+                    remoteCommandService.refreshNowPlayingInfo()
+                }
+                .overlay {
+                    ZStack {
+                        if isPlayerInitializing {
+                            loadingOverlay
+                        }
+
+                        if !isPlayerInitializing,
+                           let presentedToast = toastModel.presentedToast,
+                           case let .networkError(message) = presentedToast
+                        {
+                            errorOverlay(message: message)
+                        }
+                    }
+                }
+            #else
+            // 其它平台保持现有布局不变
             ZStack {
                 playerSurface(geometry: geometry)
 
@@ -50,9 +133,6 @@ struct PlayerControlView: View {
                         playerMaskModel.showMask()
                     }
                     .environmentObject(playerModel.playerCoordinator)
-                    #if os(macOS)
-                    .padding(.horizontal, 16)
-                    #endif
                 }
 
                 SiderView(geometry: geometry)
@@ -60,7 +140,7 @@ struct PlayerControlView: View {
                     .environmentObject(playerControlModel)
                     .environmentObject(playerMaskModel)
                     .environmentObject(playerModel.playerCoordinator)
-                    .environmentObject(PlayerSubtitleStyleModel.shared)
+                    .environmentObject(playerModel.config.subtitleStyle)
 
                 if let toast = toastModel.presentedToast {
                     VStack {
@@ -79,8 +159,11 @@ struct PlayerControlView: View {
                     loadingOverlay
                 }
 
-                if showPlayerError {
-                    errorOverlay
+                if !isPlayerInitializing,
+                   let presentedToast = toastModel.presentedToast,
+                   case let .networkError(message) = presentedToast
+                {
+                    errorOverlay(message: message)
                 }
             }
             .background(.black)
@@ -110,6 +193,7 @@ struct PlayerControlView: View {
             .onReceive(playerModel.playerCoordinator.$playbackState) { _ in
                 remoteCommandService.refreshNowPlayingInfo()
             }
+            #endif
         }
         .environmentObject(playerMaskModel)
     }
@@ -120,6 +204,11 @@ struct PlayerControlView: View {
                 coordinator: playerModel.playerCoordinator,
                 config: playerModel.config
             )
+            .onPlaybackStateChanged { status in
+                if status == .ready || status == .playing {
+                    isPlayerInitializing = false
+                }
+            }
             .onBufferingStatusChanged { status in
                 handleBufferingStatus(status)
             }
@@ -129,8 +218,8 @@ struct PlayerControlView: View {
             .onNetworkError { type, message in
                 handleNetworkError(type: type, message: message)
             }
-            .onError { error in
-                handlePlayerError(error.localizedDescription)
+            .onError { _ in
+                toastModel.show(.networkError(message: "播放出错，请重试或检查网络"), duration: 1.8)
             }
             #if os(macOS)
             .onTapGesture(count: 2) {
@@ -172,8 +261,10 @@ struct PlayerControlView: View {
             #if os(macOS)
             MacInteractionLayer(
                 onMouseMoved: {
-                    playerMaskModel.showMask()
-                    playerMaskModel.restartTimer()
+                    // 与 cinemore-apple 一致：侧边面板或媒体信息卡片打开时，滑动鼠标不显示主控件
+                    if !playerControlModel.isSiderContainerShow, !playerControlModel.showMediaInfoCard {
+                        playerMaskModel.showMask()
+                    }
                 },
                 onKeyDown: { event in
                     handleMacKeyDown(event)
@@ -209,32 +300,73 @@ struct PlayerControlView: View {
         #endif
     }
 
+    @ViewBuilder
     private var loadingOverlay: some View {
-        VStack(spacing: 10) {
-            ProgressView()
-                .controlSize(.large)
-            Text(loadingMessage)
-                .f14m()
-                .foregroundStyle(.white)
+        ZStack {
+            Color.black.opacity(0.7)
+                .ignoresSafeArea()
+            if let presentedToast = toastModel.presentedToast,
+               case let .networkError(message) = presentedToast
+            {
+                VStack(spacing: 12) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.red)
+                    Text(message)
+                        .f14m()
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+                .padding(24)
+                .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
+            } else {
+                VStack(spacing: 10) {
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(.white)
+                    Text(loadingOverlayMessage)
+                        .f14m()
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .modifier(GlassEffectModifier(cornerRadius: 22, useCapsule: false))
+            }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .modifier(GlassEffectModifier(cornerRadius: 22))
     }
 
-    private var errorOverlay: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(.white)
-            Text(playerErrorMessage)
-                .f14m()
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white)
+    private var loadingOverlayMessage: String {
+        guard let toast = toastModel.presentedToast else { return "初始化中..." }
+        switch toast {
+        case .networkConnecting:
+            return "正在连接..."
+        case let .networkRetrying(attempt, total):
+            return "重试中 (\(attempt)/\(total))"
+        case let .networkSwitchingURL(currentIndex, totalURLs):
+            return "切换线路 (\(currentIndex)/\(totalURLs))"
+        default:
+            return "初始化中..."
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .modifier(GlassEffectModifier(cornerRadius: 22))
+    }
+
+    private func errorOverlay(message: String) -> some View {
+        ZStack {
+            Color.black.opacity(0.85)
+                .ignoresSafeArea()
+            VStack(spacing: 16) {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.red)
+                Text(message)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+            .padding(32)
+            .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
+        }
     }
 
     private func openCurrentSource(resetPlayerState: Bool) {
@@ -243,56 +375,33 @@ struct PlayerControlView: View {
         }
         if resetPlayerState {
             isPlayerInitializing = true
-            showPlayerError = false
-            loadingMessage = "初始化中..."
         }
         playerModel.open(url: source.url)
         remoteCommandService.refreshNowPlayingInfo()
     }
 
+    /// 与 cinemore-apple 一致：仅 .error 时 toast，不驱动 isPlayerInitializing / loadingMessage
     private func handleBufferingStatus(_ status: BufferState) {
-        switch status {
-        case .notReady:
-            isPlayerInitializing = true
-            loadingMessage = "初始化中..."
-            showPlayerError = false
-        case .buffering:
-            isPlayerInitializing = true
-            loadingMessage = "缓冲中..."
-        case .sufficient, .complete:
-            isPlayerInitializing = false
-            showPlayerError = false
-        case .error:
-            handlePlayerError("播放错误，请检查网络或重试")
-        @unknown default:
-            isPlayerInitializing = false
+        if status == .error {
+            toastModel.show(.networkError(message: "加载失败"))
         }
     }
 
+    /// 与 cinemore-apple 一致：仅更新 toast，不驱动 isPlayerInitializing；.stable duration 1.0，.switchingURL .infinity
     private func handleNetworkStatus(_ status: NetworkPlaybackStatus) {
         switch status {
         case .connecting:
-            loadingMessage = "正在连接..."
-            isPlayerInitializing = true
             toastModel.show(.networkConnecting, duration: .infinity)
-        case .buffering:
-            loadingMessage = "缓冲中..."
-            isPlayerInitializing = true
         case let .retrying(attempt, totalAttempts):
-            loadingMessage = "重试中..."
-            isPlayerInitializing = true
             toastModel.show(.networkRetrying(attempt: attempt, total: totalAttempts), duration: .infinity)
         case let .switchingURL(currentIndex, totalURLs):
-            loadingMessage = "切换线路..."
-            isPlayerInitializing = true
-            toastModel.show(.networkSwitchingURL(currentIndex: currentIndex, totalURLs: totalURLs), duration: 1.2)
+            toastModel.show(.networkSwitchingURL(currentIndex: currentIndex, totalURLs: totalURLs), duration: .infinity)
         case .stable:
-            isPlayerInitializing = false
-            showPlayerError = false
-            toastModel.show(.networkStable)
+            toastModel.show(.networkStable, duration: 1.0)
         case let .failed(reason):
-            handlePlayerError(reason)
-            toastModel.show(.networkError(message: reason), duration: 1.8)
+            toastModel.show(.networkError(message: reason))
+        case .buffering:
+            break
         @unknown default:
             break
         }
@@ -324,14 +433,7 @@ struct PlayerControlView: View {
         }
 
         let text = message.isEmpty ? fallbackMessage : message
-        handlePlayerError(text)
         toastModel.show(.networkError(message: text), duration: 2)
-    }
-
-    private func handlePlayerError(_ message: String) {
-        isPlayerInitializing = false
-        showPlayerError = true
-        playerErrorMessage = message
     }
 
     #if os(macOS)

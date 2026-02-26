@@ -4,10 +4,13 @@ struct PlayerTitleView: View {
     let title: String
 
     var body: some View {
-        Text(title)
-            .f12r()
-            .fontWeight(.medium)
-            .foregroundStyle(.white)
-            .lineLimit(1)
+        HStack {
+            Text(title)
+                .lineLimit(1)
+        }
+        .f12r()
+        .fontWeight(.medium)
+        .foregroundColor(.white)
+        .brightness(0.2)
     }
 }
