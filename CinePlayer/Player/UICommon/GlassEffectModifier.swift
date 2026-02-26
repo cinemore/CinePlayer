@@ -36,7 +36,9 @@ struct GlassEffectModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        let allSame = topLeading == topTrailing && topTrailing == bottomLeading && bottomLeading == bottomTrailing
+        let allSame =
+            topLeading == topTrailing && topTrailing == bottomLeading
+            && bottomLeading == bottomTrailing
         return applyEffect(to: clipIfNeeded(content, allSame: allSame), allSame: allSame)
     }
 
@@ -63,27 +65,27 @@ struct GlassEffectModifier: ViewModifier {
     @ViewBuilder
     private func applyEffect(to content: some View, allSame: Bool) -> some View {
         #if !os(visionOS)
-        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, *) {
-            if useCapsule {
-                content.glassEffect(.regular.interactive(), in: .capsule)
-            } else if allSame {
-                content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: topLeading))
-            } else {
-                content.glassEffect(
-                    .regular.interactive(),
-                    in: .rect(
-                        topLeadingRadius: topLeading,
-                        bottomLeadingRadius: bottomLeading,
-                        bottomTrailingRadius: bottomTrailing,
-                        topTrailingRadius: topTrailing
+            if #available(iOS 26.0, macOS 26.0, tvOS 26.0, *) {
+                if useCapsule {
+                    content.glassEffect(.regular.interactive(), in: .capsule)
+                } else if allSame {
+                    content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: topLeading))
+                } else {
+                    content.glassEffect(
+                        .regular.interactive(),
+                        in: .rect(
+                            topLeadingRadius: topLeading,
+                            bottomLeadingRadius: bottomLeading,
+                            bottomTrailingRadius: bottomTrailing,
+                            topTrailingRadius: topTrailing
+                        )
                     )
-                )
+                }
+            } else {
+                fallbackEffect(content, allSame: allSame)
             }
-        } else {
-            fallbackEffect(content, allSame: allSame)
-        }
         #else
-        fallbackEffect(content, allSame: allSame)
+            fallbackEffect(content, allSame: allSame)
         #endif
     }
 

@@ -45,13 +45,14 @@ The launch page SHALL accept dropped video files from any window region and open
 - **THEN** the app accepts the drop
 - **THEN** playback opens for the dropped file
 
-### Requirement: Launch page SHALL show bottom-centered status hint
-The launch page SHALL show a bottom-centered hint/status label for drag-and-drop guidance and action feedback.
+### Requirement: Launch page SHALL show macOS-only bottom guidance hint
+The launch page SHALL show a fixed bottom-centered drag-and-drop guidance hint on macOS only, and SHALL NOT display dynamic status feedback text.
 
-#### Scenario: Default guidance is visible
-- **WHEN** the launch page first appears
-- **THEN** bottom-centered text instructs that file drag-and-drop is supported
+#### Scenario: macOS guidance is visible
+- **WHEN** the launch page appears on macOS
+- **THEN** a bottom-centered fixed guidance text is shown
+- **THEN** the text does not change after play, file pick, or file drop actions
 
-#### Scenario: Feedback updates after action
-- **WHEN** URL play or file selection/drop action is triggered
-- **THEN** bottom-centered text updates to reflect the pending playback target
+#### Scenario: Non-macOS platforms hide guidance text
+- **WHEN** the launch page appears on iOS, tvOS, or visionOS families
+- **THEN** no bottom drag-and-drop guidance text is shown

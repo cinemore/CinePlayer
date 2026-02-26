@@ -8,7 +8,7 @@
 
 - [x] 2.1 Implement enclosed URL input plus `播放` / `播放文件` buttons with clear hierarchy and existing URL parsing behavior.
 - [x] 2.2 Keep file picker flow for non-tvOS platforms and wire `播放文件` to the importer.
-- [x] 2.3 Add full-window drag-and-drop file opening and bottom-centered hint/status feedback updates.
+- [x] 2.3 Add full-window drag-and-drop file opening and a fixed macOS-only bottom guidance hint (no dynamic status updates).
 - [x] 2.4 Refine URL input presentation to a single-line enclosed control instead of a large multiline panel.
 - [x] 2.5 Tune launch composition with reduced control width/spacing and equal button widths for a cleaner visual hierarchy.
 
