@@ -41,4 +41,4 @@
 
 - [x] 7.1 根据当前实现更新 README-zh.md：特性列表、多平台支持、构建与运行说明
 - [x] 7.2 按 AGENTS.md 执行全平台 xcodebuild 构建验证
-- [ ] 7.3 在各平台上与 Cinemore App 做控件布局、手势/快捷键、Toast 与加载/错误体验的对照回归
+- [x] 7.3 在各平台上与 Cinemore App 做控件布局、手势/快捷键、Toast 与加载/错误体验的对照回归

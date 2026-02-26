@@ -12,4 +12,4 @@
 ## 3. 回归验证
 
 - [x] 3.1 运行 7 平台构建（iOS/iOS Simulator/tvOS/tvOS Simulator/macOS/visionOS/visionOS Simulator）
-- [ ] 3.2 手工回归：验证 macOS 播放设置项、字幕面板样式、字幕调整能力和 Dock 拖拽单窗口行为
+- [x] 3.2 手工回归：验证 macOS 播放设置项、字幕面板样式、字幕调整能力和 Dock 拖拽单窗口行为

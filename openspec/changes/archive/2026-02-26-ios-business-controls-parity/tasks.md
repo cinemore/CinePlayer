@@ -19,4 +19,4 @@
 
 - [x] 4.1 在 iPhone 打开播放器时自动横屏、关闭时恢复竖屏，并与旋转按钮联动
 - [x] 4.2 按 AGENTS.md 执行 7 平台 `xcodebuild` 构建验证
-- [ ] 4.3 在 iOS（iPhone 竖/横、iPad）做与 Cinemore 的 UI 布局与交互对照回归
+- [x] 4.3 在 iOS（iPhone 竖/横、iPad）做与 Cinemore 的 UI 布局与交互对照回归
