@@ -11,9 +11,6 @@ The project SHALL include CinePlayerSDK and required dependent xcframeworks, and
 - **WHEN** the project is built for iOS, macOS, tvOS, and visionOS schemes
 - **THEN** build output contains no SDK linkage errors and produces app binaries for each platform
 
-### Requirement: Player configuration SHALL include SDK authorization key and required runtime options
-The app SHALL provide `CinePlayerAuthKey` and initialize player config so CinePlayerSDK can start playback with local or remote sources.
-
 #### Scenario: Player config initializes with valid auth key
 - **WHEN** the app creates a new playback session
 - **THEN** the player configuration contains the documented auth key and initializes the SDK player successfully

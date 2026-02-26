@@ -146,7 +146,9 @@ struct PlayerControlView: View {
                                 .environmentObject(playerModel.playerCoordinator)
                                 .environmentObject(playerModel.config.subtitleStyle)
 
-                            if let toast = toastModel.presentedToast {
+                            if !isLoadingOrErrorOverlayVisible,
+                               let toast = toastModel.presentedToast
+                            {
                                 VStack {
                                     PlayerToastView(
                                         toast: toast,
@@ -190,18 +192,7 @@ struct PlayerControlView: View {
                     remoteCommandService.refreshNowPlayingInfo()
                 }
                 .overlay {
-                    ZStack {
-                        if isPlayerInitializing {
-                            loadingOverlay
-                        }
-
-                        if !isPlayerInitializing,
-                           let presentedToast = toastModel.presentedToast,
-                           case let .networkError(message) = presentedToast
-                        {
-                            errorOverlay(message: message)
-                        }
-                    }
+                    loadingOrErrorOverlay
                 }
             #else
             // 其它平台保持现有布局不变
@@ -236,7 +227,9 @@ struct PlayerControlView: View {
                     .environmentObject(playerModel.playerCoordinator)
                     .environmentObject(playerModel.config.subtitleStyle)
 
-                if let toast = toastModel.presentedToast {
+                if !isLoadingOrErrorOverlayVisible,
+                   let toast = toastModel.presentedToast
+                {
                     VStack {
                         PlayerToastView(
                             toast: toast,
@@ -251,16 +244,7 @@ struct PlayerControlView: View {
                     .ignoresSafeArea(edges: .top)
                 }
 
-                if isPlayerInitializing {
-                    loadingOverlay
-                }
-
-                if !isPlayerInitializing,
-                   let presentedToast = toastModel.presentedToast,
-                   case let .networkError(message) = presentedToast
-                {
-                    errorOverlay(message: message)
-                }
+                loadingOrErrorOverlay
             }
             .background(.black)
             .onAppear {
@@ -334,64 +318,97 @@ struct PlayerControlView: View {
 
     private func playerSurface(geometry: GeometryProxy) -> some View {
         ZStack {
-            CinePlayer(
-                coordinator: playerModel.playerCoordinator,
-                config: playerModel.config
-            )
-            .onPlaybackStateChanged { status in
-                if status == .ready || status == .playing {
-                    isPlayerInitializing = false
-                    #if os(macOS)
-                    // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
-                    // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
-                    if !hasAppliedMacWindowLayout {
-                        if let track = playerModel.playerCoordinator.controller?.videoTrack {
-                            let size = track.naturalSize
-                            if size.width > 0, size.height > 0 {
-                                hasAppliedMacWindowLayout = true
-                                DispatchQueue.main.async {
-                                    PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+            if playerModel.config.url != nil {
+                CinePlayer(
+                    coordinator: playerModel.playerCoordinator,
+                    config: playerModel.config
+                )
+                .onPlaybackStateChanged { status in
+                    if status == .ready || status == .playing {
+                        isPlayerInitializing = false
+                        #if os(macOS)
+                        // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
+                        // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
+                        if !hasAppliedMacWindowLayout {
+                            if let track = playerModel.playerCoordinator.controller?.videoTrack {
+                                let size = track.naturalSize
+                                if size.width > 0, size.height > 0 {
+                                    hasAppliedMacWindowLayout = true
+                                    DispatchQueue.main.async {
+                                        PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+                                    }
                                 }
                             }
                         }
-                    }
-                    #endif
-                }
-            }
-            .onBufferingStatusChanged { status in
-                handleBufferingStatus(status)
-            }
-            .onNetworkStatusChanged { status in
-                handleNetworkStatus(status)
-            }
-            .onNetworkError { type, message in
-                handleNetworkError(type: type, message: message)
-            }
-            .onError { _ in
-                toastModel.show(.networkError(message: "播放出错，请重试或检查网络"), duration: 1.8)
-            }
-            #if os(macOS)
-            .onTapGesture(count: 2) {
-                // 如果窗口处于悬浮锁定状态，先恢复为普通层级
-                if windowController.isFloating {
-                    windowController.toggleWindowLevel()
-                }
+                        #endif
 
-                if let window = NSApplication.shared.keyWindow {
-                    let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
-                    if wasPlaying {
-                        playerModel.playerCoordinator.controller?.pause()
+                        #if !os(tvOS)
+                        if status == .ready {
+                            if let track = playerModel.playerCoordinator.controller?.videoTrack {
+                                let size = track.naturalSize
+                                let width = Int(size.width)
+                                let height = Int(size.height)
+                                if width > 0, height > 0 {
+                                    PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
+                                        width: width,
+                                        height: height
+                                    )
+                                } else {
+                                    PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
+                                        width: nil,
+                                        height: nil
+                                    )
+                                }
+                            } else {
+                                PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
+                                    width: nil,
+                                    height: nil
+                                )
+                            }
+
+                        }
+                        #endif
                     }
-                    window.toggleFullScreen(nil)
-                    if wasPlaying {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            playerModel.playerCoordinator.controller?.play()
+                }
+                .onBufferingStatusChanged { status in
+                    handleBufferingStatus(status)
+                }
+                .onNetworkStatusChanged { status in
+                    handleNetworkStatus(status)
+                }
+                .onNetworkError { type, message in
+                    handleNetworkError(type: type, message: message)
+                }
+                .onError { _ in
+                    isPlayerInitializing = false
+                    toastModel.show(.networkError(message: "播放出错，请重试或检查网络"), duration: .infinity)
+                }
+                #if os(macOS)
+                .onTapGesture(count: 2) {
+                    // 如果窗口处于悬浮锁定状态，先恢复为普通层级
+                    if windowController.isFloating {
+                        windowController.toggleWindowLevel()
+                    }
+
+                    if let window = NSApplication.shared.keyWindow {
+                        let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
+                        if wasPlaying {
+                            playerModel.playerCoordinator.controller?.pause()
+                        }
+                        window.toggleFullScreen(nil)
+                        if wasPlaying {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                playerModel.playerCoordinator.controller?.play()
+                            }
                         }
                     }
                 }
+                #endif
+                .ignoresSafeArea()
+            } else {
+                Color.black
+                    .ignoresSafeArea()
             }
-            #endif
-            .ignoresSafeArea()
 
             #if os(iOS)
             GestureController(brightness: $brightness, geometry: geometry)
@@ -472,43 +489,60 @@ struct PlayerControlView: View {
         #endif
     }
 
+    /// 当前是否显示「初始化 / 错误」中间浮层，用于避免顶部 Toast 重复展示。
+    private var isLoadingOrErrorOverlayVisible: Bool {
+        if isPlayerInitializing { return true }
+        if let toast = toastModel.presentedToast,
+           case .networkError = toast {
+            return true
+        }
+        return false
+    }
+
+    /// 初始化中与网络错误共用同一浮层：仅展示状态，不拦截点击，关闭按钮始终可点。
     @ViewBuilder
-    private var loadingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.7)
-                .ignoresSafeArea()
-            if let presentedToast = toastModel.presentedToast,
-               case let .networkError(message) = presentedToast
-            {
-                VStack(spacing: 12) {
-                    Image(systemName: "wifi.exclamationmark")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.red)
-                    Text(message)
-                        .f14m()
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
+    private var loadingOrErrorOverlay: some View {
+        let showLoading = isPlayerInitializing
+        let errorMessage: String? = {
+            guard let toast = toastModel.presentedToast,
+                  case let .networkError(msg) = toast else { return nil }
+            return msg
+        }()
+        if isLoadingOrErrorOverlayVisible {
+            ZStack {
+                if let message = errorMessage {
+                    VStack(spacing: 16) {
+                        Image(systemName: "wifi.exclamationmark")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.red)
+                        Text(message)
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+                    .padding(32)
+                    .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
+                } else if showLoading {
+                    VStack(spacing: 10) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+                        Text(loadingOrErrorOverlayMessage)
+                            .f14m()
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .modifier(GlassEffectModifier(cornerRadius: 22, useCapsule: false))
                 }
-                .padding(24)
-                .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
-            } else {
-                VStack(spacing: 10) {
-                    ProgressView()
-                        .controlSize(.large)
-                        .tint(.white)
-                    Text(loadingOverlayMessage)
-                        .f14m()
-                        .foregroundStyle(.white)
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-                .modifier(GlassEffectModifier(cornerRadius: 22, useCapsule: false))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .allowsHitTesting(false)
         }
     }
 
-    private var loadingOverlayMessage: String {
+    private var loadingOrErrorOverlayMessage: String {
         guard let toast = toastModel.presentedToast else { return "初始化中..." }
         switch toast {
         case .networkConnecting:
@@ -519,25 +553,6 @@ struct PlayerControlView: View {
             return "切换线路 (\(currentIndex)/\(totalURLs))"
         default:
             return "初始化中..."
-        }
-    }
-
-    private func errorOverlay(message: String) -> some View {
-        ZStack {
-            Color.black.opacity(0.85)
-                .ignoresSafeArea()
-            VStack(spacing: 16) {
-                Image(systemName: "wifi.exclamationmark")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.red)
-                Text(message)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-            }
-            .padding(32)
-            .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
         }
     }
 
@@ -675,10 +690,11 @@ struct PlayerControlView: View {
         controller.seek(time: seekTime)
     }
 
-    /// 与 cinemore-apple 一致：仅 .error 时 toast，不驱动 isPlayerInitializing / loadingMessage
+    /// 与 cinemore-apple 一致：仅 .error 时 toast；错误时结束初始化态并常驻提示以便用户可点关闭
     private func handleBufferingStatus(_ status: BufferState) {
         if status == .error {
-            toastModel.show(.networkError(message: "加载失败"))
+            isPlayerInitializing = false
+            toastModel.show(.networkError(message: "加载失败"), duration: .infinity)
         }
     }
 
@@ -694,7 +710,8 @@ struct PlayerControlView: View {
         case .stable:
             toastModel.show(.networkStable, duration: 1.0)
         case let .failed(reason):
-            toastModel.show(.networkError(message: reason))
+            isPlayerInitializing = false
+            toastModel.show(.networkError(message: reason), duration: .infinity)
         case .buffering:
             break
         @unknown default:
@@ -728,7 +745,8 @@ struct PlayerControlView: View {
         }
 
         let text = message.isEmpty ? fallbackMessage : message
-        toastModel.show(.networkError(message: text), duration: 2)
+        isPlayerInitializing = false
+        toastModel.show(.networkError(message: text), duration: .infinity)
     }
 
     #if os(macOS)

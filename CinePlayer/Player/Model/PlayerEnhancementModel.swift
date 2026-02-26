@@ -343,6 +343,10 @@ final class PlayerEnhancementModel: ObservableObject {
     }
 
     func resetVideoEnhancementForNewVideoSession() {
+        let previousSuppressState = suppressRuntimeCallback
+        suppressRuntimeCallback = true
+        defer { suppressRuntimeCallback = previousSuppressState }
+
         anime4kSectionVisible = false
         systemMLCurrentVideoInRange = false
         opticalFlowSectionVisible = false
@@ -474,7 +478,18 @@ final class PlayerEnhancementModel: ObservableObject {
 
     private static func loadVideoEnhancementStrategy() -> VideoEnhancementStrategy {
         let raw = UserDefaults.standard.string(forKey: StorageKey.videoEnhancementStrategy)
-        return VideoEnhancementStrategy(rawValue: raw ?? VideoEnhancementStrategy.off.rawValue) ?? .off
+        let loaded =
+            VideoEnhancementStrategy(rawValue: raw ?? VideoEnhancementStrategy.off.rawValue) ?? .off
+        #if !DEBUG
+        if loaded == .systemML || loaded == .opticalFlow {
+            UserDefaults.standard.set(
+                VideoEnhancementStrategy.off.rawValue,
+                forKey: StorageKey.videoEnhancementStrategy
+            )
+            return .off
+        }
+        #endif
+        return loaded
     }
 
     private static func loadBool(forKey key: String, defaultValue: Bool) -> Bool {
@@ -499,6 +514,15 @@ final class PlayerEnhancementModel: ObservableObject {
     }
 
     private func clampStrategyToAvailability(_ strategy: VideoEnhancementStrategy) -> VideoEnhancementStrategy {
+        #if !DEBUG
+        switch strategy {
+        case .systemML, .opticalFlow:
+            return .off
+        default:
+            break
+        }
+        #endif
+
         switch strategy {
         case .anime4k where !anime4kSectionVisible:
             .off

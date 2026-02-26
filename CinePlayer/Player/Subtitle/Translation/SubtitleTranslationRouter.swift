@@ -87,6 +87,19 @@ actor SubtitleTranslationRouter {
         return text
     }
 
+    func restartTranslationService() async {
+        #if !os(tvOS) && !os(visionOS)
+        if #available(iOS 18.0, macOS 15.0, *) {
+            await restartAppleTranslator(
+                preferredPair: nil,
+                reason: "manual_button",
+                logLevel: .debug,
+                respectCooldown: false
+            )
+        }
+        #endif
+    }
+
     #if !os(tvOS) && !os(visionOS)
     @available(iOS 18.0, macOS 15.0, *)
     func runAppleSession(_ session: TranslationSession, pair: (from: String, to: String)) async {
@@ -124,17 +137,46 @@ actor SubtitleTranslationRouter {
 
     @available(iOS 18.0, macOS 15.0, *)
     private func recoverAppleTranslatorIfNeeded(pair: (String, String), failedError: Error) async {
+        await restartAppleTranslator(
+            preferredPair: pair,
+            reason: "auto_error_\(String(describing: failedError))",
+            logLevel: .error,
+            respectCooldown: true
+        )
+    }
+
+    @available(iOS 18.0, macOS 15.0, *)
+    private func restartAppleTranslator(
+        preferredPair: (String, String)?,
+        reason: String,
+        logLevel: SubtitleTranslationLogLevel,
+        respectCooldown: Bool
+    ) async {
         guard mode.needsTranslation else {
+            subtitleTranslationLog(
+                .debug,
+                "[Recovery] ignore restart reason=\(reason) because mode=\(mode)"
+            )
             return
         }
+
         guard !appleRecoveryInProgress else {
+            subtitleTranslationLog(
+                .debug,
+                "[Recovery] skip restart reason=\(reason) because recovery is in progress"
+            )
             return
         }
 
         let now = Date()
-        if let lastAppleRecoveryAt,
+        if respectCooldown,
+           let lastAppleRecoveryAt,
            now.timeIntervalSince(lastAppleRecoveryAt) < appleRecoveryCooldown
         {
+            subtitleTranslationLog(
+                .debug,
+                "[Recovery] skip restart reason=\(reason) because cooldown=\(appleRecoveryCooldown)s"
+            )
             return
         }
 
@@ -144,11 +186,14 @@ actor SubtitleTranslationRouter {
             lastAppleRecoveryAt = now
         }
 
-        let restorePair = await MainActor.run { () -> (String, String) in
+        let restorePair: (String, String)? = await MainActor.run { () -> (String, String)? in
             if let current = self.runtime.desiredApplePair {
                 return (current.from, current.to)
             }
-            return pair
+            if let preferredPair {
+                return preferredPair
+            }
+            return nil
         }
 
         if let oldTranslator = (appleTranslatorBox as? AppleSubtitleTranslatorBox)?.translator {
@@ -156,20 +201,27 @@ actor SubtitleTranslationRouter {
         }
         appleTranslatorBox = nil
 
-        await MainActor.run {
-            self.runtime.desiredApplePair = nil
-        }
-        await Task.yield()
-        guard mode.needsTranslation else {
+        if let restorePair {
+            await MainActor.run {
+                self.runtime.desiredApplePair = nil
+            }
+            await Task.yield()
+            guard mode.needsTranslation else {
+                return
+            }
+            await MainActor.run {
+                self.runtime.desiredApplePair = .init(from: restorePair.0, to: restorePair.1)
+            }
+            subtitleTranslationLog(
+                logLevel,
+                "[Recovery] restarted Apple translator reason=\(reason) pair=\(restorePair.0)->\(restorePair.1)"
+            )
             return
-        }
-        await MainActor.run {
-            self.runtime.desiredApplePair = .init(from: restorePair.0, to: restorePair.1)
         }
 
         subtitleTranslationLog(
-            .error,
-            "[Recovery] recreated Apple translator after error=\(failedError) pair=\(restorePair.0)->\(restorePair.1)"
+            logLevel,
+            "[Recovery] restarted Apple translator reason=\(reason) pair=none"
         )
     }
     #endif

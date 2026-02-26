@@ -6,6 +6,7 @@ struct EmbeddedSubtitleView: View {
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var sessionStore: PlayerSessionStore
+    @EnvironmentObject private var playerModel: VideoPlayerModel
 
     var body: some View {
         Group {
@@ -49,6 +50,21 @@ struct EmbeddedSubtitleView: View {
                         #if os(macOS)
                         .frame(maxWidth: 130, alignment: .trailing)
                         #endif
+                    }
+
+                    HStack {
+                        Spacer()
+                        Button {
+                            playerModel.restartSubtitleTranslationService()
+                        } label: {
+                            Text("重启翻译服务")
+                                .f12r()
+                                .foregroundStyle(.white.opacity(0.9))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(.white.opacity(0.12), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     ScrollView(showsIndicators: false) {

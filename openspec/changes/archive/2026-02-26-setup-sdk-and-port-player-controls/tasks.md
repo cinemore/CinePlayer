@@ -2,7 +2,6 @@
 
 - [x] 1.1 将 SDK 发布包中的 Frameworks xcframework 复制并接入当前工程 target
 - [x] 1.2 按 SDK 文档配置 Build Settings、Other Linker Flags、系统 frameworks/tbd 和平台过滤规则
-- [x] 1.3 更新 `Info.plist` 与 entitlements，加入 `CinePlayerAuthKey` 及播放器运行所需能力
 
 ## 2. 纯播放器壳与会话主链
 
