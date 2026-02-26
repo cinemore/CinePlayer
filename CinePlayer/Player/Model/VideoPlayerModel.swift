@@ -124,6 +124,21 @@ final class VideoPlayerModel: ObservableObject {
     private typealias VideoCallback = (@Sendable (inout VideoFrameContext) -> VideoFrameResult)?
     private typealias EventCallback = (@Sendable (FrameCallbackEvent) -> Void)?
 
+    /// 在 MainActor 上同步执行闭包；若当前已在主线程则直接执行，否则派发到主队列并等待。用于帧回调闭包内调用 MainActor 隔离的增强引擎。
+    private nonisolated static func runOnMainActorSync<T: Sendable>(_ body: @MainActor @Sendable @escaping () -> T) -> T {
+        if Thread.isMainThread {
+            return MainActor.assumeIsolated(body)
+        }
+        var result: T!
+        let semaphore = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = MainActor.assumeIsolated(body)
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return result
+    }
+
     private func makeFrameCallbackConfiguration()
         -> (
             policy: FrameCallbackPolicy, onVideoFrame: VideoCallback,
@@ -188,29 +203,40 @@ final class VideoPlayerModel: ObservableObject {
             )
 
             let engine = Anime4KHostEngine.shared
+            let maxW = resolution.maxWidth
+            let maxH = resolution.maxHeight
             let onVideoFrame: VideoCallback = { context in
-                let effectivePreset = engine.resolveEffectivePreset(
-                    requested: preset,
-                    timestamp: context.timestamp,
-                    frameDuration: context.duration,
-                    timebaseNum: context.timebaseNum,
-                    timebaseDen: context.timebaseDen,
-                    fps: context.fps
-                )
-                guard
-                    let enhanced = engine.enhance(
-                        pixelBuffer: context.pixelBuffer,
-                        timestamp: context.timestamp,
-                        generation: context.generation,
-                        preset: effectivePreset,
-                        abCompareEnabled: abCompareEnabled,
-                        maxOutputWidth: resolution.maxWidth,
-                        maxOutputHeight: resolution.maxHeight
+                let ts = context.timestamp
+                let dur = context.duration
+                let tbn = context.timebaseNum
+                let tbd = context.timebaseDen
+                let f = context.fps
+                let buf = context.pixelBuffer
+                let gen = context.generation
+                return Self.runOnMainActorSync {
+                    let effectivePreset = engine.resolveEffectivePreset(
+                        requested: preset,
+                        timestamp: ts,
+                        frameDuration: dur,
+                        timebaseNum: tbn,
+                        timebaseDen: tbd,
+                        fps: f
                     )
-                else {
-                    return .passthrough
+                    guard
+                        let enhanced = engine.enhance(
+                            pixelBuffer: buf,
+                            timestamp: ts,
+                            generation: gen,
+                            preset: effectivePreset,
+                            abCompareEnabled: abCompareEnabled,
+                            maxOutputWidth: maxW,
+                            maxOutputHeight: maxH
+                        )
+                    else {
+                        return .passthrough
+                    }
+                    return .replace(pixelBuffer: enhanced)
                 }
-                return .replace(pixelBuffer: enhanced)
             }
             let onEvent = makeFrameCallbackEventLogger(tag: "VFI")
             return (policy, onVideoFrame, onEvent)
@@ -260,12 +286,16 @@ final class VideoPlayerModel: ObservableObject {
                 )
 
                 let onVideoFrame: VideoCallback = { context in
-                    adapter.processTemporalFrames(
-                        previous: context.previousFrame,
-                        current: context,
-                        scalar: scalar,
-                        numFrames: numFrames
-                    )
+                    let prev = context.previousFrame
+                    let curr = context
+                    return Self.runOnMainActorSync {
+                        adapter.processTemporalFrames(
+                            previous: prev,
+                            current: curr,
+                            scalar: scalar,
+                            numFrames: numFrames
+                        )
+                    }
                 }
                 return (policy, onVideoFrame, onEvent)
             }
@@ -279,16 +309,19 @@ final class VideoPlayerModel: ObservableObject {
                 "System VT super resolution enabled mode=asyncSingle scale=\(scale) abCompare=\(abCompareEnabled)"
             )
             let onVideoFrame: VideoCallback = { context in
-                guard
-                    let enhanced = adapter.processSingleFrame(
-                        context: context,
-                        scale: scale,
-                        abCompareEnabled: abCompareEnabled
-                    )
-                else {
-                    return .passthrough
+                let ctx = context
+                return Self.runOnMainActorSync {
+                    guard
+                        let enhanced = adapter.processSingleFrame(
+                            context: ctx,
+                            scale: scale,
+                            abCompareEnabled: abCompareEnabled
+                        )
+                    else {
+                        return .passthrough
+                    }
+                    return .replace(pixelBuffer: enhanced)
                 }
-                return .replace(pixelBuffer: enhanced)
             }
             return (policy, onVideoFrame, onEvent)
             #endif
@@ -310,7 +343,11 @@ final class VideoPlayerModel: ObservableObject {
             logFrameCallbackConfigurationOnce("Optical flow frame callback enabled mode=temporal")
             let adapter = OpticalFlowFrameInterpolationAdapter.shared
             let onVideoFrame: VideoCallback = { context in
-                adapter.processTemporal(previous: context.previousFrame, current: context)
+                let prev = context.previousFrame
+                let curr = context
+                return Self.runOnMainActorSync {
+                    adapter.processTemporal(previous: prev, current: curr)
+                }
             }
             let onEvent = makeFrameCallbackEventLogger(tag: "VFI")
             return (policy, onVideoFrame, onEvent)
@@ -328,28 +365,47 @@ final class VideoPlayerModel: ObservableObject {
         { event in
             switch event {
             case let .callbackTimeout(kind, elapsedMs):
-                cinemoreLog(
-                    level: .debug,
-                    "[\(tag)] Frame callback timeout kind=\(kind.rawValue) elapsed=\(String(format: "%.2f", elapsedMs))ms"
-                )
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback timeout kind=\(kind.rawValue) elapsed=\(String(format: "%.2f", elapsedMs))ms"
+                    )
+                }
             case let .callbackInvalidResult(kind, message):
-                cinemoreLog(
-                    level: .debug,
-                    "[\(tag)] Frame callback invalid result kind=\(kind.rawValue) message=\(message)"
-                )
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback invalid result kind=\(kind.rawValue) message=\(message)"
+                    )
+                }
             case let .callbackError(kind, message):
-                cinemoreLog(
-                    level: .debug,
-                    "[\(tag)] Frame callback error kind=\(kind.rawValue) message=\(message)"
-                )
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback error kind=\(kind.rawValue) message=\(message)"
+                    )
+                }
             case let .bypassStarted(kind):
-                cinemoreLog(
-                    level: .debug, "[\(tag)] Frame callback bypass started kind=\(kind.rawValue)"
-                )
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback bypass started kind=\(kind.rawValue)"
+                    )
+                }
             case let .bypassEnded(kind):
-                cinemoreLog(
-                    level: .debug, "[\(tag)] Frame callback bypass ended kind=\(kind.rawValue)"
-                )
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback bypass ended kind=\(kind.rawValue)"
+                    )
+                }
+            @unknown default:
+                Task { @MainActor in
+                    cinemoreLog(
+                        level: .debug,
+                        "[\(tag)] Frame callback unknown event=\(event)"
+                    )
+                }
             }
         }
     }
@@ -359,7 +415,9 @@ final class VideoPlayerModel: ObservableObject {
             return
         }
         lastFrameCallbackConfigLog = message
-        cinemoreLog(level: .debug, message)
+        Task { @MainActor in
+            cinemoreLog(level: .debug, message)
+        }
     }
     #endif
 }

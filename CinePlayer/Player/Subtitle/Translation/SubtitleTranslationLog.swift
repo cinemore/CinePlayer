@@ -5,7 +5,7 @@ enum SubtitleTranslationLogLevel {
     case error
 }
 
-func subtitleTranslationLog(_ level: SubtitleTranslationLogLevel, _ message: String) {
+nonisolated func subtitleTranslationLog(_ level: SubtitleTranslationLogLevel, _ message: String) {
     switch level {
     case .debug:
         #if DEBUG

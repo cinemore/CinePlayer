@@ -5,7 +5,7 @@ enum CinemoreLogLevel {
     case error
 }
 
-func cinemoreLog(level: CinemoreLogLevel, _ message: String) {
+nonisolated func cinemoreLog(level: CinemoreLogLevel, _ message: String) {
     #if DEBUG
     let prefix: String
     switch level {

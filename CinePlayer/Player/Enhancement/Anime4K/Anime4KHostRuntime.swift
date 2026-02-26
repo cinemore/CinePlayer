@@ -1632,8 +1632,10 @@ import CinePlayerSDK
 
             if let texture, let commandBuffer {
                 let holder = TextureReturnHolder(texture: texture, width: width, height: height)
-                commandBuffer.addCompletedHandler { [weak self] _ in
-                    self?.returnToIntermediatePool(texture: holder.texture, width: holder.width, height: holder.height)
+                commandBuffer.addCompletedHandler { [weak self, holder] _ in
+                    Task { @MainActor in
+                        self?.returnToIntermediatePool(texture: holder.texture, width: holder.width, height: holder.height)
+                    }
                 }
             }
             return texture

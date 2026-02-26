@@ -10,6 +10,7 @@
 - [x] 2.2 Keep file picker flow for non-tvOS platforms and wire `播放文件` to the importer.
 - [x] 2.3 Add full-window drag-and-drop file opening and bottom-centered hint/status feedback updates.
 - [x] 2.4 Refine URL input presentation to a single-line enclosed control instead of a large multiline panel.
+- [x] 2.5 Tune launch composition with reduced control width/spacing and equal button widths for a cleaner visual hierarchy.
 
 ## 3. Verification
 

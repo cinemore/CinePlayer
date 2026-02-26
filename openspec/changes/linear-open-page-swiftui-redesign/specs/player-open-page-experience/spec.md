@@ -32,6 +32,11 @@ The launch page SHALL provide an enclosed URL input field, a `播放` action, an
 - **THEN** the URL input is displayed as a single-line enclosed field
 - **THEN** the control is compact and does not render as a multiline panel
 
+#### Scenario: Action buttons keep equal visual width
+- **WHEN** the launch page renders on platforms that show both `播放` and `播放文件`
+- **THEN** both action buttons are presented with equal width
+- **THEN** both controls appear as one aligned action group below the URL input
+
 ### Requirement: Launch page SHALL support full-window drag-and-drop opening
 The launch page SHALL accept dropped video files from any window region and open playback with the dropped file.
 

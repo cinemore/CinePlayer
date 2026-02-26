@@ -140,15 +140,23 @@ actor AppleSubtitleTranslator {
         do {
             try await session.prepareTranslation()
             markPreparedIfStillValid(generation: startGeneration, pair: pair)
-            subtitleTranslationLog(
-                .debug,
+            let preparedMessage =
                 "Apple session prepared from=\(pair.from) to=\(pair.to) generation=\(startGeneration)"
-            )
+            await MainActor.run {
+                subtitleTranslationLog(
+                    .debug,
+                    preparedMessage
+                )
+            }
         } catch {
-            subtitleTranslationLog(
-                .error,
+            let errorMessage =
                 "Apple session prepare failed from=\(pair.from) to=\(pair.to) error=\(error)"
-            )
+            await MainActor.run {
+                subtitleTranslationLog(
+                    .error,
+                    errorMessage
+                )
+            }
         }
 
         do {
@@ -176,10 +184,14 @@ actor AppleSubtitleTranslator {
                 }
 
                 guard hasActiveSession, isPrepared else {
-                    subtitleTranslationLog(
-                        .debug,
+                    let unavailableMessage =
                         "Apple session unavailable for request from=\(pair.from) to=\(pair.to) generation=\(generation)"
-                    )
+                    await MainActor.run {
+                        subtitleTranslationLog(
+                            .debug,
+                            unavailableMessage
+                        )
+                    }
                     fail(
                         requestID: request.id,
                         error: AppleSubtitleTranslationError.sessionUnavailable
@@ -197,10 +209,14 @@ actor AppleSubtitleTranslator {
                             error: AppleSubtitleTranslationError.sessionUnavailable
                         )
                     } else {
-                        subtitleTranslationLog(
-                            .error,
+                        let translateErrorMessage =
                             "Apple session translate failed from=\(pair.from) to=\(pair.to) error=\(error)"
-                        )
+                        await MainActor.run {
+                            subtitleTranslationLog(
+                                .error,
+                                translateErrorMessage
+                            )
+                        }
                         fail(requestID: request.id, error: error)
                     }
                 }
