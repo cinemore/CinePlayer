@@ -23,7 +23,9 @@ struct EmbeddedSubtitleView: View {
                                 }
                             )
                         ) {}
-                        .toggleStyle(.switch)
+                        #if !os(tvOS)
+                            .toggleStyle(.switch)
+                        #endif
                         .labelsHidden()
                         #if os(iOS)
                             .scaleEffect(0.8)

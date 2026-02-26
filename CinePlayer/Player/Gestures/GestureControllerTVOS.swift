@@ -10,6 +10,7 @@ private enum GestureConstants {
 
 @MainActor
 struct GestureController: View {
+    @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var toastModel: PlayerToastModel

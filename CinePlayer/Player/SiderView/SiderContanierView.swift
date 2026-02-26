@@ -38,7 +38,7 @@ struct SiderContanierView<Content: View>: View {
     private var alignment: Alignment {
         switch direction {
         case .trailing:
-            .trailing
+            .topTrailing
         case .bottom:
             .bottom
         }
@@ -47,6 +47,9 @@ struct SiderContanierView<Content: View>: View {
     private var cornerRadius: CGFloat {
         PlatformServices.displayCornerRadius()
     }
+
+    private let trailingOuterInset: CGFloat = 8
+    private let bottomOuterInset: CGFloat = 8
 
     private var leadingCornerRadius: CGFloat {
         #if canImport(UIKit)
@@ -60,6 +63,9 @@ struct SiderContanierView<Content: View>: View {
         ZStack {
             content
                 .frame(maxWidth: direction == .trailing ? (width ?? 380) : .infinity)
+                .if(direction == .trailing) {
+                    $0.frame(maxHeight: .infinity, alignment: .top)
+                }
                 .if(showBackground) {
                     if direction == .trailing {
                         // 从右边弹出，右边两个角使用屏幕圆角
@@ -90,11 +96,18 @@ struct SiderContanierView<Content: View>: View {
         }
         .frame(
             maxWidth: .infinity,
-            maxHeight: direction == .trailing ? geometry.size.height + geometry.safeAreaInsets.bottom - 16 : .infinity,
+            maxHeight: .infinity,
             alignment: alignment
         )
-        .padding(.vertical, 8)
-        .padding(.horizontal, 8)
-        .edgesIgnoringSafeArea(.all)
+        .if(direction == .trailing) {
+            $0.padding(.top, trailingOuterInset)
+                .padding(.trailing, trailingOuterInset)
+                .padding(.bottom, trailingOuterInset)
+        }
+        .if(direction == .bottom) {
+            $0.padding(.vertical, bottomOuterInset)
+                .padding(.horizontal, bottomOuterInset)
+        }
+        .ignoresSafeArea(.all)
     }
 }
