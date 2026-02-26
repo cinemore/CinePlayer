@@ -26,6 +26,24 @@ enum PlatformServices {
         #endif
     }
 
+    #if canImport(AppKit) && os(macOS)
+    static func setMacTrafficLightsHidden(_ hidden: Bool) {
+        guard let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first else {
+            return
+        }
+
+        let buttonTypes: [NSWindow.ButtonType] = [
+            .closeButton,
+            .miniaturizeButton,
+            .zoomButton
+        ]
+
+        for type in buttonTypes {
+            window.standardWindowButton(type)?.isHidden = hidden
+        }
+    }
+    #endif
+
     static func screenBrightness(default fallback: CGFloat = 0.5) -> CGFloat {
         #if canImport(UIKit) && !os(tvOS) && !os(visionOS)
         UIScreen.main.brightness

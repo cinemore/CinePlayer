@@ -15,6 +15,7 @@ struct ControllerPanelViewMacOS: View {
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @EnvironmentObject private var toastModel: PlayerToastModel
+    @EnvironmentObject private var windowController: PlayerWindowController
 
     @State private var containerWidth: CGFloat = 900
     @State private var isFullScreen = false
@@ -107,6 +108,16 @@ struct ControllerPanelViewMacOS: View {
                     : "arrow.up.left.and.arrow.down.right"
             ) {
                 toggleFullScreen()
+            }
+
+            if !isFullScreen {
+                groupIconButton(
+                    icon: windowController.isFloating
+                        ? "lock.rectangle.on.rectangle.fill"
+                        : "lock.rectangle.on.rectangle"
+                ) {
+                    windowController.toggleWindowLevel()
+                }
             }
         }
         .padding(.horizontal, 8)
@@ -311,6 +322,11 @@ struct ControllerPanelViewMacOS: View {
     }
 
     private func toggleFullScreen() {
+        // 如果窗口处于悬浮锁定状态，先恢复为普通层级
+        if windowController.isFloating {
+            windowController.toggleWindowLevel()
+        }
+
         let wasPlaying = playerCoordinator.playbackState == .playing
         if wasPlaying {
             playerCoordinator.controller?.pause()

@@ -15,6 +15,10 @@ struct PlayerControlView: View {
     @StateObject private var toastModel = PlayerToastModel()
     @StateObject private var remoteCommandService = PurePlayerRemoteCommandService()
 
+    #if os(macOS)
+    @StateObject private var windowController = PlayerWindowController()
+    #endif
+
     @State private var isPlayerInitializing = true
     @State private var brightness: CGFloat = 0.5
 
@@ -80,8 +84,12 @@ struct PlayerControlView: View {
                     brightness = PlatformServices.screenBrightness(default: brightness)
                     openCurrentSource(resetPlayerState: true)
                     remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
+                    DispatchQueue.main.async {
+                        PlatformServices.setMacTrafficLightsHidden(true)
+                    }
                 }
                 .onDisappear {
+                    PlatformServices.setMacTrafficLightsHidden(false)
                     remoteCommandService.deactivate()
                 }
                 .compatibleOnChange(of: sessionStore.currentSource?.id) { _ in
@@ -196,6 +204,9 @@ struct PlayerControlView: View {
             #endif
         }
         .environmentObject(playerMaskModel)
+        #if os(macOS)
+        .environmentObject(windowController)
+        #endif
     }
 
     private func playerSurface(geometry: GeometryProxy) -> some View {
@@ -223,6 +234,11 @@ struct PlayerControlView: View {
             }
             #if os(macOS)
             .onTapGesture(count: 2) {
+                // 如果窗口处于悬浮锁定状态，先恢复为普通层级
+                if windowController.isFloating {
+                    windowController.toggleWindowLevel()
+                }
+
                 if let window = NSApplication.shared.keyWindow {
                     let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
                     if wasPlaying {
