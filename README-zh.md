@@ -6,16 +6,40 @@ CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlaye
 
 ## ✨ 特性
 
-* **极致画质：** 支持 HLG、HDR10、HDR10+ (含 Metadata) 以及杜比视界 (Dolby Vision with RPU)。
-* **顶级音频：** 支持立体声/多声道、空间音频，以及特定场景下的杜比全景声 (Dolby Atmos)。
-* **高性能解码：** 全面的硬件加速解码方案。
-* **播放控制：** 精准倍速播放、多音轨/多字幕轨道快速切换。
-* **字幕支持：** 完善的内封及外挂字幕渲染，支持字幕翻译功能。
-* **蓝光支持：** 支持 ISO 和 BDMV 蓝光原盘播放。
-* **丰富信息：** 支持显示网络读取速度、音视频轨道信息
-* **全平台：** 支持 iOS、macOS、tvOS、visionOS
+- **纯播放器控制层：** 分平台控制面板（iOS / macOS / tvOS / visionOS），统一播放器遮罩、侧边面板与 Toast 交互。
+- **手势与快捷键：**
+  - iOS：单击显隐、双击快进/快退/播放暂停、长按临时倍速、亮度滑动。
+  - tvOS：遥控器滑动/按键快进快退、长按连续快进、`pageUp/pageDown` 上一集/下一集。
+  - macOS：空格、方向键、Esc + 鼠标移动唤起控制层。
+- **轻量播放列表：** 内置 `PlayerPlaylist`（列表 + 索引），支持多文件打开与前后切换。
+- **网络与错误反馈：** 支持网络连接/重试/切线/稳定/错误 Toast，并提供加载与错误卡片提示。
+- **系统能力：** 支持 PiP（按平台能力启用）、iOS 旋转锁定按钮、Now Playing / Remote Command Center。
+- **多平台支持：** iOS、macOS、tvOS、visionOS。
 
-** 杜比视界及杜比全景声使用 Apple AVFoundation  [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/)
+**杜比视界及杜比全景声由 Apple AVFoundation 的 [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/) 负责处理。**
+
+## 🚫 范围边界
+
+本仓库是纯播放器示例，不包含以下业务能力：
+
+- 详情页/剧集业务模型/历史上报/推荐
+- 云盘多线路与会员逻辑
+- 字幕下载与业务字幕服务
+- Anime4K 或系统 ML 超分/补帧等增强功能
+
+## 🛠 构建与运行
+
+在仓库根目录执行（关闭签名）：
+
+```bash
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=tvOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=tvOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=macOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=visionOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=visionOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+```
 
 ## 🏗 项目架构与依赖
 
@@ -47,7 +71,7 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 ## ⚖️ 授权协议 (License)
 
-本项目采用混合授权模式，源码详见 LICENSE，SDK 详见 libs/CinePlayerSDK/LICENSE_SDK。
+本项目采用混合授权模式：源码许可详见仓库根目录的 `LICENSE` 文件，SDK 许可条款详见 `Frameworks/CinePlayerSDK.xcframework` 各平台子目录下 `CinePlayerSDK.framework/License` 文件。
 
 ### 1. 开源部分
 

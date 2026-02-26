@@ -6,8 +6,96 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DA31DF242F4F633B008767DD /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF002F4F633B008767DD /* AVKit.framework */; };
+		DA31DF252F4F633B008767DD /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF012F4F633B008767DD /* CoreMedia.framework */; };
+		DA31DF262F4F633B008767DD /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF022F4F633B008767DD /* CoreVideo.framework */; };
+		DA31DF272F4F633B008767DD /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF032F4F633B008767DD /* CoreAudio.framework */; };
+		DA31DF282F4F633B008767DD /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF042F4F633B008767DD /* AudioToolbox.framework */; };
+		DA31DF292F4F633B008767DD /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF052F4F633B008767DD /* VideoToolbox.framework */; };
+		DA31DF2A2F4F633B008767DD /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF062F4F633B008767DD /* CoreImage.framework */; };
+		DA31DF2B2F4F633B008767DD /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF072F4F633B008767DD /* CoreText.framework */; };
+		DA31DF2C2F4F633B008767DD /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF082F4F633B008767DD /* QuartzCore.framework */; };
+		DA31DF2D2F4F633B008767DD /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF092F4F633B008767DD /* Accelerate.framework */; };
+		DA31DF2E2F4F633B008767DD /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0A2F4F633B008767DD /* Security.framework */; };
+		DA31DF2F2F4F633B008767DD /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0B2F4F633B008767DD /* SystemConfiguration.framework */; };
+		DA31DF302F4F633B008767DD /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0C2F4F633B008767DD /* libc++.tbd */; };
+		DA31DF312F4F633B008767DD /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0D2F4F633B008767DD /* libresolv.tbd */; };
+		DA31DF322F4F633B008767DD /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0E2F4F633B008767DD /* libxml2.tbd */; };
+		DA31DF332F4F633B008767DD /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF0F2F4F633B008767DD /* libz.tbd */; };
+		DA31DF342F4F633B008767DD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF102F4F633B008767DD /* libbz2.tbd */; };
+		DA31DF352F4F633B008767DD /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF112F4F633B008767DD /* libiconv.tbd */; };
+		DA31E34D2F4F7182008767DD /* CinePlayerSDK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33C2F4F7182008767DD /* CinePlayerSDK.xcframework */; };
+		DA31E34E2F4F7182008767DD /* libbluray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3422F4F7182008767DD /* libbluray.xcframework */; platformFilters = (ios, macos, xros, ); };
+		DA31E34F2F4F7182008767DD /* libunibreak.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34C2F4F7182008767DD /* libunibreak.xcframework */; };
+		DA31E3502F4F7182008767DD /* libass.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33D2F4F7182008767DD /* libass.xcframework */; };
+		DA31E3512F4F7182008767DD /* libavformat.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3402F4F7182008767DD /* libavformat.xcframework */; };
+		DA31E3522F4F7182008767DD /* CineFFmpeg.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33B2F4F7182008767DD /* CineFFmpeg.xcframework */; };
+		DA31E3532F4F7182008767DD /* libharfbuzz.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3472F4F7182008767DD /* libharfbuzz.xcframework */; };
+		DA31E3542F4F7182008767DD /* libfreetype.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3452F4F7182008767DD /* libfreetype.xcframework */; };
+		DA31E3552F4F7182008767DD /* libdovi.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3442F4F7182008767DD /* libdovi.xcframework */; };
+		DA31E3562F4F7182008767DD /* libavfilter.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33F2F4F7182008767DD /* libavfilter.xcframework */; };
+		DA31E3572F4F7182008767DD /* libswscale.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3492F4F7182008767DD /* libswscale.xcframework */; };
+		DA31E3582F4F7182008767DD /* libuavs3d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34A2F4F7182008767DD /* libuavs3d.xcframework */; };
+		DA31E3592F4F7182008767DD /* libswresample.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3482F4F7182008767DD /* libswresample.xcframework */; };
+		DA31E35A2F4F7182008767DD /* libudfread.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34B2F4F7182008767DD /* libudfread.xcframework */; platformFilters = (ios, macos, xros, ); };
+		DA31E35B2F4F7182008767DD /* libavutil.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3412F4F7182008767DD /* libavutil.xcframework */; };
+		DA31E35C2F4F7182008767DD /* libdav1d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3432F4F7182008767DD /* libdav1d.xcframework */; };
+		DA31E35D2F4F7182008767DD /* libavcodec.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33E2F4F7182008767DD /* libavcodec.xcframework */; };
+		DA31E35E2F4F7182008767DD /* libfribidi.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3462F4F7182008767DD /* libfribidi.xcframework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA31DE012F4F633B008767DD /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		DA31DD5C2F4F4375008767DD /* CinePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CinePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA31DF002F4F633B008767DD /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
+		DA31DF012F4F633B008767DD /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		DA31DF022F4F633B008767DD /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		DA31DF032F4F633B008767DD /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		DA31DF042F4F633B008767DD /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		DA31DF052F4F633B008767DD /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
+		DA31DF062F4F633B008767DD /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
+		DA31DF072F4F633B008767DD /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		DA31DF082F4F633B008767DD /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		DA31DF092F4F633B008767DD /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		DA31DF0A2F4F633B008767DD /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		DA31DF0B2F4F633B008767DD /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		DA31DF0C2F4F633B008767DD /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		DA31DF0D2F4F633B008767DD /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
+		DA31DF0E2F4F633B008767DD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
+		DA31DF0F2F4F633B008767DD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		DA31DF102F4F633B008767DD /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
+		DA31DF112F4F633B008767DD /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
+		DA31E33B2F4F7182008767DD /* CineFFmpeg.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = CineFFmpeg.xcframework; sourceTree = "<group>"; };
+		DA31E33C2F4F7182008767DD /* CinePlayerSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = CinePlayerSDK.xcframework; sourceTree = "<group>"; };
+		DA31E33D2F4F7182008767DD /* libass.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libass.xcframework; sourceTree = "<group>"; };
+		DA31E33E2F4F7182008767DD /* libavcodec.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libavcodec.xcframework; sourceTree = "<group>"; };
+		DA31E33F2F4F7182008767DD /* libavfilter.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libavfilter.xcframework; sourceTree = "<group>"; };
+		DA31E3402F4F7182008767DD /* libavformat.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libavformat.xcframework; sourceTree = "<group>"; };
+		DA31E3412F4F7182008767DD /* libavutil.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libavutil.xcframework; sourceTree = "<group>"; };
+		DA31E3422F4F7182008767DD /* libbluray.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libbluray.xcframework; sourceTree = "<group>"; };
+		DA31E3432F4F7182008767DD /* libdav1d.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libdav1d.xcframework; sourceTree = "<group>"; };
+		DA31E3442F4F7182008767DD /* libdovi.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libdovi.xcframework; sourceTree = "<group>"; };
+		DA31E3452F4F7182008767DD /* libfreetype.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libfreetype.xcframework; sourceTree = "<group>"; };
+		DA31E3462F4F7182008767DD /* libfribidi.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libfribidi.xcframework; sourceTree = "<group>"; };
+		DA31E3472F4F7182008767DD /* libharfbuzz.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libharfbuzz.xcframework; sourceTree = "<group>"; };
+		DA31E3482F4F7182008767DD /* libswresample.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libswresample.xcframework; sourceTree = "<group>"; };
+		DA31E3492F4F7182008767DD /* libswscale.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libswscale.xcframework; sourceTree = "<group>"; };
+		DA31E34A2F4F7182008767DD /* libuavs3d.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libuavs3d.xcframework; sourceTree = "<group>"; };
+		DA31E34B2F4F7182008767DD /* libudfread.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libudfread.xcframework; sourceTree = "<group>"; };
+		DA31E34C2F4F7182008767DD /* libunibreak.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libunibreak.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +124,42 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA31DF242F4F633B008767DD /* AVKit.framework in Frameworks */,
+				DA31DF252F4F633B008767DD /* CoreMedia.framework in Frameworks */,
+				DA31DF262F4F633B008767DD /* CoreVideo.framework in Frameworks */,
+				DA31DF272F4F633B008767DD /* CoreAudio.framework in Frameworks */,
+				DA31DF282F4F633B008767DD /* AudioToolbox.framework in Frameworks */,
+				DA31DF292F4F633B008767DD /* VideoToolbox.framework in Frameworks */,
+				DA31DF2A2F4F633B008767DD /* CoreImage.framework in Frameworks */,
+				DA31E34D2F4F7182008767DD /* CinePlayerSDK.xcframework in Frameworks */,
+				DA31E34E2F4F7182008767DD /* libbluray.xcframework in Frameworks */,
+				DA31E34F2F4F7182008767DD /* libunibreak.xcframework in Frameworks */,
+				DA31E3502F4F7182008767DD /* libass.xcframework in Frameworks */,
+				DA31E3512F4F7182008767DD /* libavformat.xcframework in Frameworks */,
+				DA31E3522F4F7182008767DD /* CineFFmpeg.xcframework in Frameworks */,
+				DA31E3532F4F7182008767DD /* libharfbuzz.xcframework in Frameworks */,
+				DA31E3542F4F7182008767DD /* libfreetype.xcframework in Frameworks */,
+				DA31E3552F4F7182008767DD /* libdovi.xcframework in Frameworks */,
+				DA31E3562F4F7182008767DD /* libavfilter.xcframework in Frameworks */,
+				DA31E3572F4F7182008767DD /* libswscale.xcframework in Frameworks */,
+				DA31E3582F4F7182008767DD /* libuavs3d.xcframework in Frameworks */,
+				DA31E3592F4F7182008767DD /* libswresample.xcframework in Frameworks */,
+				DA31E35A2F4F7182008767DD /* libudfread.xcframework in Frameworks */,
+				DA31E35B2F4F7182008767DD /* libavutil.xcframework in Frameworks */,
+				DA31E35C2F4F7182008767DD /* libdav1d.xcframework in Frameworks */,
+				DA31E35D2F4F7182008767DD /* libavcodec.xcframework in Frameworks */,
+				DA31E35E2F4F7182008767DD /* libfribidi.xcframework in Frameworks */,
+				DA31DF2B2F4F633B008767DD /* CoreText.framework in Frameworks */,
+				DA31DF2C2F4F633B008767DD /* QuartzCore.framework in Frameworks */,
+				DA31DF2D2F4F633B008767DD /* Accelerate.framework in Frameworks */,
+				DA31DF2E2F4F633B008767DD /* Security.framework in Frameworks */,
+				DA31DF2F2F4F633B008767DD /* SystemConfiguration.framework in Frameworks */,
+				DA31DF302F4F633B008767DD /* libc++.tbd in Frameworks */,
+				DA31DF312F4F633B008767DD /* libresolv.tbd in Frameworks */,
+				DA31DF322F4F633B008767DD /* libxml2.tbd in Frameworks */,
+				DA31DF332F4F633B008767DD /* libz.tbd in Frameworks */,
+				DA31DF342F4F633B008767DD /* libbz2.tbd in Frameworks */,
+				DA31DF352F4F633B008767DD /* libiconv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,6 +169,7 @@
 		DA31DD532F4F4375008767DD = {
 			isa = PBXGroup;
 			children = (
+				DA31DE502F4F633B008767DD /* Frameworks */,
 				DA31DD5E2F4F4375008767DD /* CinePlayer */,
 				DA31DD5D2F4F4375008767DD /* Products */,
 			);
@@ -58,6 +183,49 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		DA31DE502F4F633B008767DD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DA31E33B2F4F7182008767DD /* CineFFmpeg.xcframework */,
+				DA31E33C2F4F7182008767DD /* CinePlayerSDK.xcframework */,
+				DA31E33D2F4F7182008767DD /* libass.xcframework */,
+				DA31E33E2F4F7182008767DD /* libavcodec.xcframework */,
+				DA31E33F2F4F7182008767DD /* libavfilter.xcframework */,
+				DA31E3402F4F7182008767DD /* libavformat.xcframework */,
+				DA31E3412F4F7182008767DD /* libavutil.xcframework */,
+				DA31E3422F4F7182008767DD /* libbluray.xcframework */,
+				DA31E3432F4F7182008767DD /* libdav1d.xcframework */,
+				DA31E3442F4F7182008767DD /* libdovi.xcframework */,
+				DA31E3452F4F7182008767DD /* libfreetype.xcframework */,
+				DA31E3462F4F7182008767DD /* libfribidi.xcframework */,
+				DA31E3472F4F7182008767DD /* libharfbuzz.xcframework */,
+				DA31E3482F4F7182008767DD /* libswresample.xcframework */,
+				DA31E3492F4F7182008767DD /* libswscale.xcframework */,
+				DA31E34A2F4F7182008767DD /* libuavs3d.xcframework */,
+				DA31E34B2F4F7182008767DD /* libudfread.xcframework */,
+				DA31E34C2F4F7182008767DD /* libunibreak.xcframework */,
+				DA31DF002F4F633B008767DD /* AVKit.framework */,
+				DA31DF012F4F633B008767DD /* CoreMedia.framework */,
+				DA31DF022F4F633B008767DD /* CoreVideo.framework */,
+				DA31DF032F4F633B008767DD /* CoreAudio.framework */,
+				DA31DF042F4F633B008767DD /* AudioToolbox.framework */,
+				DA31DF052F4F633B008767DD /* VideoToolbox.framework */,
+				DA31DF062F4F633B008767DD /* CoreImage.framework */,
+				DA31DF072F4F633B008767DD /* CoreText.framework */,
+				DA31DF082F4F633B008767DD /* QuartzCore.framework */,
+				DA31DF092F4F633B008767DD /* Accelerate.framework */,
+				DA31DF0A2F4F633B008767DD /* Security.framework */,
+				DA31DF0B2F4F633B008767DD /* SystemConfiguration.framework */,
+				DA31DF0C2F4F633B008767DD /* libc++.tbd */,
+				DA31DF0D2F4F633B008767DD /* libresolv.tbd */,
+				DA31DF0E2F4F633B008767DD /* libxml2.tbd */,
+				DA31DF0F2F4F633B008767DD /* libz.tbd */,
+				DA31DF102F4F633B008767DD /* libbz2.tbd */,
+				DA31DF112F4F633B008767DD /* libiconv.tbd */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -68,6 +236,7 @@
 				DA31DD582F4F4375008767DD /* Sources */,
 				DA31DD592F4F4375008767DD /* Frameworks */,
 				DA31DD5A2F4F4375008767DD /* Resources */,
+				DA31DE012F4F633B008767DD /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -147,6 +316,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5AJ2RL8W58;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -159,7 +329,12 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				"EXCLUDED_ARCHS[sdk=xrsimulator*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CinePlayer/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CinePlayer;
@@ -179,6 +354,10 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -189,6 +368,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Frameworks";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,7";
@@ -206,6 +386,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5AJ2RL8W58;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -218,7 +399,12 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				"EXCLUDED_ARCHS[sdk=xrsimulator*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CinePlayer/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CinePlayer;
@@ -238,6 +424,10 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -248,6 +438,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Frameworks";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,7";
