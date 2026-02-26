@@ -176,10 +176,10 @@ struct ControllerPanelViewIOS: View {
         HStack(spacing: 8) {
             if PlayerController.isPictureInPictureSupported() {
                 groupIconButton(
-                    icon: PictureInPictureSupport.isActive(controller: playerCoordinator.controller)
+                    icon: playerCoordinator.isPictureInPictureActive
                         ? "pip.exit" : "pip.enter"
                 ) {
-                    PictureInPictureSupport.toggle(controller: playerCoordinator.controller)
+                    playerCoordinator.controller?.togglePictureInPicture()
                 }
             }
 

@@ -218,6 +218,16 @@ struct PlayerControlView: View {
             .onPlaybackStateChanged { status in
                 if status == .ready || status == .playing {
                     isPlayerInitializing = false
+                    #if os(macOS)
+                    if let track = playerModel.playerCoordinator.controller?.videoTrack {
+                        let size = track.naturalSize
+                        if size.width > 0, size.height > 0 {
+                            DispatchQueue.main.async {
+                                PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+                            }
+                        }
+                    }
+                    #endif
                 }
             }
             .onBufferingStatusChanged { status in

@@ -1,26 +1,5 @@
 import CinePlayerSDK
 import Foundation
 
-enum PictureInPictureSupport {
-    static func toggle(controller: PlayerController?) {
-        guard let controller else {
-            return
-        }
-        let toggleSelector = NSSelectorFromString("togglePictureInPicture")
-        guard controller.responds(to: toggleSelector) else {
-            return
-        }
-        _ = controller.perform(toggleSelector)
-    }
-
-    static func isActive(controller: PlayerController?) -> Bool {
-        guard let controller else {
-            return false
-        }
-        let activeSelector = NSSelectorFromString("isPictureInPictureActive")
-        guard controller.responds(to: activeSelector) else {
-            return false
-        }
-        return controller.perform(activeSelector)?.takeUnretainedValue() as? Bool ?? false
-    }
-}
+// 保留文件占位，避免修改 Xcode 工程文件列表。
+// 画中画控制已经改为直接调用 SDK 提供的 API（togglePictureInPicture / isPictureInPictureActive）。

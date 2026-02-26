@@ -87,19 +87,22 @@ struct ControllerPanelViewMacOS: View {
         HStack(spacing: 8) {
             if isPictureInPictureSupported {
                 groupIconButton(
-                    icon: PictureInPictureSupport.isActive(controller: playerCoordinator.controller)
+                    icon: playerCoordinator.isPictureInPictureActive
                         ? "pip.exit" : "pip.enter"
                 ) {
-                    PictureInPictureSupport.toggle(controller: playerCoordinator.controller)
+                    playerCoordinator.controller?.togglePictureInPicture()
                 }
             }
 
-            groupIconButton(
-                icon: playerCoordinator.isScaleAspectFill
-                    ? "rectangle.arrowtriangle.2.inward"
-                    : "rectangle.arrowtriangle.2.outward"
-            ) {
-                playerCoordinator.isScaleAspectFill.toggle()
+            // 填充按钮仅在全屏模式下显示
+            if isFullScreen {
+                groupIconButton(
+                    icon: playerCoordinator.isScaleAspectFill
+                        ? "rectangle.arrowtriangle.2.inward"
+                        : "rectangle.arrowtriangle.2.outward"
+                ) {
+                    playerCoordinator.isScaleAspectFill.toggle()
+                }
             }
 
             groupIconButton(
