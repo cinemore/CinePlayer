@@ -36,15 +36,6 @@ struct ControllerPanelViewMacOS: View {
         }
         // 顶部贴边显示，忽略窗口安全区顶部间距
         .padding(.top, -geometry.safeAreaInsets.top)
-        .contentShape(Rectangle())
-        .onHover { hovering in
-            // 与 cinemore-apple 一致：鼠标在整块控制面板上时禁用自动隐藏，避免点击按钮时控件消失
-            if hovering {
-                playerMaskModel.disableAutoHide()
-            } else {
-                playerMaskModel.enableAutoHide()
-            }
-        }
         .onAppear {
             syncFullScreenState()
         }
@@ -200,6 +191,14 @@ struct ControllerPanelViewMacOS: View {
                         }
                 }
             )
+            // 只在底部控制区域上禁用自动隐藏，避免覆盖整个窗口阻止定时器工作和双击事件
+            .onHover { hovering in
+                if hovering {
+                    playerMaskModel.disableAutoHide()
+                } else {
+                    playerMaskModel.enableAutoHide()
+                }
+            }
             Spacer()
         }
     }
