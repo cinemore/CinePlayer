@@ -1,8 +1,81 @@
 import CinePlayerSDK
 import SwiftUI
 
+#if !os(tvOS) && !os(visionOS)
+@preconcurrency import Translation
+#endif
+
 #if os(macOS)
 import AppKit
+#endif
+
+#if !os(tvOS) && !os(visionOS)
+private enum LanguagePackSheetStatus {
+    case canDownload
+    case unsupported
+}
+
+private struct LanguagePackSheetContent: View {
+    let presetFrom: String?
+    let presetTo: String?
+    let packStatus: LanguagePackSheetStatus?
+    let onComplete: () -> Void
+
+    var body: some View {
+        if #available(iOS 18.0, macOS 15.0, *) {
+            if packStatus == .unsupported {
+                unsupportedView
+            } else {
+                downloadView
+            }
+        } else {
+            EmptyView()
+        }
+    }
+
+    private var unsupportedView: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Apple 翻译暂不支持该语言对。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("翻译语言")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("完成", action: onComplete)
+                }
+            }
+            #if os(macOS)
+            .frame(minWidth: 420, minHeight: 280)
+            #endif
+        }
+    }
+
+    @ViewBuilder
+    private var downloadView: some View {
+        if #available(iOS 18.0, macOS 15.0, *) {
+            NavigationStack {
+                AppleSubtitleTranslationLanguagePage(
+                    presetFrom: presetFrom,
+                    presetTo: presetTo
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("完成", action: onComplete)
+                    }
+                }
+            }
+            #if os(macOS)
+            .frame(minWidth: 420, minHeight: 480)
+            #endif
+        } else {
+            EmptyView()
+        }
+    }
+}
 #endif
 
 @MainActor
@@ -16,11 +89,19 @@ struct PlayerControlView: View {
     @StateObject private var remoteCommandService = PurePlayerRemoteCommandService()
 
     #if os(macOS)
-    @StateObject private var windowController = PlayerWindowController()
+    @EnvironmentObject private var windowController: PlayerWindowController
+    /// 是否已经为当前视频应用过一次窗口布局（避免每次 seek / 状态变化都重置用户手动调整过的窗口大小）
+    @State private var hasAppliedMacWindowLayout = false
     #endif
 
     @State private var isPlayerInitializing = true
     @State private var brightness: CGFloat = 0.5
+
+    #if !os(tvOS) && !os(visionOS)
+    @State private var showLanguagePackDownloadSheet = false
+    @State private var languagePackSheetPresetPair: (from: String, to: String)?
+    @State private var languagePackSheetStatus: LanguagePackSheetStatus?
+    #endif
 
     private var controlConfig: PlayerControlConfig {
         sessionStore.controlConfig
@@ -59,6 +140,7 @@ struct PlayerControlView: View {
 
                             SiderView(geometry: overlayGeometry)
                                 .environmentObject(sessionStore)
+                                .environmentObject(playerModel)
                                 .environmentObject(playerControlModel)
                                 .environmentObject(playerMaskModel)
                                 .environmentObject(playerModel.playerCoordinator)
@@ -74,7 +156,9 @@ struct PlayerControlView: View {
                                     )
                                     Spacer()
                                 }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .padding(.top, 28)
+                                .ignoresSafeArea(edges: .top)
                             }
                         }
                     }
@@ -85,6 +169,7 @@ struct PlayerControlView: View {
                     openCurrentSource(resetPlayerState: true)
                     remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
                     DispatchQueue.main.async {
+                        windowController.attachToKeyWindowIfNeeded()
                         PlatformServices.setMacTrafficLightsHidden(true)
                     }
                 }
@@ -145,6 +230,7 @@ struct PlayerControlView: View {
 
                 SiderView(geometry: geometry)
                     .environmentObject(sessionStore)
+                    .environmentObject(playerModel)
                     .environmentObject(playerControlModel)
                     .environmentObject(playerMaskModel)
                     .environmentObject(playerModel.playerCoordinator)
@@ -160,7 +246,9 @@ struct PlayerControlView: View {
                         )
                         Spacer()
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, 28)
+                    .ignoresSafeArea(edges: .top)
                 }
 
                 if isPlayerInitializing {
@@ -204,6 +292,41 @@ struct PlayerControlView: View {
             #endif
         }
         .environmentObject(playerMaskModel)
+        .background(subtitleTranslationTaskHost)
+        #if !os(tvOS) && !os(visionOS)
+        .modifier(
+            PlayerLanguagePackCheckWhenAvailableModifier(
+                translationRuntime: playerModel.translationRuntime,
+                mode: sessionStore.controlConfig.subtitleTranslateMode,
+                showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
+                presetPair: $languagePackSheetPresetPair,
+                presetStatus: $languagePackSheetStatus,
+                isPlaying: playerModel.playerCoordinator.playbackState == .playing,
+                pause: { playerModel.playerCoordinator.controller?.pause() }
+            )
+        )
+        .sheet(
+            isPresented: $showLanguagePackDownloadSheet,
+            onDismiss: {
+                languagePackSheetPresetPair = nil
+                languagePackSheetStatus = nil
+            }
+        ) {
+            LanguagePackSheetContent(
+                presetFrom: languagePackSheetPresetPair?.from,
+                presetTo: languagePackSheetPresetPair?.to,
+                packStatus: languagePackSheetStatus,
+                onComplete: {
+                    showLanguagePackDownloadSheet = false
+                    languagePackSheetPresetPair = nil
+                    languagePackSheetStatus = nil
+                }
+            )
+        }
+        #endif
+        .compatibleOnChange(of: sessionStore.controlConfig.subtitleTranslateMode) { newMode in
+            handleSubtitleTranslateModeChange(newMode)
+        }
         #if os(macOS)
         .environmentObject(windowController)
         #endif
@@ -219,11 +342,16 @@ struct PlayerControlView: View {
                 if status == .ready || status == .playing {
                     isPlayerInitializing = false
                     #if os(macOS)
-                    if let track = playerModel.playerCoordinator.controller?.videoTrack {
-                        let size = track.naturalSize
-                        if size.width > 0, size.height > 0 {
-                            DispatchQueue.main.async {
-                                PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+                    // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
+                    // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
+                    if !hasAppliedMacWindowLayout {
+                        if let track = playerModel.playerCoordinator.controller?.videoTrack {
+                            let size = track.naturalSize
+                            if size.width > 0, size.height > 0 {
+                                hasAppliedMacWindowLayout = true
+                                DispatchQueue.main.async {
+                                    PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+                                }
                             }
                         }
                     }
@@ -327,6 +455,25 @@ struct PlayerControlView: View {
     }
 
     @ViewBuilder
+    private var subtitleTranslationTaskHost: some View {
+        #if !os(tvOS) && !os(visionOS)
+        if #available(iOS 18.0, macOS 15.0, *) {
+            AppleSubtitleTranslationTaskHostView(
+                runtime: playerModel.translationRuntime,
+                router: playerModel.translationRouter,
+                mode: sessionStore.controlConfig.subtitleTranslateMode
+            )
+        } else {
+            Color.clear
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+        #else
+        EmptyView()
+        #endif
+    }
+
+    @ViewBuilder
     private var loadingOverlay: some View {
         ZStack {
             Color.black.opacity(0.7)
@@ -401,9 +548,43 @@ struct PlayerControlView: View {
         }
         if resetPlayerState {
             isPlayerInitializing = true
+            #if os(macOS)
+            // 切换到新的视频源时，允许重新根据新视频尺寸应用一次窗口布局
+            hasAppliedMacWindowLayout = false
+            #endif
         }
-        playerModel.open(url: source.url)
+        playerModel.open(url: source.url, controlConfig: controlConfig)
         remoteCommandService.refreshNowPlayingInfo()
+    }
+
+    private func handleSubtitleTranslateModeChange(_ mode: SubtitleTranslateMode) {
+        playerModel.applySubtitleTranslationSettings(mode: mode)
+        refreshSubtitleForTranslationModeChange()
+    }
+
+    private func refreshSubtitleForTranslationModeChange() {
+        guard let controller = playerModel.playerCoordinator.controller else {
+            return
+        }
+
+        if !playerControlModel.currentSubtitlePath.isEmpty {
+            if let item = playerControlModel.localSubtitleItems.first(
+                where: { $0.id == playerControlModel.currentSubtitlePath }
+            ) {
+                controller.clearSubtitle()
+                controller.loadSubtitleFile(subtitleID: item.displayName, url: item.url)
+            }
+        } else if playerModel.playerCoordinator.subtitleTrackIndex != -1 {
+            let selectedIndex = playerModel.playerCoordinator.subtitleTrackIndex
+            controller.clearSubtitle()
+            controller.loadSubtitleTrack(subtitlesTrackIndex: selectedIndex)
+        } else {
+            return
+        }
+
+        let currentTime = controller.currentPlaybackTime
+        let seekTime = max(currentTime - 2, 0)
+        controller.seek(time: seekTime)
     }
 
     /// 与 cinemore-apple 一致：仅 .error 时 toast，不驱动 isPlayerInitializing / loadingMessage
@@ -493,3 +674,80 @@ struct PlayerControlView: View {
     }
     #endif
 }
+
+#if !os(tvOS) && !os(visionOS)
+private struct PlayerLanguagePackCheckWhenAvailableModifier: ViewModifier {
+    @ObservedObject var translationRuntime: SubtitleTranslationRuntime
+    let mode: SubtitleTranslateMode
+    @Binding var showLanguagePackDownloadSheet: Bool
+    @Binding var presetPair: (from: String, to: String)?
+    @Binding var presetStatus: LanguagePackSheetStatus?
+    let isPlaying: Bool
+    let pause: () -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, macOS 15.0, *) {
+            content.modifier(
+                PlayerLanguagePackCheckModifier(
+                    translationRuntime: translationRuntime,
+                    mode: mode,
+                    showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
+                    presetPair: $presetPair,
+                    presetStatus: $presetStatus,
+                    isPlaying: isPlaying,
+                    pause: pause
+                )
+            )
+        } else {
+            content
+        }
+    }
+}
+
+@available(iOS 18.0, macOS 15.0, *)
+private struct PlayerLanguagePackCheckModifier: ViewModifier {
+    @ObservedObject var translationRuntime: SubtitleTranslationRuntime
+    let mode: SubtitleTranslateMode
+    @Binding var showLanguagePackDownloadSheet: Bool
+    @Binding var presetPair: (from: String, to: String)?
+    @Binding var presetStatus: LanguagePackSheetStatus?
+    let isPlaying: Bool
+    let pause: () -> Void
+
+    private var languagePackCheckId: String {
+        guard mode.needsTranslation, isPlaying, let pair = translationRuntime.desiredApplePair else {
+            return ""
+        }
+        return "\(pair.from)_\(pair.to)_\(isPlaying)"
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .task(id: languagePackCheckId) {
+                guard !languagePackCheckId.isEmpty,
+                      !showLanguagePackDownloadSheet,
+                      let pair = translationRuntime.desiredApplePair
+                else {
+                    return
+                }
+
+                let sourceLang = Locale.Language(identifier: pair.from)
+                let targetLang = Locale.Language(identifier: pair.to)
+                let availability = LanguageAvailability()
+                let status = await availability.status(from: sourceLang, to: targetLang)
+
+                if status == .unsupported {
+                    pause()
+                    presetPair = (pair.from, pair.to)
+                    presetStatus = .unsupported
+                    showLanguagePackDownloadSheet = true
+                } else if status != .installed {
+                    pause()
+                    presetPair = (pair.from, pair.to)
+                    presetStatus = .canDownload
+                    showLanguagePackDownloadSheet = true
+                }
+            }
+    }
+}
+#endif

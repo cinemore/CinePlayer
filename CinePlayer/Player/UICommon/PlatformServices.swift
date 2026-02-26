@@ -27,6 +27,9 @@ enum PlatformServices {
     }
 
     #if canImport(AppKit) && os(macOS)
+    /// 记录当前播放器窗口的最小内容尺寸，供 NSWindowDelegate 在调整大小时参考
+    static var macPlayerMinContentSize: NSSize?
+
     static func setMacTrafficLightsHidden(_ hidden: Bool) {
         guard let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first else {
             return
@@ -83,6 +86,7 @@ enum PlatformServices {
         }
 
         let minContentSize = NSSize(width: minWidth, height: minHeight)
+        macPlayerMinContentSize = minContentSize
         window.contentMinSize = minContentSize
         window.contentMaxSize = NSSize(width: maxWidth, height: maxHeight)
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1.0)

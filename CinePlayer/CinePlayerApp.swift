@@ -14,6 +14,7 @@ struct CinePlayerApp: App {
 
     #if os(macOS)
     @NSApplicationDelegateAdaptor(MacAppDelegate.self) var macAppDelegate
+    @StateObject private var windowController = PlayerWindowController()
     #endif
 
     var body: some Scene {
@@ -48,6 +49,7 @@ struct CinePlayerApp: App {
             .environmentObject(sessionStore)
             .environmentObject(playerModel)
             #if os(macOS)
+                .environmentObject(windowController)
                 .onOpenURL { url in
                     if url.isFileURL {
                         sessionStore.open(url: url)
