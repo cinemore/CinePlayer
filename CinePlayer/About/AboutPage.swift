@@ -127,7 +127,7 @@ struct AboutPage: View {
             Button {
                 openExternal(AboutLinks.filing)
             } label: {
-                Text("Copyright © 2024 Youduohong. All rights reserved.")
+                Text("Copyright © 2026 Youduohong. All rights reserved.")
                     .f12r()
             }
             .buttonStyle(.plain)

@@ -1,45 +1,34 @@
-# CinePlayer For Apple
-
-**次世代高性能跨平台视频播放器**
+<div align="center">
+  <a href="https://cinemore.com.cn/">
+    <img src="assets/appicon-dark.png" alt="CinePlayer" width="120" height="120">
+  </a>
+  <h1>CinePlayer For Apple</h1>
+  <p><strong>次世代播放器</strong></p>
+  <p>
+    <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
+  </p>
+</div>
 
 CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlayerSDK` 作为 **[Cinemore](https://cinemore.com.cn)** 的播放核心得到了广泛的验证，现在我们将成果进行拓展。它展示了如何利用高性能内核实现极致的音视频播放体验，同时保持了应用层的灵活性和可扩展性。
 
+## 📸 预览
+
+<p align="center">
+  <img src="assets/player.png" alt="CinePlayer 播放界面" width="720">
+</p>
+
 ## ✨ 特性
 
-- **纯播放器控制层：** 分平台控制面板（iOS / macOS / tvOS / visionOS），统一播放器遮罩、侧边面板与 Toast 交互。
-- **手势与快捷键：**
-  - iOS：单击显隐、双击快进/快退/播放暂停、长按临时倍速、亮度滑动。
-  - tvOS：遥控器滑动/按键快进快退、长按连续快进、`pageUp/pageDown` 上一集/下一集。
-  - macOS：空格、方向键、Esc + 鼠标移动唤起控制层。
-- **轻量播放列表：** 内置 `PlayerPlaylist`（列表 + 索引），支持多文件打开与前后切换。
-- **网络与错误反馈：** 支持网络连接/重试/切线/稳定/错误 Toast，并提供加载与错误卡片提示。
-- **系统能力：** 支持 PiP（按平台能力启用）、iOS 旋转锁定按钮、Now Playing / Remote Command Center。
-- **多平台支持：** iOS、macOS、tvOS、visionOS。
+- **画质与音频**：HLG、HDR10、HDR10+、杜比视界（含 RPU）；硬件解码；立体声/多声道、空间音频、杜比全景声（在支持场景下）。
+- **手势与快捷键**：iOS — 单击显隐控制、双击左右快进/快退或中间播放/暂停、长按临时倍速（播放设置中可配置快进秒数与长按倍速）；tvOS — 遥控器滑动/按键快进快退、长按连续快进；macOS — 空格播放/暂停、方向键快进/倍速、Esc 全屏、鼠标移动唤起控制层。
+- **字幕**：内嵌与外挂字幕；全 ASS 样式可调；HDR 字幕支持；翻译（如 Apple 翻译）。
+- **轨道与媒体信息**：音视频与字幕轨道列表快速切换；媒体信息详情卡片。
+- **画面增强**：Anime4K 动漫超分辨率（多档预设，可选 A/B 对比）。
+- **播放体验**：进度条拖动带缩略图预览；横竖屏（iOS 旋转锁定）、画面填充、画中画、全屏、倍速调节；macOS 窗口置顶；锁屏与控制中心 Now Playing 控制。
+- **蓝光**：ISO、BDMV。
+- **平台**：iOS、macOS、tvOS、visionOS。
 
 **杜比视界及杜比全景声由 Apple AVFoundation 的 [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/) 负责处理。**
-
-## 🚫 范围边界
-
-本仓库是纯播放器示例，不包含以下业务能力：
-
-- 详情页/剧集业务模型/历史上报/推荐
-- 云盘多线路与会员逻辑
-- 字幕下载与业务字幕服务
-- Anime4K 或系统 ML 超分/补帧等增强功能
-
-## 🛠 构建与运行
-
-在仓库根目录执行（关闭签名）：
-
-```bash
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=tvOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=tvOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=macOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=visionOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-xcodebuild -project CinePlayer.xcodeproj -scheme CinePlayer -destination 'generic/platform=visionOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-```
 
 ## 🏗 项目架构与依赖
 
@@ -55,8 +44,9 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 * **[FFmpeg](https://github.com/FFmpeg/FFmpeg)**
 
 ### 视频与 HDR 处理
-* **[libdav1d](https://github.com/videolan/dav1d)**
-* **[libdovi](https://github.com/quietvoid/dovi_tool)**
+* **[dav1d](https://github.com/videolan/dav1d)** (libdav1d)
+* **[dovi_tool](https://github.com/quietvoid/dovi_tool)** (libdovi)
+* **[uavs3d](https://github.com/uavs3/uavs3d)** (libuavs3d)
 
 ### 字幕渲染引擎
 * **[libass](https://github.com/libass/libass)**
@@ -71,7 +61,12 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 ## ⚖️ 授权协议 (License)
 
-本项目采用混合授权模式：源码许可详见仓库根目录的 `LICENSE` 文件，SDK 许可条款详见 `Frameworks/CinePlayerSDK.xcframework` 各平台子目录下 `CinePlayerSDK.framework/License` 文件。
+本项目采用混合授权模式：
+
+* **源码许可**：见仓库根目录的 [`LICENSE`](LICENSE) 文件。
+* **SDK 许可**：CinePlayerSDK 的**正式条款**以各平台 slice 内 `CinePlayerSDK.framework` 中的 **License** 文件为准（macOS 下路径为 `Versions/A/Resources/License`）。完整路径：`Frameworks/CinePlayerSDK.xcframework/<平台>/CinePlayerSDK.framework/...`。
+
+本仓库所引用的第三方库（FFmpeg、libass 等）均依各自许可证使用，见上文「第三方库列表」中的链接。
 
 ### 1. 开源部分
 
@@ -79,8 +74,10 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 ### 2. 闭源组件与商业授权
 
-**CinePlayerSDK** (即项目中的二进制库文件) 属于专有软件：
+**CinePlayerSDK**（即仓库中的预编译二进制）为专有软件，**正式条款**以 SDK 内 License 文件为准。禁止对 SDK 二进制进行逆向工程、反编译或反汇编。
 
-* **个人/非商业用途：** 允许随本开源项目一同分发，仅限个人学习和测试使用。
-* **商业用途：** **严禁**任何第三方公司在未经许可的情况下将 `CinePlayerSDK` 用于商业产品。
-* **获取授权：** 如需在商业项目中使用此 SDK，请联系：`cinemore@cinemore.com.cn` 进行商务洽谈。
+**仅针对本仓库**，授权方允许：
+
+* **仅允许个人使用**：`CinePlayerSDK` 仅限个人使用。未经书面许可不得再分发、再许可或用于商业用途。
+* **商业用途**：任何第三方公司**严禁**在未获书面许可前将 `CinePlayerSDK` 用于商业产品。
+* **商业授权**：商业使用或再分发权利请联系：`cinemore@cinemore.com.cn`。

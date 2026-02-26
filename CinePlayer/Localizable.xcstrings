@@ -1,426 +1,220 @@
 {
-  "sourceLanguage" : "zh-Hans",
-  "strings" : {
-    "" : {
-      "shouldTranslate" : false
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "": {
+      "shouldTranslate": false
     },
-    ":" : {
-      "shouldTranslate" : false
+    ":": {
+      "shouldTranslate": false
     },
-    "(当前)" : {
-
+    "(当前)": {},
+    "/": {
+      "shouldTranslate": false
     },
-    "/" : {
-      "shouldTranslate" : false
+    "%.2fx": {
+      "shouldTranslate": false
     },
-    "%.2fx" : {
-      "shouldTranslate" : false
+    "%@": {
+      "shouldTranslate": false
     },
-    "%@" : {
-      "shouldTranslate" : false
+    "%@x": {
+      "shouldTranslate": false
     },
-    "%@x" : {
-      "shouldTranslate" : false
+    "%d Hz": {
+      "shouldTranslate": false
     },
-    "%d Hz" : {
-      "shouldTranslate" : false
+    "%lld": {
+      "shouldTranslate": false
     },
-    "%lld" : {
-      "shouldTranslate" : false
+    "%lld s": {
+      "shouldTranslate": false
     },
-    "%lld s" : {
-      "shouldTranslate" : false
+    "%lld%%": {
+      "shouldTranslate": false
     },
-    "%lld%%" : {
-      "shouldTranslate" : false
-    },
-    "%lld×%lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld×%2$lld"
+    "%lld×%lld": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld×%2$lld"
           }
         }
       },
-      "shouldTranslate" : false
+      "shouldTranslate": false
     },
-    "%llds" : {
-      "shouldTranslate" : false
+    "%llds": {
+      "shouldTranslate": false
     },
-    "%lldx%lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lldx%2$lld"
+    "%lldx%lld": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lldx%2$lld"
           }
         }
       },
-      "shouldTranslate" : false
+      "shouldTranslate": false
     },
-    "1" : {
-      "shouldTranslate" : false
+    "1": {
+      "shouldTranslate": false
     },
-    "2" : {
-      "shouldTranslate" : false
+    "2": {
+      "shouldTranslate": false
     },
-    "3" : {
-      "shouldTranslate" : false
+    "3": {
+      "shouldTranslate": false
     },
-    "A/B 对比（左原图，右超分）" : {
-
+    "A/B 对比（左原图，右超分）": {},
+    "Anime4K 超分": {},
+    "Apple 翻译暂不支持该语言对，已自动关闭字幕翻译。": {},
+    "cinemore@cinemore.com.cn": {
+      "shouldTranslate": false
     },
-    "Anime4K 超分" : {
-
+    "CinePlayer": {
+      "shouldTranslate": false
     },
-    "Apple 翻译暂不支持该语言对，已自动关闭字幕翻译。" : {
-
+    "Codec": {
+      "shouldTranslate": false
     },
-    "cinemore@cinemore.com.cn" : {
-      "shouldTranslate" : false
+    "Copyright © 2026 Youduohong. All rights reserved.": {
+      "shouldTranslate": false
     },
-    "CinePlayer" : {
-      "shouldTranslate" : false
+    "Dolby Vision": {
+      "shouldTranslate": false
     },
-    "Codec" : {
-      "shouldTranslate" : false
+    "Frames added": {
+      "shouldTranslate": false
     },
-    "Copyright © 2024 Youduohong. All rights reserved." : {
-      "shouldTranslate" : false
+    "Layers": {
+      "shouldTranslate": false
     },
-    "Dolby Vision" : {
-      "shouldTranslate" : false
+    "Profile": {
+      "shouldTranslate": false
     },
-    "Frames added" : {
-      "shouldTranslate" : false
+    "Scale by": {
+      "shouldTranslate": false
     },
-    "Layers" : {
-      "shouldTranslate" : false
-    },
-    "Profile" : {
-      "shouldTranslate" : false
-    },
-    "Scale by" : {
-      "shouldTranslate" : false
-    },
-    "VT 插帧" : {
-
-    },
-    "VT 超分" : {
-
-    },
-    "下载语言包" : {
-
-    },
-    "了解 Anime4K 详情" : {
-
-    },
-    "仅在 1080p 及以下分辨率开放，适合低帧率内容插帧。" : {
-
-    },
-    "仅对低像素的视频开启，为实验功能，会增加耗电与发热。" : {
-
-    },
-    "位深度" : {
-
-    },
-    "依赖系统 VideoToolbox 能力，仅部分设备与分辨率支持。" : {
-
-    },
-    "倍速" : {
-
-    },
-    "像素格式" : {
-
-    },
-    "光流补帧" : {
-
-    },
-    "关于" : {
-
-    },
-    "关闭" : {
-
-    },
-    "内封字幕" : {
-
-    },
-    "减少%@" : {
-
-    },
-    "减少时间偏移" : {
-
-    },
-    "分辨率" : {
-
-    },
-    "分辨率:" : {
-
-    },
-    "切换备用源 (%lld/%lld)" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "切换备用源 (%1$lld/%2$lld)"
+    "VT 插帧": {},
+    "VT 超分": {},
+    "下载语言包": {},
+    "了解 Anime4K 详情": {},
+    "仅在 1080p 及以下分辨率开放，适合低帧率内容插帧。": {},
+    "仅对低像素的视频开启，为实验功能，会增加耗电与发热。": {},
+    "位深度": {},
+    "依赖系统 VideoToolbox 能力，仅部分设备与分辨率支持。": {},
+    "倍速": {},
+    "像素格式": {},
+    "光流补帧": {},
+    "关于": {},
+    "关闭": {},
+    "内封字幕": {},
+    "减少%@": {},
+    "减少时间偏移": {},
+    "分辨率": {},
+    "分辨率:": {},
+    "切换备用源 (%lld/%lld)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "new",
+            "value": "切换备用源 (%1$lld/%2$lld)"
           }
         }
       }
     },
-    "动态范围" : {
-
-    },
-    "双击前进" : {
-
-    },
-    "双击后退" : {
-
-    },
-    "右键前进" : {
-
-    },
-    "垂直位置" : {
-
-    },
-    "垂直对齐" : {
-
-    },
-    "基色" : {
-
-    },
-    "增加%@" : {
-
-    },
-    "增加时间偏移" : {
-
-    },
-    "声道" : {
-
-    },
-    "声道:" : {
-
-    },
-    "外部字幕" : {
-
-    },
-    "字幕 #%d" : {
-
-    },
-    "字幕调整" : {
-
-    },
-    "字幕轨道" : {
-
-    },
-    "完成" : {
-
-    },
-    "导入" : {
-
-    },
-    "封面 #%d" : {
-
-    },
-    "封面轨道" : {
-
-    },
-    "尚未导入外部字幕" : {
-
-    },
-    "左键后退" : {
-
-    },
-    "已下载" : {
-
-    },
-    "帧率" : {
-
-    },
-    "底色" : {
-
-    },
-    "开启" : {
-
-    },
-    "当前媒体无内封字幕" : {
-
-    },
-    "当前字幕翻译需要以下语言包，请下载后继续播放。" : {
-
-    },
-    "当前视频像素数不在 Anime4K 适配范围内" : {
-
-    },
-    "当前视频分辨率不在光流补帧支持范围内" : {
-
-    },
-    "当前视频分辨率不支持系统 VT 增强" : {
-
-    },
-    "当前设备不支持系统 VT 视频增强" : {
-
-    },
-    "手势" : {
-
-    },
-    "打开URL…" : {
-
-    },
-    "打开文件…" : {
-
-    },
-    "按键" : {
-
-    },
-    "提高播放速度" : {
-
-    },
-    "播放" : {
-
-    },
-    "播放器" : {
-
-    },
-    "播放文件" : {
-
-    },
-    "播放设置" : {
-
-    },
-    "时间偏移" : {
-
-    },
-    "标题" : {
-
-    },
-    "样式" : {
-
-    },
-    "档位" : {
-
-    },
-    "正在连接..." : {
-
-    },
-    "比特率" : {
-
-    },
-    "水平位置" : {
-
-    },
-    "水平对齐" : {
-
-    },
-    "源语言" : {
-
-    },
-    "目标语言" : {
-
-    },
-    "视频 #%d" : {
-
-    },
-    "视频增强（实验）" : {
-
-    },
-    "视频轨道" : {
-
-    },
-    "系统 VT 视频增强" : {
-
-    },
-    "编码" : {
-
-    },
-    "编码:" : {
-
-    },
-    "缩放" : {
-
-    },
-    "网络重试中 (%lld/%lld)" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "网络重试中 (%1$lld/%2$lld)"
+    "动态范围": {},
+    "双击前进": {},
+    "双击后退": {},
+    "右键前进": {},
+    "垂直位置": {},
+    "垂直对齐": {},
+    "基色": {},
+    "增加%@": {},
+    "增加时间偏移": {},
+    "声道": {},
+    "声道:": {},
+    "外部字幕": {},
+    "字幕 #%d": {},
+    "字幕调整": {},
+    "字幕轨道": {},
+    "完成": {},
+    "导入": {},
+    "封面 #%d": {},
+    "封面轨道": {},
+    "尚未导入外部字幕": {},
+    "左键后退": {},
+    "已下载": {},
+    "帧率": {},
+    "底色": {},
+    "开启": {},
+    "当前媒体无内封字幕": {},
+    "当前字幕翻译需要以下语言包，请下载后继续播放。": {},
+    "当前视频像素数不在 Anime4K 适配范围内": {},
+    "当前视频分辨率不在光流补帧支持范围内": {},
+    "当前视频分辨率不支持系统 VT 增强": {},
+    "当前设备不支持系统 VT 视频增强": {},
+    "手势": {},
+    "打开URL…": {},
+    "打开文件…": {},
+    "按键": {},
+    "提高播放速度": {},
+    "播放": {},
+    "播放器": {},
+    "播放文件": {},
+    "播放设置": {},
+    "时间偏移": {},
+    "标题": {},
+    "样式": {},
+    "档位": {},
+    "正在连接...": {},
+    "比特率": {},
+    "水平位置": {},
+    "水平对齐": {},
+    "源语言": {},
+    "目标语言": {},
+    "视频 #%d": {},
+    "视频增强（实验）": {},
+    "视频轨道": {},
+    "系统 VT 视频增强": {},
+    "编码": {},
+    "编码:": {},
+    "缩放": {},
+    "网络重试中 (%lld/%lld)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "new",
+            "value": "网络重试中 (%1$lld/%2$lld)"
           }
         }
       }
     },
-    "翻译" : {
-
-    },
-    "翻译语言" : {
-
-    },
-    "联系我们" : {
-
-    },
-    "色彩矩阵" : {
-
-    },
-    "色调映射" : {
-
-    },
-    "语言" : {
-
-    },
-    "语言对" : {
-
-    },
-    "请选择" : {
-
-    },
-    "超分倍率" : {
-
-    },
-    "轨道时长" : {
-
-    },
-    "输入视频 URL" : {
-
-    },
-    "输入范围: -300.0s ~ +300.0s" : {
-
-    },
-    "输出分辨率" : {
-
-    },
-    "边框" : {
-
-    },
-    "连接稳定" : {
-
-    },
-    "选择源语言和目标语言后，点击“下载语言包”可离线使用 Apple 翻译。" : {
-
-    },
-    "采样率" : {
-
-    },
-    "重启翻译服务" : {
-
-    },
-    "重置" : {
-
-    },
-    "长按倍速播放" : {
-
-    },
-    "降低播放速度" : {
-
-    },
-    "音轨" : {
-
-    },
-    "音频 #%d" : {
-
-    },
-    "音频轨道" : {
-
-    }
+    "翻译": {},
+    "翻译语言": {},
+    "联系我们": {},
+    "色彩矩阵": {},
+    "色调映射": {},
+    "语言": {},
+    "语言对": {},
+    "请选择": {},
+    "超分倍率": {},
+    "轨道时长": {},
+    "输入视频 URL": {},
+    "输入范围: -300.0s ~ +300.0s": {},
+    "输出分辨率": {},
+    "边框": {},
+    "连接稳定": {},
+    "选择源语言和目标语言后，点击“下载语言包”可离线使用 Apple 翻译。": {},
+    "采样率": {},
+    "重启翻译服务": {},
+    "重置": {},
+    "长按倍速播放": {},
+    "降低播放速度": {},
+    "音轨": {},
+    "音频 #%d": {},
+    "音频轨道": {}
   },
-  "version" : "1.1"
+  "version": "1.1"
 }

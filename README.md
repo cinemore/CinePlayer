@@ -1,23 +1,34 @@
-# CinePlayer for Apple
-
-**Next-generation high-performance cross-platform video player**
+<div align="center">
+  <a href="https://cinemore.com.cn/">
+    <img src="assets/appicon-dark.png" alt="CinePlayer" width="120" height="120">
+  </a>
+  <h1>CinePlayer for Apple</h1>
+  <p><strong>Next-generation player</strong></p>
+  <p>
+    <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
+  </p>
+</div>
 
 CinePlayer is an open-source player application built on top of `CinePlayerSDK`.  
 `CinePlayerSDK` is the core playback engine used by **[Cinemore](https://cinemore.com.cn)** and has been battle-tested in production.  
 This repository demonstrates how to use a high-performance playback core to deliver a premium audio/video experience while keeping the app layer flexible and extensible.
 
-For the Simplified Chinese README, see `README-zh.md`.
+## 📸 Preview
+
+<p align="center">
+  <img src="assets/player.png" alt="CinePlayer playback interface" width="720">
+</p>
 
 ## ✨ Features
 
-- **Stunning image quality**: Supports HLG, HDR10, HDR10+ (with metadata), and Dolby Vision (Dolby Vision with RPU).
-- **Premium audio**: Supports stereo/multichannel audio, spatial audio, and Dolby Atmos in supported scenarios.
-- **High-performance decoding**: Comprehensive hardware-accelerated decoding pipeline.
-- **Playback controls**: Precise playback speed control, fast switching between multiple audio and subtitle tracks.
-- **Subtitle support**: Robust rendering for embedded and external subtitles, with optional subtitle translation features.
-- **Blu-ray support**: Supports ISO and BDMV Blu-ray disc images.
-- **Rich diagnostics**: Can display network throughput and detailed audio/video track information.
-- **Multi-platform**: Runs on iOS, macOS, tvOS, and visionOS.
+- **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
+- **Gestures & shortcuts**: iOS — single tap show/hide controls, double-tap left/right skip or center play/pause, long-press temporary speed (configurable skip seconds and long-press speed in playback settings); tvOS — remote swipe/press skip, long-press continuous seek; macOS — Space play/pause, arrow keys skip/speed, Esc fullscreen, mouse to show controls.
+- **Subtitles**: Embedded and external subtitles; full ASS-style customization; HDR subtitle support; translation (e.g. Apple).
+- **Tracks & media info**: Detailed video/audio/subtitle track list with quick switching; media info card.
+- **Enhancement**: Anime4K-style anime super-resolution (multiple presets, optional A/B compare).
+- **Playback UX**: Progress scrub with thumbnail preview; portrait/landscape (iOS orientation lock), picture fill, PiP, fullscreen, variable playback speed; macOS window floating (always on top); Now Playing / lock screen & Control Center control.
+- **Blu-ray**: ISO and BDMV.
+- **Platforms**: iOS, macOS, tvOS, visionOS.
 
 **Dolby Vision and Dolby Atmos playback are handled by Apple AVFoundation’s [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/).**
 
@@ -38,8 +49,9 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 
 ### Video & HDR processing
 
-- **[libdav1d](https://github.com/videolan/dav1d)**
-- **[libdovi](https://github.com/quietvoid/dovi_tool)**
+- **[dav1d](https://github.com/videolan/dav1d)** (libdav1d)
+- **[dovi_tool](https://github.com/quietvoid/dovi_tool)** (libdovi)
+- **[uavs3d](https://github.com/uavs3/uavs3d)** (libuavs3d)
 
 ### Subtitle rendering
 
@@ -58,8 +70,10 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 
 This project uses a **hybrid licensing model**:
 
-- **Source code license**: See the `LICENSE` file at the repository root.
-- **SDK license**: See the `CinePlayerSDK.framework/License` files under `Frameworks/CinePlayerSDK.xcframework` for each supported platform slice.
+- **Source code license**: See the [`LICENSE`](LICENSE) file at the repository root.
+- **SDK license**: The binding terms for CinePlayerSDK are in the **License** file inside each platform slice’s `CinePlayerSDK.framework` (on macOS: `Versions/A/Resources/License`). Path: `Frameworks/CinePlayerSDK.xcframework/<platform>/CinePlayerSDK.framework/...`
+
+Third-party libraries (FFmpeg, libass, etc.) are used under their own licenses; see the links in **Third-party Libraries** above.
 
 ### 1. Open-source components
 
@@ -69,12 +83,14 @@ You are free to study, modify, and build your own applications based on this cod
 
 ### 2. Proprietary SDK and commercial licensing
 
-**CinePlayerSDK** (the prebuilt binary libraries in this repository) is proprietary software:
+**CinePlayerSDK** (the prebuilt binary libraries in this repository) is proprietary software. The **definitive terms** are in the License file inside the SDK (see path above). You may not reverse engineer, decompile, or disassemble the SDK binaries.
 
-- **Personal / non-commercial use**:  
-  You may redistribute `CinePlayerSDK` as part of this open-source project **for personal learning and testing only**.
+For **this repository only**, the licensor permits:
+
+- **Personal use only**:  
+  You may use `CinePlayerSDK` **for personal use only**. No redistribution, sublicense, or commercial use without prior written permission.
 - **Commercial use**:  
-  It is **strictly prohibited** for any third-party company to use `CinePlayerSDK` in commercial products without prior written permission.
-- **Obtaining a commercial license**:  
-  For commercial usage of the SDK, please contact: `cinemore@cinemore.com.cn`.
+  **Strictly prohibited** for any third-party company without prior written permission.
+- **Commercial license**:  
+  Contact `cinemore@cinemore.com.cn` for commercial use or redistribution rights.
 
