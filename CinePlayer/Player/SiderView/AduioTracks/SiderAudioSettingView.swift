@@ -29,8 +29,8 @@ struct SiderAudioSettingView: View {
                             profileName: audioTrack.profileName,
                             language: audioTrack.language,
                             codecName: audioTrack.codecName,
-                            channelDescription: nil,
-                            audioDescriptorSampleRate: nil,
+                            channelDescription: audioTrack.audioChannelLayoutDescription.isEmpty ? nil : audioTrack.audioChannelLayoutDescription,
+                            audioDescriptorSampleRate: audioTrack.audioSampleRate > 0 ? audioTrack.audioSampleRate : nil,
                             bitRate: audioTrack.bitRate,
                             streamIndex: audioTrack.streamIndex
                         ) {
