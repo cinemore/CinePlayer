@@ -37,7 +37,7 @@ private struct LanguagePackSheetContent: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Apple 翻译暂不支持该语言对。")
+                    Text("Apple 翻译暂不支持该语言对，已自动关闭字幕翻译。")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -302,14 +302,16 @@ struct PlayerControlView: View {
                 presetPair: $languagePackSheetPresetPair,
                 presetStatus: $languagePackSheetStatus,
                 isPlaying: playerModel.playerCoordinator.playbackState == .playing,
-                pause: { playerModel.playerCoordinator.controller?.pause() }
+                pause: { playerModel.playerCoordinator.controller?.pause() },
+                disableTranslation: { reason, pair in
+                    disableSubtitleTranslationMode(reason: reason, pair: pair)
+                }
             )
         )
         .sheet(
             isPresented: $showLanguagePackDownloadSheet,
             onDismiss: {
-                languagePackSheetPresetPair = nil
-                languagePackSheetStatus = nil
+                handleLanguagePackSheetDismiss()
             }
         ) {
             LanguagePackSheetContent(
@@ -318,8 +320,6 @@ struct PlayerControlView: View {
                 packStatus: languagePackSheetStatus,
                 onComplete: {
                     showLanguagePackDownloadSheet = false
-                    languagePackSheetPresetPair = nil
-                    languagePackSheetStatus = nil
                 }
             )
         }
@@ -460,8 +460,7 @@ struct PlayerControlView: View {
         if #available(iOS 18.0, macOS 15.0, *) {
             AppleSubtitleTranslationTaskHostView(
                 runtime: playerModel.translationRuntime,
-                router: playerModel.translationRouter,
-                mode: sessionStore.controlConfig.subtitleTranslateMode
+                router: playerModel.translationRouter
             )
         } else {
             Color.clear
@@ -561,6 +560,95 @@ struct PlayerControlView: View {
         playerModel.applySubtitleTranslationSettings(mode: mode)
         refreshSubtitleForTranslationModeChange()
     }
+
+    #if !os(tvOS) && !os(visionOS)
+    private func disableSubtitleTranslationMode(
+        reason: String,
+        pair: (from: String, to: String)? = nil,
+        availabilityStatus: String = "n/a"
+    ) {
+        let previousMode = sessionStore.controlConfig.subtitleTranslateMode
+        guard previousMode.needsTranslation else {
+            let pairText = pair.map { "\($0.from)->\($0.to)" } ?? "unknown"
+            subtitleTranslationLog(
+                .debug,
+                "[LanguagePackPolicy] ignore disable request reason=\(reason) pair=\(pairText) mode=\(previousMode)"
+            )
+            return
+        }
+
+        var updatedConfig = sessionStore.controlConfig
+        updatedConfig.subtitleTranslateMode = .off
+        sessionStore.controlConfig = updatedConfig
+
+        let pairText = pair.map { "\($0.from)->\($0.to)" } ?? "unknown"
+        subtitleTranslationLog(
+            .error,
+            "[LanguagePackPolicy] force mode off reason=\(reason) pair=\(pairText) previousMode=\(previousMode) availability=\(availabilityStatus)"
+        )
+    }
+
+    private func handleLanguagePackSheetDismiss() {
+        let dismissedPair = languagePackSheetPresetPair
+        let dismissedStatus = languagePackSheetStatus
+
+        languagePackSheetPresetPair = nil
+        languagePackSheetStatus = nil
+
+        guard dismissedStatus == .canDownload,
+              let pair = dismissedPair
+        else {
+            return
+        }
+
+        guard sessionStore.controlConfig.subtitleTranslateMode.needsTranslation else {
+            subtitleTranslationLog(
+                .debug,
+                "[LanguagePackPolicy] sheet dismissed with mode already off pair=\(pair.from)->\(pair.to)"
+            )
+            return
+        }
+
+        if #available(iOS 18.0, macOS 15.0, *) {
+            Task {
+                let sourceLang = Locale.Language(identifier: pair.from)
+                let targetLang = Locale.Language(identifier: pair.to)
+                let status = await LanguageAvailability().status(from: sourceLang, to: targetLang)
+                let statusText = String(describing: status)
+                await MainActor.run {
+                    if let currentPair = playerModel.translationRuntime.desiredApplePair,
+                       (currentPair.from != pair.from || currentPair.to != pair.to)
+                    {
+                        subtitleTranslationLog(
+                            .debug,
+                            "[LanguagePackPolicy] skip dismiss fallback because pair changed dismissed=\(pair.from)->\(pair.to) current=\(currentPair.from)->\(currentPair.to)"
+                        )
+                        return
+                    }
+                    if status == .installed {
+                        subtitleTranslationLog(
+                            .debug,
+                            "[LanguagePackPolicy] sheet dismissed after install pair=\(pair.from)->\(pair.to) status=\(statusText), keep mode=\(sessionStore.controlConfig.subtitleTranslateMode)"
+                        )
+                        return
+                    }
+                    disableSubtitleTranslationMode(
+                        reason: "language_pack_sheet_dismissed_without_install",
+                        pair: pair,
+                        availabilityStatus: statusText
+                    )
+                }
+            }
+            return
+        }
+
+        disableSubtitleTranslationMode(
+            reason: "language_pack_sheet_dismissed_on_unsupported_os",
+            pair: pair,
+            availabilityStatus: "unknown"
+        )
+    }
+    #endif
 
     private func refreshSubtitleForTranslationModeChange() {
         guard let controller = playerModel.playerCoordinator.controller else {
@@ -684,6 +772,7 @@ private struct PlayerLanguagePackCheckWhenAvailableModifier: ViewModifier {
     @Binding var presetStatus: LanguagePackSheetStatus?
     let isPlaying: Bool
     let pause: () -> Void
+    let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
 
     func body(content: Content) -> some View {
         if #available(iOS 18.0, macOS 15.0, *) {
@@ -695,7 +784,8 @@ private struct PlayerLanguagePackCheckWhenAvailableModifier: ViewModifier {
                     presetPair: $presetPair,
                     presetStatus: $presetStatus,
                     isPlaying: isPlaying,
-                    pause: pause
+                    pause: pause,
+                    disableTranslation: disableTranslation
                 )
             )
         } else {
@@ -713,6 +803,7 @@ private struct PlayerLanguagePackCheckModifier: ViewModifier {
     @Binding var presetStatus: LanguagePackSheetStatus?
     let isPlaying: Bool
     let pause: () -> Void
+    let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
 
     private var languagePackCheckId: String {
         guard mode.needsTranslation, isPlaying, let pair = translationRuntime.desiredApplePair else {
@@ -737,8 +828,11 @@ private struct PlayerLanguagePackCheckModifier: ViewModifier {
                 let status = await availability.status(from: sourceLang, to: targetLang)
 
                 if status == .unsupported {
-                    pause()
-                    presetPair = (pair.from, pair.to)
+                    let currentPair = (from: pair.from, to: pair.to)
+                    await MainActor.run {
+                        disableTranslation("apple_language_pair_unsupported", currentPair)
+                    }
+                    presetPair = currentPair
                     presetStatus = .unsupported
                     showLanguagePackDownloadSheet = true
                 } else if status != .installed {

@@ -2,6 +2,9 @@ import SwiftUI
 #if os(iOS)
 import UIKit
 #endif
+#if os(macOS)
+import AppKit
+#endif
 
 @main
 struct CinePlayerApp: App {
@@ -15,6 +18,7 @@ struct CinePlayerApp: App {
     #if os(macOS)
     @NSApplicationDelegateAdaptor(MacAppDelegate.self) var macAppDelegate
     @StateObject private var windowController = PlayerWindowController()
+    @State private var aboutWindow: NSWindow?
     #endif
 
     var body: some Scene {
@@ -24,6 +28,11 @@ struct CinePlayerApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("关于") {
+                    showAboutWindow()
+                }
+            }
             CommandGroup(after: .newItem) {
                 Button("打开文件…") {
                     macAppDelegate.openFileFromMenuOrDock()
@@ -73,6 +82,31 @@ struct CinePlayerApp: App {
                 }
             #endif
     }
+
+    #if os(macOS)
+    private func showAboutWindow() {
+        if let aboutWindow {
+            aboutWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 500),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: AboutPage())
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        aboutWindow = window
+    }
+    #endif
 }
 
 #if os(iOS)

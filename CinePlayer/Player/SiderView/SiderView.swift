@@ -43,7 +43,7 @@ struct SiderView: View {
                 show: playerControlModel.showSettingContainer,
                 geometry: geometry,
                 direction: panelDirection,
-                showBackground: panelDirection == .trailing
+                showBackground: true
             ) {
                 SiderSettingView()
                     .if(panelDirection == .bottom) {
@@ -55,7 +55,7 @@ struct SiderView: View {
                 show: playerControlModel.showEnhancementContainer,
                 geometry: geometry,
                 direction: panelDirection,
-                showBackground: panelDirection == .trailing
+                showBackground: true
             ) {
                 SiderEnhancementView()
                     .if(panelDirection == .bottom) {
@@ -67,7 +67,7 @@ struct SiderView: View {
                 show: playerControlModel.showSubtitleContainer,
                 geometry: geometry,
                 direction: panelDirection,
-                showBackground: panelDirection == .trailing
+                showBackground: true
             ) {
                 SiderSubtitleView()
                     .if(panelDirection == .bottom) {
@@ -79,7 +79,7 @@ struct SiderView: View {
                 show: playerControlModel.showAudioContainer,
                 geometry: geometry,
                 direction: panelDirection,
-                showBackground: panelDirection == .trailing
+                showBackground: true
             ) {
                 SiderAudioSettingView()
                     .if(panelDirection == .bottom) {
@@ -91,7 +91,7 @@ struct SiderView: View {
                 show: playerControlModel.showVideoTrackContainer,
                 geometry: geometry,
                 direction: panelDirection,
-                showBackground: panelDirection == .trailing
+                showBackground: true
             ) {
                 SiderVideoTrackView()
                     .if(panelDirection == .bottom) {

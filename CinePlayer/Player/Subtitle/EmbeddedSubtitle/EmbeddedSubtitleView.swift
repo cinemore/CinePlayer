@@ -5,6 +5,7 @@ import SwiftUI
 struct EmbeddedSubtitleView: View {
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
+    @EnvironmentObject private var sessionStore: PlayerSessionStore
 
     var body: some View {
         Group {
@@ -30,6 +31,23 @@ struct EmbeddedSubtitleView: View {
                         #if os(iOS)
                             .scaleEffect(0.8)
                             .offset(x: 2)
+                        #endif
+                    }
+
+                    HStack {
+                        Text("翻译")
+                            .f16b()
+                            .foregroundColor(.white)
+                        Spacer()
+                        Picker("", selection: translationModeBinding) {
+                            ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        #if os(macOS)
+                        .frame(maxWidth: 130, alignment: .trailing)
                         #endif
                     }
 
@@ -81,6 +99,22 @@ struct EmbeddedSubtitleView: View {
 
     private var selectedTrackIndex: Int32 {
         playerCoordinator.subtitleTrackIndex
+    }
+
+    private var translationModeBinding: Binding<SubtitleTranslateMode> {
+        Binding(
+            get: {
+                sessionStore.controlConfig.subtitleTranslateMode
+            },
+            set: { newValue in
+                var config = sessionStore.controlConfig
+                guard config.subtitleTranslateMode != newValue else {
+                    return
+                }
+                config.subtitleTranslateMode = newValue
+                sessionStore.controlConfig = config
+            }
+        )
     }
 
     private func updateToggleState(_ newValue: Bool) {
