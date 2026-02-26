@@ -1,7 +1,7 @@
 import SwiftUI
 
 #if canImport(AppKit)
-import AppKit
+    import AppKit
 #endif
 
 private enum AboutAppInfo {
@@ -23,7 +23,7 @@ private enum AboutLinks {
 
 struct AboutPage: View {
     #if !os(macOS)
-    @Environment(\.openURL) private var openURL
+        @Environment(\.openURL) private var openURL
     #endif
 
     private var versionText: String {
@@ -32,46 +32,50 @@ struct AboutPage: View {
 
     var body: some View {
         #if os(macOS)
-        macBody
-            .navigationTitle("关于")
+            macBody
+                .navigationTitle("关于")
         #else
-        mobileBody
-            .navigationTitle("关于")
-        #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-        #endif
+            mobileBody
+                .navigationTitle("关于")
+                #if os(iOS)
+                    .navigationBarTitleDisplayMode(.inline)
+                #endif
         #endif
     }
 
     #if os(macOS)
-    private var macBody: some View {
-        VStack(spacing: 0) {
-            headerView
-                .padding(.bottom, 18)
-
-            contactCard
-
-            Spacer(minLength: 80)
-
-            footerLinks
-        }
-        .padding(.top, 30)
-        .padding(.bottom, 42)
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    #else
-    private var mobileBody: some View {
-        ScrollView {
-            VStack(spacing: 18) {
+        private var macBody: some View {
+            VStack(spacing: 0) {
                 headerView
+                    .padding(.bottom, 18)
+
+                contactCard
+
+                Spacer(minLength: 80)
+
+                footerLinks
+            }
+            .padding(.top, 30)
+            .padding(.bottom, 42)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    #else
+        private var mobileBody: some View {
+            VStack(spacing: 18) {
+                Spacer()
+
+                headerView
+
+                Spacer()
+
                 contactCard
                 footerLinks
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 24)
+            .frame(maxHeight: .infinity)
         }
-    }
     #endif
 
     private var headerView: some View {
@@ -127,6 +131,7 @@ struct AboutPage: View {
                     .f12r()
             }
             .buttonStyle(.plain)
+            .focusable(false)
 
             HStack(spacing: 26) {
                 linkButton(title: "第三方许可信息", url: AboutLinks.licenses)
@@ -134,14 +139,14 @@ struct AboutPage: View {
                 linkButton(title: "使用条款(EULA)", url: AboutLinks.eula)
             }
 
-//            Button {
-//                openExternal(AboutLinks.filing)
-//            } label: {
-//                Text("粤ICP备2022030744号-5A")
-//                    .f12r()
-//                    .foregroundStyle(.blue)
-//            }
-//            .buttonStyle(.plain)
+            //            Button {
+            //                openExternal(AboutLinks.filing)
+            //            } label: {
+            //                Text("粤ICP备2022030744号-5A")
+            //                    .f12r()
+            //                    .foregroundStyle(.blue)
+            //            }
+            //            .buttonStyle(.plain)
         }
     }
 
@@ -161,9 +166,9 @@ struct AboutPage: View {
             return
         }
         #if os(macOS)
-        NSWorkspace.shared.open(url)
+            NSWorkspace.shared.open(url)
         #else
-        openURL(url)
+            openURL(url)
         #endif
     }
 }
