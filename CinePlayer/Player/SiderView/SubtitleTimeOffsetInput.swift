@@ -138,6 +138,7 @@ struct SubtitleTimeOffsetInput: View {
                         .f14m()
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -164,6 +165,7 @@ struct SubtitleTimeOffsetInput: View {
                         .frame(height: 28)
                         .background(Color.white.opacity(offset == 0.0 ? 0.2 : 0.1))
                         .roundedCorner(4)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }

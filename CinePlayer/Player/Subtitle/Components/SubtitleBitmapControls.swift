@@ -20,11 +20,16 @@ import CinePlayerSDK
                     HStack {
                         SubtitleSectionHeader(title: "缩放大小")
                         Spacer()
-                        Button("重置") {
+                        Button {
                             subtitleStyle.bitmapScale = 1.0
+                        } label: {
+                            Text("重置")
+                                .f12r()
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 12)
+                                .contentShape(Rectangle())
                         }
-                        .f12r()
-                        .foregroundColor(.blue)
+                        .buttonStyle(.plain)
                     }
 
                     VStack(spacing: 8) {
@@ -57,12 +62,17 @@ import CinePlayerSDK
                     HStack {
                         SubtitleSectionHeader(title: "位置调整")
                         Spacer()
-                        Button("重置") {
+                        Button {
                             subtitleStyle.bitmapHorizontalOffset = 0
                             subtitleStyle.bitmapVerticalOffset = 0
+                        } label: {
+                            Text("重置")
+                                .f12r()
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 12)
+                                .contentShape(Rectangle())
                         }
-                        .f12r()
-                        .foregroundColor(.blue)
+                        .buttonStyle(.plain)
                     }
 
                     // 水平偏移
@@ -120,11 +130,16 @@ import CinePlayerSDK
                     HStack {
                         SubtitleSectionHeader(title: "透明度设置")
                         Spacer()
-                        Button("重置") {
+                        Button {
                             subtitleStyle.bitmapOpacity = 1.0
+                        } label: {
+                            Text("重置")
+                                .f12r()
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 12)
+                                .contentShape(Rectangle())
                         }
-                        .f12r()
-                        .foregroundColor(.blue)
+                        .buttonStyle(.plain)
                     }
 
                     SubtitleOpacitySlider(

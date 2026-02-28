@@ -5,8 +5,8 @@
 //  Created by lf on 2024/12/25.
 //
 
-import SwiftUI
 import CinePlayerSDK
+import SwiftUI
 
 // MARK: 字幕调整
 
@@ -78,8 +78,8 @@ import CinePlayerSDK
                     // 在 EnvironmentObject 模式下，使用 @EnvironmentObject 绑定的 subtitleStyle 以确保 UI 更新
                     let effectiveSubtitleStyle =
                         useParameterMode
-                            ? paramSubtitleStyle
-                            : envSubtitleStyle
+                        ? paramSubtitleStyle
+                        : envSubtitleStyle
 
                     VStack(spacing: 12) {
                         VStack(spacing: 8) {
@@ -103,7 +103,7 @@ import CinePlayerSDK
                                     effectiveIsImage
                                         ? effectiveSubtitleStyle.enableBitmapCustomization
                                         : effectiveSubtitleStyle
-                                        .overwriteSubtitleStyle
+                                            .overwriteSubtitleStyle
                                 },
                                 set: {
                                     if effectiveIsImage {
@@ -138,7 +138,7 @@ import CinePlayerSDK
                                                 get: { effectiveSubtitleStyle.textFontSize },
                                                 set: { effectiveSubtitleStyle.textFontSize = $0 }
                                             ),
-                                            in: 9 ... 64,
+                                            in: 9...64,
                                             step: 1.0,
                                             label: { EmptyView() }
                                         )
@@ -171,7 +171,7 @@ import CinePlayerSDK
 
                                         SubtitleAdjustmentRow(
                                             title:
-                                            "字间距: \(Int(effectiveSubtitleStyle.letterSpacing))"
+                                                "字间距: \(Int(effectiveSubtitleStyle.letterSpacing))"
                                         ) {
                                             Stepper(
                                                 value: Binding(
@@ -180,7 +180,7 @@ import CinePlayerSDK
                                                         effectiveSubtitleStyle.letterSpacing = $0
                                                     }
                                                 ),
-                                                in: 0 ... 20,
+                                                in: 0...20,
                                                 step: 1
                                             ) { EmptyView() }
                                         }
@@ -204,7 +204,7 @@ import CinePlayerSDK
                                         // 垂直位置调整
                                         if effectiveSubtitleStyle.textPosition.verticalAlign == .top
                                             || effectiveSubtitleStyle.textPosition.verticalAlign
-                                            == .bottom
+                                                == .bottom
                                         {
                                             SubtitlePositionSlider(
                                                 title: "垂直位置",
@@ -219,7 +219,7 @@ import CinePlayerSDK
                                                             .verticalMargin = CGFloat($0)
                                                     }
                                                 ),
-                                                range: 0 ... 100,
+                                                range: 0...100,
                                                 iconLeft: effectiveSubtitleStyle.textPosition
                                                     .verticalAlign == .bottom
                                                     ? "arrow.down" : "arrow.up",
@@ -279,7 +279,7 @@ import CinePlayerSDK
                                         }
                                         .pickerStyle(.segmented)
                                         .labelsHidden()
-                                        .frame(width: 120)
+                                        .fixedSize()
                                     }
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
@@ -310,7 +310,7 @@ import CinePlayerSDK
 
                                         SubtitleAdjustmentRow(
                                             title:
-                                            "边框宽度: \(Int(effectiveSubtitleStyle.outlineWidth))"
+                                                "边框宽度: \(Int(effectiveSubtitleStyle.outlineWidth))"
                                         ) {
                                             Stepper(
                                                 value: Binding(
@@ -319,7 +319,7 @@ import CinePlayerSDK
                                                         effectiveSubtitleStyle.outlineWidth = $0
                                                     }
                                                 ),
-                                                in: 0 ... 10,
+                                                in: 0...10,
                                                 step: 1
                                             ) { EmptyView() }
                                         }
@@ -348,14 +348,14 @@ import CinePlayerSDK
 
                                         SubtitleAdjustmentRow(
                                             title:
-                                            "阴影宽度: \(Int(effectiveSubtitleStyle.shadowWidth))"
+                                                "阴影宽度: \(Int(effectiveSubtitleStyle.shadowWidth))"
                                         ) {
                                             Stepper(
                                                 value: Binding(
                                                     get: { effectiveSubtitleStyle.shadowWidth },
                                                     set: { effectiveSubtitleStyle.shadowWidth = $0 }
                                                 ),
-                                                in: 0 ... 10,
+                                                in: 0...10,
                                                 step: 1
                                             ) { EmptyView() }
                                         }
