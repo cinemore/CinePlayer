@@ -8,10 +8,15 @@ import UIKit
 #endif
 
 struct PlayerOpenView: View {
+    private enum OpenRoute: Hashable {
+        case history
+    }
+
     @EnvironmentObject var sessionStore: PlayerSessionStore
 
     private let defaultHint = "拖动视频文件到窗口播放"
 
+    @State private var navigationPath: [OpenRoute] = []
     @State private var showFileImporter = false
     @State private var urlInput = ""
     @State private var isDropTargeted = false
@@ -22,28 +27,50 @@ struct PlayerOpenView: View {
     }
 
     var body: some View {
-        ZStack {
-            backgroundLayer
+        NavigationStack(path: $navigationPath) {
+            ZStack {
+                backgroundLayer
 
-            VStack(spacing: 0) {
-                Spacer()
-                topBranding
-                Spacer()
-                openControls
-                Spacer()
+                VStack(spacing: 32) {
+                    topBranding
+                    openControls
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+
+                #if os(macOS)
+                bottomHint
+                #endif
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 16)
-
-            #if os(macOS)
-            bottomHint
-            #endif
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay {
-            if isDropTargeted {
-                dropOverlay
+            .overlay {
+                if isDropTargeted {
+                    dropOverlay
+                }
             }
+            .navigationDestination(for: OpenRoute.self) { route in
+                switch route {
+                case .history:
+                    PlaybackHistoryListView()
+                }
+            }
+            .navigationTitle("")
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #if os(macOS)
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    historyButton
+                }
+            }
+            #else
+            .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        historyButton
+                    }
+                }
+            #endif
         }
         #if !os(tvOS)
         .onDrop(
@@ -61,6 +88,14 @@ struct PlayerOpenView: View {
             }
         }
         #endif
+    }
+
+    private var historyButton: some View {
+        Button {
+            navigationPath.append(.history)
+        } label: {
+            Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+        }
     }
 
     private var backgroundLayer: some View {
@@ -87,12 +122,12 @@ struct PlayerOpenView: View {
                 )
             }
             .ignoresSafeArea()
-            #if os(iOS)
+        #if os(iOS)
             .contentShape(Rectangle())
             .onTapGesture {
                 isURLFieldFocused = false
             }
-            #endif
+        #endif
     }
 
     private var systemBackgroundColor: Color {
@@ -129,7 +164,7 @@ struct PlayerOpenView: View {
         .frame(maxWidth: 640)
     }
 
-    private static let openControlCornerRadius: CGFloat = 14
+    private static let openControlCornerRadius: CGFloat = 16
 
     private var urlPlayContainer: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -140,8 +175,14 @@ struct PlayerOpenView: View {
                 .textFieldStyle(.plain)
             #endif
                 .focused($isURLFieldFocused)
+                .submitLabel(.go)
+                .onSubmit {
+                    guard let url = resolveInputURL(urlInput) else {
+                        return
+                    }
+                    openMedia(url: url)
+                }
                 .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 16)
 
@@ -151,7 +192,7 @@ struct PlayerOpenView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.opacity(0.7))
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 8)
@@ -190,13 +231,13 @@ struct PlayerOpenView: View {
     private var orDividerRow: some View {
         HStack(spacing: 12) {
             Capsule()
-                .fill(Color.white.opacity(0.2))
+                .fill(Color.primary.opacity(0.2))
                 .frame(height: 1)
             Text("或")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundStyle(.primary.opacity(0.72))
             Capsule()
-                .fill(Color.white.opacity(0.2))
+                .fill(Color.primary.opacity(0.2))
                 .frame(height: 1)
         }
         .frame(alignment: .center)
@@ -208,12 +249,12 @@ struct PlayerOpenView: View {
             showFileImporter = true
         }) {
             ZStack {
-                Color(red: 0.24, green: 0.31, blue: 0.41).opacity(0.5)
+                Color.blue
                 Text("打开文件")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .frame(height: 44)
+            .frame(width: 240, height: 44)
             .modifier(GlassEffectModifier(
                 cornerRadius: Self.openControlCornerRadius,
                 useCapsule: true,

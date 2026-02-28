@@ -16,12 +16,8 @@ struct ContentView: View {
                 Label("关于", systemImage: "info.circle")
             }
         }
-        .environment(\.colorScheme, .dark)
-        .preferredColorScheme(.dark)
         #else
         PlayerRootView()
-            .environment(\.colorScheme, .dark)
-            .preferredColorScheme(.dark)
         #endif
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 #if os(iOS)
 import UIKit
 #endif
@@ -26,7 +27,7 @@ struct CinePlayerApp: App {
         Window("CinePlayer", id: "main-window") {
             rootContentView
         }
-        .windowStyle(.hiddenTitleBar)
+//        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("关于") {
@@ -57,6 +58,7 @@ struct CinePlayerApp: App {
         ContentView()
             .environmentObject(sessionStore)
             .environmentObject(playerModel)
+            .modelContainer(for: [PlaybackHistoryRecord.self])
             #if os(macOS)
                 .environmentObject(windowController)
                 .onOpenURL { url in

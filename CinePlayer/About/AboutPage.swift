@@ -37,9 +37,9 @@ struct AboutPage: View {
         #else
             mobileBody
                 .navigationTitle("关于")
-                #if os(iOS)
-                    .navigationBarTitleDisplayMode(.inline)
-                #endif
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.large)
+            #endif
         #endif
     }
 
@@ -83,7 +83,8 @@ struct AboutPage: View {
             Image("CinePlayerIcon")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 82, height: 82)
+                .frame(width: 86, height: 86)
+                .shadow(color: Color.black.opacity(0.2), radius: 18, y: 8)
                 .padding(.bottom, 8)
 
             Text("CinePlayer")

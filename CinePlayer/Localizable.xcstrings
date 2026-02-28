@@ -182,6 +182,16 @@
     "%@" : {
       "shouldTranslate" : false
     },
+    "%@/%@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@/%2$@"
+          }
+        }
+      }
+    },
     "%@x" : {
       "shouldTranslate" : false
     },
@@ -2570,6 +2580,9 @@
         }
       }
     },
+    "全选" : {
+
+    },
     "关于" : {
       "localizations" : {
         "ar" : {
@@ -3904,6 +3917,9 @@
         }
       }
     },
+    "删除" : {
+
+    },
     "动态范围" : {
       "localizations" : {
         "ar" : {
@@ -4069,6 +4085,9 @@
           }
         }
       }
+    },
+    "历史记录" : {
+
     },
     "双击前进" : {
       "localizations" : {
@@ -4401,6 +4420,9 @@
           }
         }
       }
+    },
+    "取消" : {
+
     },
     "右键前进" : {
       "localizations" : {
@@ -10628,6 +10650,9 @@
         }
       }
     },
+    "暂无历史记录" : {
+
+    },
     "标题" : {
       "localizations" : {
         "ar" : {
@@ -13099,6 +13124,9 @@
           }
         }
       }
+    },
+    "编辑" : {
+
     },
     "缩放" : {
       "localizations" : {

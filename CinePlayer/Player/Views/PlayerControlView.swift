@@ -1,4 +1,5 @@
 import CinePlayerSDK
+import SwiftData
 import SwiftUI
 
 #if !os(tvOS) && !os(visionOS)
@@ -80,6 +81,7 @@ private struct LanguagePackSheetContent: View {
 
 @MainActor
 struct PlayerControlView: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerModel: VideoPlayerModel
 
@@ -96,6 +98,10 @@ struct PlayerControlView: View {
 
     @State private var isPlayerInitializing = true
     @State private var brightness: CGFloat = 0.5
+    @State private var didEnsureHistoryRecord = false
+    @State private var didRequestHistoryThumbnail = false
+    @State private var lastHistoryProgressSecond = -1
+    @State private var lastHistoryDurationSecond = -1
 
     #if !os(tvOS) && !os(visionOS)
     @State private var showLanguagePackDownloadSheet = false
@@ -277,6 +283,12 @@ struct PlayerControlView: View {
         }
         .environmentObject(playerMaskModel)
         .background(subtitleTranslationTaskHost)
+        .environment(\.colorScheme, .dark)
+        .preferredColorScheme(.dark)
+        .navigationTitle("")
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
         #if !os(tvOS) && !os(visionOS)
         .modifier(
             PlayerLanguagePackCheckWhenAvailableModifier(
@@ -326,6 +338,9 @@ struct PlayerControlView: View {
                 .onPlaybackStateChanged { status in
                     if status == .ready || status == .playing {
                         isPlayerInitializing = false
+                        let playbackTime = playerModel.playerCoordinator.controller?.currentPlaybackTime
+                            ?? Double(playerModel.playerCoordinator.progress.currentTime)
+                        handleHistoryRecordCreationIfNeeded(currentTime: playbackTime)
                         #if os(macOS)
                         // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
                         // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
@@ -366,9 +381,14 @@ struct PlayerControlView: View {
                                 )
                             }
 
+                            handleHistoryThumbnailIfNeededOnReady()
                         }
                         #endif
                     }
+                }
+                .onTimeChanged { currentTime in
+                    handleHistoryRecordCreationIfNeeded(currentTime: currentTime)
+                    handleHistoryProgressUpdate(currentTime: currentTime)
                 }
                 .onBufferingStatusChanged { status in
                     handleBufferingStatus(status)
@@ -493,7 +513,8 @@ struct PlayerControlView: View {
     private var isLoadingOrErrorOverlayVisible: Bool {
         if isPlayerInitializing { return true }
         if let toast = toastModel.presentedToast,
-           case .networkError = toast {
+           case .networkError = toast
+        {
             return true
         }
         return false
@@ -562,13 +583,98 @@ struct PlayerControlView: View {
         }
         if resetPlayerState {
             isPlayerInitializing = true
+            didEnsureHistoryRecord = false
+            didRequestHistoryThumbnail = false
+            lastHistoryProgressSecond = -1
+            lastHistoryDurationSecond = -1
             #if os(macOS)
             // 切换到新的视频源时，允许重新根据新视频尺寸应用一次窗口布局
             hasAppliedMacWindowLayout = false
             #endif
         }
-        playerModel.open(url: source.url, controlConfig: controlConfig)
+        playerModel.open(url: source.url, startTime: source.startTime, controlConfig: controlConfig)
         remoteCommandService.refreshNowPlayingInfo()
+    }
+
+    private func handleHistoryRecordCreationIfNeeded(currentTime: TimeInterval) {
+        guard !didEnsureHistoryRecord, let source = sessionStore.currentSource else {
+            return
+        }
+        let totalDuration = historyTotalDuration()
+        PlaybackHistoryRepository.ensureRecordExists(
+            for: source,
+            initialPlaybackTime: currentTime,
+            totalDuration: totalDuration,
+            in: modelContext
+        )
+        didEnsureHistoryRecord = true
+        lastHistoryProgressSecond = Int(currentTime.rounded(.down))
+        lastHistoryDurationSecond = Int(totalDuration.rounded(.down))
+    }
+
+    private func handleHistoryProgressUpdate(currentTime: TimeInterval) {
+        guard didEnsureHistoryRecord, let source = sessionStore.currentSource else {
+            return
+        }
+        let currentSecond = Int(currentTime.rounded(.down))
+        let totalDuration = historyTotalDuration()
+        let totalSecond = Int(totalDuration.rounded(.down))
+
+        guard currentSecond != lastHistoryProgressSecond || totalSecond != lastHistoryDurationSecond else {
+            return
+        }
+        lastHistoryProgressSecond = currentSecond
+        lastHistoryDurationSecond = totalSecond
+
+        PlaybackHistoryRepository.updatePlaybackProgress(
+            for: source,
+            currentTime: currentTime,
+            totalDuration: totalDuration,
+            in: modelContext
+        )
+    }
+
+    private func historyTotalDuration() -> TimeInterval {
+        let controllerDuration = playerModel.playerCoordinator.controller?.duration ?? 0
+        return max(controllerDuration, Double(playerModel.playerCoordinator.progress.totalTime))
+    }
+
+    private func handleHistoryThumbnailIfNeededOnReady() {
+        guard
+            !didRequestHistoryThumbnail,
+            let source = sessionStore.currentSource,
+            let controller = playerModel.playerCoordinator.controller
+        else {
+            return
+        }
+        guard PlaybackHistoryRepository.hasThumbnail(for: source, in: modelContext) == false else {
+            didRequestHistoryThumbnail = true
+            return
+        }
+
+        let duration = max(controller.duration, Double(playerModel.playerCoordinator.progress.totalTime))
+        guard duration > 0 else {
+            return
+        }
+
+        didRequestHistoryThumbnail = true
+        let captureTime = duration / 2
+        let targetSize = CGSize(width: 320, height: 180)
+
+        Task { @MainActor in
+            guard let result = await controller.requestScrubThumbnail(
+                time: captureTime,
+                targetPointSize: targetSize,
+                scale: 1
+            ) else {
+                return
+            }
+            PlaybackHistoryRepository.saveThumbnailIfNeeded(
+                for: source,
+                thumbnailData: result.imageData,
+                in: modelContext
+            )
+        }
     }
 
     private func handleSubtitleTranslateModeChange(_ mode: SubtitleTranslateMode) {
@@ -632,7 +738,7 @@ struct PlayerControlView: View {
                 let statusText = String(describing: status)
                 await MainActor.run {
                     if let currentPair = playerModel.translationRuntime.desiredApplePair,
-                       (currentPair.from != pair.from || currentPair.to != pair.to)
+                       currentPair.from != pair.from || currentPair.to != pair.to
                     {
                         subtitleTranslationLog(
                             .debug,

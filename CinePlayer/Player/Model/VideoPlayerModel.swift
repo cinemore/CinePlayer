@@ -29,7 +29,7 @@ final class VideoPlayerModel: ObservableObject {
         #endif
     }
 
-    func open(url: URL, controlConfig: PlayerControlConfig) {
+    func open(url: URL, startTime: TimeInterval = 0, controlConfig: PlayerControlConfig) {
         sourceURL = url
         let newConfig = CinePlayerConfig()
 
@@ -38,7 +38,7 @@ final class VideoPlayerModel: ObservableObject {
         #endif
 
         newConfig.url = url
-        newConfig.startTime = 0
+        newConfig.startTime = max(0, startTime)
         newConfig.autoPlay = true
         configureSubtitleTranslate(for: newConfig, mode: controlConfig.subtitleTranslateMode)
         configureFrameCallback(for: newConfig)

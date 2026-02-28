@@ -9,8 +9,8 @@ final class PlayerSessionStore: ObservableObject {
 
     private var securityScopedURLs: [URL] = []
 
-    func open(url: URL) {
-        open(urls: [url], startAt: 0)
+    func open(url: URL, startTime: TimeInterval = 0) {
+        open(sources: [PlayerSource(url: url, startTime: startTime)], startAt: 0)
     }
 
     func open(urls: [URL], startAt: Int = 0) {
