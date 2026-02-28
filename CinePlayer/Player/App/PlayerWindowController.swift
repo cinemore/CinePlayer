@@ -13,7 +13,7 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
 
     /// 将自己设置为当前 keyWindow 的 delegate，用于拦截窗口大小调整并应用最小尺寸限制
     func attachToKeyWindowIfNeeded() {
-        guard let window = NSApplication.shared.keyWindow else {
+        guard let window = currentWindow else {
             return
         }
         if window.delegate !== self {
@@ -22,7 +22,7 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
     }
 
     func toggleWindowLevel() {
-        guard let window = NSApplication.shared.keyWindow else {
+        guard let window = currentWindow else {
             return
         }
 
@@ -38,7 +38,15 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
 
     /// 在非播放态下调用：固定一个合适的初始窗口大小并禁用缩放
     func lockWindowToInitialSize() {
-        guard let window = NSApplication.shared.keyWindow else {
+        guard let window = currentWindow else {
+            return
+        }
+
+        if window.styleMask.contains(.fullScreen) {
+            window.toggleFullScreen(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                self?.lockWindowToInitialSize()
+            }
             return
         }
 
@@ -79,11 +87,15 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
         var style = window.styleMask
         style.remove(.resizable)
         window.styleMask = style
+
+        // 着陆页隐藏绿色全屏按钮，避免误触进入全屏后影响窗口体验
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.collectionBehavior.remove(.fullScreenPrimary)
     }
 
     /// 进入播放前调用：解锁窗口缩放，交给播放器逻辑设置最小大小和比例
     func unlockWindowForPlayback() {
-        guard let window = NSApplication.shared.keyWindow else {
+        guard let window = currentWindow else {
             return
         }
 
@@ -102,6 +114,10 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
             width: CGFloat.greatestFiniteMagnitude,
             height: CGFloat.greatestFiniteMagnitude
         )
+
+        // macOS 全程使用应用内自定义全屏按钮，不显示系统绿色全屏按钮
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.collectionBehavior.insert(.fullScreenPrimary)
     }
 
     // MARK: - NSWindowDelegate
@@ -134,7 +150,19 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
         )
         return newFrame.size
     }
+
+    private var currentWindow: NSWindow? {
+        if let keyWindow = NSApplication.shared.keyWindow {
+            return keyWindow
+        }
+        if let mainWindow = NSApplication.shared.mainWindow {
+            return mainWindow
+        }
+        if let visibleWindow = NSApplication.shared.windows.first(where: { $0.isVisible }) {
+            return visibleWindow
+        }
+        return NSApplication.shared.windows.first
+    }
 }
 
 #endif
-

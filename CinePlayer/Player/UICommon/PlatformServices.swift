@@ -35,10 +35,10 @@ enum PlatformServices {
             return
         }
 
+        // 绿色全屏按钮由 PlayerWindowController 统一管理，这里只控制关闭/最小化按钮
         let buttonTypes: [NSWindow.ButtonType] = [
             .closeButton,
-            .miniaturizeButton,
-            .zoomButton
+            .miniaturizeButton
         ]
 
         for type in buttonTypes {

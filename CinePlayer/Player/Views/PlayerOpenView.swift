@@ -1,6 +1,11 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct PlayerOpenView: View {
     @EnvironmentObject var sessionStore: PlayerSessionStore
@@ -51,51 +56,37 @@ struct PlayerOpenView: View {
     }
 
     private var backgroundLayer: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.03, green: 0.04, blue: 0.07),
-                Color(red: 0.04, green: 0.06, blue: 0.1)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .overlay {
-            Circle()
-                .fill(Color(red: 0.55, green: 0.63, blue: 1.0).opacity(0.2))
-                .frame(width: 820, height: 820)
-                .offset(x: -260, y: -320)
-                .blur(radius: 26)
-        }
-        .overlay {
-            Circle()
-                .fill(Color(red: 0.36, green: 0.86, blue: 0.86).opacity(0.1))
-                .frame(width: 860, height: 860)
-                .offset(x: 300, y: 420)
-                .blur(radius: 38)
-        }
-        .overlay {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.62, green: 0.7, blue: 1).opacity(0.18),
-                    Color(red: 0.54, green: 0.64, blue: 0.96).opacity(0.1),
-                    Color(red: 0.4, green: 0.84, blue: 0.88).opacity(0.03),
-                    .clear
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
-        .overlay {
-            LinearGradient(
-                colors: [
-                    .clear,
-                    Color.black.opacity(0.22)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
-        .ignoresSafeArea()
+        Rectangle()
+            .fill(systemBackgroundColor)
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        .white.opacity(0.2),
+                        .clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+            }
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        .clear,
+                        Color.black.opacity(0.08)
+                    ],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+            }
+            .ignoresSafeArea()
+    }
+
+    private var systemBackgroundColor: Color {
+        #if os(macOS)
+        return Color(nsColor: .windowBackgroundColor)
+        #else
+        return Color(uiColor: .systemBackground)
+        #endif
     }
 
     private var topBranding: some View {
@@ -131,7 +122,7 @@ struct PlayerOpenView: View {
             .frame(height: 48)
             .modifier(GlassEffectModifier(
                 cornerRadius: Self.openControlCornerRadius,
-                useCapsule: false,
+                useCapsule: true,
                 clipsContent: true
             ))
             .shadow(color: Color.black.opacity(0.14), radius: 12, y: 5)
@@ -174,7 +165,7 @@ struct PlayerOpenView: View {
             .frame(width: actionButtonWidth, height: actionButtonHeight)
             .modifier(GlassEffectModifier(
                 cornerRadius: Self.openControlCornerRadius,
-                useCapsule: false,
+                useCapsule: true,
                 clipsContent: true
             ))
         }
