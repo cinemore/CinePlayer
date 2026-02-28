@@ -34,12 +34,14 @@ struct SiderPlaybackSpeedView: View {
                     }
                 } label: {
                     Image(systemName: "minus")
+                        .brightness(0.2)
                         .f14m()
                         .frame(width: 40, height: 40)
                         .background(Color.black.opacity(0.2))
                         .foregroundColor(.white)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                        .contentShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
                 .disabled(playerCoordinator.playbackRate <= 0.25)
@@ -66,12 +68,14 @@ struct SiderPlaybackSpeedView: View {
                     }
                 } label: {
                     Image(systemName: "plus")
+                        .brightness(0.2)
                         .f14m()
                         .frame(width: 40, height: 40)
                         .background(Color.black.opacity(0.2))
                         .foregroundColor(.white)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                        .contentShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
                 .disabled(playerCoordinator.playbackRate >= 6.0)
@@ -98,6 +102,7 @@ struct SiderPlaybackSpeedView: View {
                             .foregroundColor(.white)
                             .roundedCorner(16)
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
                 }

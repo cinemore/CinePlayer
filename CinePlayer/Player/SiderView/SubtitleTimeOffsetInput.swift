@@ -60,11 +60,13 @@ struct SubtitleTimeOffsetInput: View {
             updateValue(newValue)
         } label: {
             Image(systemName: "minus")
+                .brightness(0.2)
                 .f14m()
                 .foregroundColor(.white)
                 .frame(width: 32, height: 32)
                 .background(Color.white.opacity(0.1))
                 .roundedCorner(6)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         #if os(iOS)
@@ -80,11 +82,13 @@ struct SubtitleTimeOffsetInput: View {
             updateValue(newValue)
         } label: {
             Image(systemName: "plus")
+                .brightness(0.2)
                 .f14m()
                 .foregroundColor(.white)
                 .frame(width: 32, height: 32)
                 .background(Color.white.opacity(0.1))
                 .roundedCorner(6)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         #if os(iOS)

@@ -122,11 +122,13 @@ struct PlayerMediaInfoCardView: View {
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
+                    .brightness(0.2)
                     .f16b()
                     .foregroundColor(.white)
                     .frame(width: 32, height: 32)
                     .background(.ultraThickMaterial)
                     .clipShape(Circle())
+                    .contentShape(Circle())
             }
             .accessibilityLabel("关闭")
             .padding(.top, 24)

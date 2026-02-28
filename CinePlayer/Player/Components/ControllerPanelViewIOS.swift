@@ -273,6 +273,7 @@ struct ControllerPanelViewIOS: View {
                     .frame(height: 44)
                     .frame(minWidth: 44)
                     .padding(.horizontal, 8)
+                    .contentShape(Rectangle())
             }
         }
         .buttonStyle(.plain)

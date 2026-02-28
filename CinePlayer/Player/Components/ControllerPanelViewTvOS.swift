@@ -112,6 +112,7 @@ struct ControllerPanelViewTvOS: View {
                 .f14m()
                 .foregroundStyle(.white)
                 .frame(width: 52, height: 52)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .modifier(GlassEffectModifier(cornerRadius: 26))

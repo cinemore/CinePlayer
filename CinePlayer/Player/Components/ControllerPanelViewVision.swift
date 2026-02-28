@@ -118,6 +118,7 @@ struct ControllerPanelViewVision: View {
                 .f14m()
                 .foregroundStyle(.white)
                 .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .modifier(GlassEffectModifier(cornerRadius: 20))

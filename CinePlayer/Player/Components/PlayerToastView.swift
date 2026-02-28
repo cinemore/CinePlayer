@@ -175,6 +175,7 @@ struct PlayerToastView: View {
                 }
             }
         }
+        .brightness(0.2)
         .foregroundStyle(.white)
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
