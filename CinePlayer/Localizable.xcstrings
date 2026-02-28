@@ -8978,6 +8978,9 @@
         }
       }
     },
+    "或" : {
+
+    },
     "手势" : {
       "localizations" : {
         "ar" : {
@@ -9309,6 +9312,9 @@
           }
         }
       }
+    },
+    "打开文件" : {
+
     },
     "打开文件…" : {
       "localizations" : {
@@ -9809,6 +9815,7 @@
       }
     },
     "播放" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -10129,6 +10136,7 @@
       }
     },
     "播放文件" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

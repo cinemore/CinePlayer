@@ -10,26 +10,30 @@ import UIKit
 struct PlayerOpenView: View {
     @EnvironmentObject var sessionStore: PlayerSessionStore
 
-    private let defaultHint = "拖动视频文件到窗口任意区域可直接播放"
+    private let defaultHint = "拖动视频文件到窗口播放"
 
     @State private var showFileImporter = false
     @State private var urlInput = ""
     @State private var isDropTargeted = false
+    @FocusState private var isURLFieldFocused: Bool
+
+    private var hasURLInput: Bool {
+        !urlInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         ZStack {
             backgroundLayer
 
             VStack(spacing: 0) {
-                Spacer(minLength: 36)
+                Spacer()
                 topBranding
-                Spacer(minLength: topToControlsSpacing)
+                Spacer()
                 openControls
-                Spacer(minLength: 0)
+                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 20)
-            .padding(.bottom, 88)
+            .padding(.horizontal, 16)
 
             #if os(macOS)
             bottomHint
@@ -42,7 +46,11 @@ struct PlayerOpenView: View {
             }
         }
         #if !os(tvOS)
-        .onDrop(of: [UTType.fileURL], isTargeted: $isDropTargeted, perform: handleDrop(providers:))
+        .onDrop(
+            of: [UTType.fileURL],
+            isTargeted: $isDropTargeted,
+            perform: handleDrop(providers:)
+        )
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.movie, .video],
@@ -79,6 +87,12 @@ struct PlayerOpenView: View {
                 )
             }
             .ignoresSafeArea()
+            #if os(iOS)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isURLFieldFocused = false
+            }
+            #endif
     }
 
     private var systemBackgroundColor: Color {
@@ -98,71 +112,72 @@ struct PlayerOpenView: View {
     }
 
     private var openControls: some View {
-        VStack(spacing: 16) {
-            enclosedURLField
-            actionsRow
+        VStack(spacing: 32) {
+            HStack {
+                urlPlayContainer
+
+                if hasURLInput {
+                    playURLButton
+                }
+            }
+            .animation(.snappy, value: hasURLInput)
+            #if !os(tvOS)
+            orDividerRow
+            openFileButton
+            #endif
         }
-        .frame(maxWidth: controlsMaxWidth)
+        .frame(maxWidth: 640)
     }
 
     private static let openControlCornerRadius: CGFloat = 14
 
-    private var enclosedURLField: some View {
-        TextField("输入视频 URL", text: $urlInput)
+    private var urlPlayContainer: some View {
+        HStack(alignment: .center, spacing: 8) {
+            TextField("输入视频 URL", text: $urlInput)
             #if os(tvOS)
-            .textFieldStyle(.automatic)
+                .textFieldStyle(.automatic)
             #else
-            .textFieldStyle(.plain)
+                .textFieldStyle(.plain)
             #endif
-            .font(.system(size: 15, weight: .regular))
-            .foregroundStyle(.white.opacity(0.96))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .modifier(GlassEffectModifier(
-                cornerRadius: Self.openControlCornerRadius,
-                useCapsule: true,
-                clipsContent: true
-            ))
-            .shadow(color: Color.black.opacity(0.14), radius: 12, y: 5)
-    }
+                .focused($isURLFieldFocused)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
 
-    private var actionsRow: some View {
-        HStack(spacing: 14) {
-            openActionButton(
-                title: "播放",
-                color: Color(red: 0.08, green: 0.5, blue: 0.97)
-            ) {
-                guard let url = resolveInputURL(urlInput) else { return }
-                openMedia(url: url)
+            if hasURLInput {
+                Button {
+                    urlInput = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 8)
             }
-
-            #if !os(tvOS)
-            openActionButton(
-                title: "播放文件",
-                color: Color(red: 0.24, green: 0.31, blue: 0.41)
-            ) {
-                showFileImporter = true
-            }
-            #endif
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 44)
+        .modifier(GlassEffectModifier(
+            cornerRadius: Self.openControlCornerRadius,
+            useCapsule: true,
+            clipsContent: true
+        ))
     }
 
-    private func openActionButton(
-        title: String,
-        color: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
+    private var playURLButton: some View {
+        Button(action: {
+            guard let url = resolveInputURL(urlInput) else { return }
+            openMedia(url: url)
+        }) {
             ZStack {
-                color.opacity(0.5)
-                Text(title)
+                Color(red: 0.08, green: 0.5, blue: 0.97)
+                Image(systemName: "play.fill")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .frame(width: actionButtonWidth, height: actionButtonHeight)
+            .frame(width: 44, height: 44)
             .modifier(GlassEffectModifier(
                 cornerRadius: Self.openControlCornerRadius,
                 useCapsule: true,
@@ -172,40 +187,40 @@ struct PlayerOpenView: View {
         .buttonStyle(.plain)
     }
 
-    private var controlsMaxWidth: CGFloat {
-        #if os(macOS)
-        return 760
-        #elseif os(tvOS)
-        return 720
-        #else
-        return 640
-        #endif
+    private var orDividerRow: some View {
+        HStack(spacing: 12) {
+            Capsule()
+                .fill(Color.white.opacity(0.2))
+                .frame(height: 1)
+            Text("或")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.white.opacity(0.72))
+            Capsule()
+                .fill(Color.white.opacity(0.2))
+                .frame(height: 1)
+        }
+        .frame(alignment: .center)
+        .padding(.horizontal, 4)
     }
 
-    private var actionButtonWidth: CGFloat {
-        #if os(tvOS)
-        return 170
-        #else
-        return 132
-        #endif
-    }
-
-    private var actionButtonHeight: CGFloat {
-        #if os(tvOS)
-        return 52
-        #else
-        return 44
-        #endif
-    }
-
-    private var topToControlsSpacing: CGFloat {
-        #if os(macOS)
-        return 96
-        #elseif os(tvOS)
-        return 86
-        #else
-        return 72
-        #endif
+    private var openFileButton: some View {
+        Button(action: {
+            showFileImporter = true
+        }) {
+            ZStack {
+                Color(red: 0.24, green: 0.31, blue: 0.41).opacity(0.5)
+                Text("打开文件")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(height: 44)
+            .modifier(GlassEffectModifier(
+                cornerRadius: Self.openControlCornerRadius,
+                useCapsule: true,
+                clipsContent: true
+            ))
+        }
+        .buttonStyle(.plain)
     }
 
     private var bottomHint: some View {
@@ -243,7 +258,8 @@ struct PlayerOpenView: View {
 
         fileProvider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
             if let data = item as? Data,
-               let url = URL(dataRepresentation: data, relativeTo: nil) {
+               let url = URL(dataRepresentation: data, relativeTo: nil)
+            {
                 Task { @MainActor in
                     openMedia(url: url)
                 }
