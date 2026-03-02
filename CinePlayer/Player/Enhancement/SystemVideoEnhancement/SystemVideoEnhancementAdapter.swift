@@ -1189,22 +1189,22 @@
 
             final class ResultBox: @unchecked Sendable {
                 private let lock = NSLock()
-                private var result: CVPixelBuffer?
-                private var error: Error?
+                nonisolated(unsafe) private var result: CVPixelBuffer?
+                nonisolated(unsafe) private var error: Error?
 
-                func setResult(_ buffer: CVPixelBuffer) {
+                nonisolated func setResult(_ buffer: CVPixelBuffer) {
                     lock.lock()
                     result = buffer
                     lock.unlock()
                 }
 
-                func setError(_ error: Error) {
+                nonisolated func setError(_ error: Error) {
                     lock.lock()
                     self.error = error
                     lock.unlock()
                 }
 
-                func snapshot() -> (CVPixelBuffer?, Error?) {
+                nonisolated func snapshot() -> (CVPixelBuffer?, Error?) {
                     lock.lock()
                     defer { lock.unlock() }
                     return (result, error)
@@ -1213,9 +1213,9 @@
 
             // 将 process 所需参数打包为 Sendable，供 Task 闭包捕获，避免「sending 闭包」对多个 non-Sendable 捕获的 data race 警告。
             final class SyncProcessContext: @unchecked Sendable {
-                let processor: VTFrameProcessor
-                let parameters: VTLowLatencySuperResolutionScalerParameters
-                let destinationBuffer: CVPixelBuffer
+                nonisolated(unsafe) let processor: VTFrameProcessor
+                nonisolated(unsafe) let parameters: VTLowLatencySuperResolutionScalerParameters
+                nonisolated(unsafe) let destinationBuffer: CVPixelBuffer
                 init(
                     processor: VTFrameProcessor,
                     parameters: VTLowLatencySuperResolutionScalerParameters,
@@ -1233,19 +1233,17 @@
                 processor: processor, parameters: parameters, destinationBuffer: destinationBuffer
             )
 
-            let task = Task { [box, ctx] in
-                do {
-                    try await ctx.processor.process(parameters: ctx.parameters)
-                    box.setResult(ctx.destinationBuffer)
-                } catch {
+            ctx.processor.process(parameters: ctx.parameters) { _, error in
+                if let error {
                     box.setError(error)
+                } else {
+                    box.setResult(ctx.destinationBuffer)
                 }
                 semaphore.signal()
             }
 
             let waitResult = semaphore.wait(timeout: .now() + .seconds(2))
             if waitResult == .timedOut {
-                task.cancel()
                 resetSuperResolutionSessionOnQueue()
                 cinemoreLog(level: .debug, "SystemML syncProcess 超时（2s），VT process 未在时限内完成")
                 return nil

@@ -12,6 +12,8 @@ struct PlaybackHistoryListView: View {
 
     @State private var isEditing = false
     @State private var selectedRecordIDs = Set<PersistentIdentifier>()
+    @State private var missingFileAlertRecord: PlaybackHistoryRecord?
+    @State private var isShowingMissingFileAlert = false
 
     var body: some View {
         List(selection: isEditing ? $selectedRecordIDs : nil) {
@@ -109,6 +111,19 @@ struct PlaybackHistoryListView: View {
                     systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90"
                 )
             }
+        }
+        .alert(
+            "文件不存在",
+            isPresented: $isShowingMissingFileAlert,
+            presenting: missingFileAlertRecord
+        ) { record in
+            Button("删除", role: .destructive) {
+                PlaybackHistoryRepository.delete(record, in: modelContext)
+                selectedRecordIDs.remove(record.persistentModelID)
+            }
+            Button("取消", role: .cancel) {}
+        } message: { _ in
+            Text("原始文件已被删除或移动，无法播放。是否从历史记录中删除这条记录？")
         }
         .onChange(of: records.count) {
             selectedRecordIDs = selectedRecordIDs.filter { id in
@@ -229,10 +244,28 @@ struct PlaybackHistoryListView: View {
     }
 
     private func reopen(record: PlaybackHistoryRecord) {
+        if isMissingLocalFile(record: record) {
+            missingFileAlertRecord = record
+            isShowingMissingFileAlert = true
+            return
+        }
+
         guard let url = resolveURL(for: record) else {
             return
         }
         sessionStore.open(url: url, startTime: record.initialPlaybackTime)
+    }
+
+    private func isMissingLocalFile(record: PlaybackHistoryRecord) -> Bool {
+        guard
+            let sourceURL = URL(string: record.sourceURL),
+            sourceURL.isFileURL
+        else {
+            return false
+        }
+
+        let path = record.displayPath.isEmpty ? sourceURL.path : record.displayPath
+        return !FileManager.default.fileExists(atPath: path)
     }
 
     private func resolveURL(for record: PlaybackHistoryRecord) -> URL? {
