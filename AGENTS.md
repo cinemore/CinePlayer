@@ -6,12 +6,15 @@
 - Do not write external-repo changes into this repo's `openspec/` artifacts.
 
 ## Mandatory Process
-1. Start with skills
-- Use `using-superpowers` first for each new user request.
+- For **higher-complexity tasks** (multi-step features, significant behavior/UI/architecture changes, or cross-platform work), **enable superpowers and OpenSpec** and follow the steps below.
+- For **low-complexity, localized edits** (simple bugfixes, copy tweaks, tiny refactors), you may **skip superpowers and OpenSpec** unless the user explicitly asks to use them.
+
+1. Start with skills (higher-complexity work)
+- For tasks in the higher-complexity category above, use `using-superpowers` first for each new user request.
 - If the work is creative or changes behavior/UI/architecture, run `brainstorming` before implementation.
 
-2. OpenSpec-first execution
-- New requirement: use `openspec-propose` to create or update change artifacts.
+2. OpenSpec-first execution (higher-complexity work)
+- Use `openspec-propose` to create or update change artifacts.
 - Implementation: use `openspec-apply-change` and execute tasks in `tasks.md`.
 - Completion: use `openspec-archive-change` only after implementation and verification are done.
 
