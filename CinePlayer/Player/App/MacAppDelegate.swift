@@ -2,6 +2,7 @@
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
+import CinePlayerSDK
 
 extension Notification.Name {
     static let cinePlayerOpenFileEvent = Notification.Name("CinePlayerOpenFileEvent")
@@ -89,11 +90,33 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_: NSApplication, open urls: [URL]) {
-        guard let url = urls.first else { return }
-        // 文件 URL 由 SwiftUI onOpenURL 统一处理，避免重复消费导致重复开窗。
-        if !url.isFileURL {
-            NotificationCenter.default.post(name: .cinePlayerURLEvent, object: nil, userInfo: ["url": url])
+        cinemoreLog(level: .debug, "[OpenFlow] application:open urls=\(urls)")
+        guard let url = urls.first else {
+            cinemoreLog(level: .debug, "[OpenFlow] application:open received empty url list")
+            return
         }
+
+        let userInfo = ["url": url]
+        if url.isFileURL {
+            NotificationCenter.default.post(
+                name: .cinePlayerOpenFileEvent,
+                object: nil,
+                userInfo: userInfo
+            )
+        } else {
+            NotificationCenter.default.post(
+                name: .cinePlayerURLEvent,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+
+        cinemoreLog(level: .debug, "[OpenFlow] application:open dispatched url=\(url)")
+
+        // 确保应用被前置到顶层，用户能立刻看到播放界面
+        NSApp.activate(ignoringOtherApps: true)
+        // 如已有窗口存在，尽量将其置为 keyWindow
+        NSApp.mainWindow?.makeKeyAndOrderFront(nil)
     }
 }
 #endif

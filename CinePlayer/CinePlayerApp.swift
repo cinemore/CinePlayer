@@ -27,7 +27,6 @@ struct CinePlayerApp: App {
         Window("CinePlayer", id: "main-window") {
             rootContentView
         }
-//        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("关于") {
@@ -61,11 +60,6 @@ struct CinePlayerApp: App {
             .modelContainer(for: [PlaybackHistoryRecord.self])
             #if os(macOS)
                 .environmentObject(windowController)
-                .onOpenURL { url in
-                    if url.isFileURL {
-                        sessionStore.open(url: url)
-                    }
-                }
                 .onReceive(NotificationCenter.default.publisher(for: .cinePlayerOpenFileEvent)) { notification in
                     if let url = notification.userInfo?["url"] as? URL {
                         sessionStore.open(url: url)
