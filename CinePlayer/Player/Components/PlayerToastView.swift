@@ -90,7 +90,7 @@ struct PlayerToastView: View {
                 HStack(spacing: 10) {
                     Text(text)
                         .f20m()
-                    Image(systemName: "gauge.with.dots.needle.50percent")
+                    Image(systemName: "forward.fill")
                 }
             case let .playbackRateChanged(num):
                 let text = "\(num.playbackRateText)x"
@@ -101,9 +101,14 @@ struct PlayerToastView: View {
                 }
             case let .skip(seconds), let .continuousSeek(seconds):
                 HStack(spacing: 10) {
-                    Image(systemName: seconds < 0 ? "backward.fill" : "forward.fill")
+                    if seconds < 0 {
+                        Image(systemName: "backward.fill")
+                    }
                     Text("\(seconds) s")
                         .f20m()
+                    if seconds > 0 {
+                        Image(systemName: "forward.fill")
+                    }
                 }
             case .progressChanged:
                 HStack(spacing: 10) {

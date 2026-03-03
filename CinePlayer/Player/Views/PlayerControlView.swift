@@ -176,12 +176,46 @@ struct PlayerControlView: View {
                     brightness = PlatformServices.screenBrightness(default: brightness)
                     openCurrentSource(resetPlayerState: true)
                     remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
+                    let windowCount = NSApp.windows.count
+                    let visibleCount = NSApp.windows.filter { $0.isVisible }.count
+                    cinemoreLog(
+                        level: .debug,
+                        "[WindowDebug] PlayerControlView.onAppear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
+                    )
                     DispatchQueue.main.async {
                         windowController.attachToKeyWindowIfNeeded()
                         PlatformServices.setMacTrafficLightsHidden(true)
+                        // 确保用于播放的窗口在视图出现时可见且前置（与 SwiftUI 场景切换解耦）。
+                        let windows = NSApp.windows
+                        let target =
+                            NSApp.keyWindow
+                            ?? NSApp.mainWindow
+                            ?? windows.first(where: { $0.isVisible })
+                            ?? windows.first(where: { $0.contentView != nil })
+
+                        if let window = target {
+                            if !window.isVisible {
+                                window.orderFrontRegardless()
+                            }
+                            if !window.isKeyWindow {
+                                window.makeKeyAndOrderFront(nil)
+                            }
+                        }
+
+                        let afterVisible = NSApp.windows.filter { $0.isVisible }.count
+                        cinemoreLog(
+                            level: .debug,
+                            "[WindowDebug] PlayerControlView.ensureVisible currentSource=\(sessionStore.currentSource != nil) windows=\(windows.count) visibleAfter=\(afterVisible)"
+                        )
                     }
                 }
                 .onDisappear {
+                    let windowCount = NSApp.windows.count
+                    let visibleCount = NSApp.windows.filter { $0.isVisible }.count
+                    cinemoreLog(
+                        level: .debug,
+                        "[WindowDebug] PlayerControlView.onDisappear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
+                    )
                     PlatformServices.setMacTrafficLightsHidden(false)
                     remoteCommandService.deactivate()
                 }
@@ -559,6 +593,7 @@ struct PlayerControlView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
             .allowsHitTesting(false)
         }
     }

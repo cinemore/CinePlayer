@@ -66,6 +66,10 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 - **[libbluray](https://code.videolan.org/videolan/libbluray)**
 - **[libudfread](https://code.videolan.org/videolan/libudfread)**
 
+## 🧪 Building & Code Signing
+
+To run on a real iOS device, open the `CinePlayer` iOS target in Xcode, go to **Signing & Capabilities**, and select your own **Team**. Other settings can generally stay as-is for local development.
+
 ## ⚖️ License
 
 This project uses a **hybrid licensing model**:

@@ -41,14 +41,17 @@ CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlaye
 CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 ### 核心多媒体框架
+
 * **[FFmpeg](https://github.com/FFmpeg/FFmpeg)**
 
 ### 视频与 HDR 处理
+
 * **[dav1d](https://github.com/videolan/dav1d)** (libdav1d)
 * **[dovi_tool](https://github.com/quietvoid/dovi_tool)** (libdovi)
 * **[uavs3d](https://github.com/uavs3/uavs3d)** (libuavs3d)
 
 ### 字幕渲染引擎
+
 * **[libass](https://github.com/libass/libass)**
 * **[FreeType](https://github.com/freetype/freetype)**
 * **[FriBidi](https://github.com/fribidi/fribidi)** 
@@ -56,8 +59,13 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 * **[libunibreak](https://github.com/adah1972/libunibreak)** 
 
 ### 蓝光支持
+
 * **[libbluray](https://code.videolan.org/videolan/libbluray)** 
 * **[libudfread](https://code.videolan.org/videolan/libudfread)**
+ 
+## 🧪 构建与代码签名
+
+在 iOS 真机上运行时，请在 Xcode 中打开 `CinePlayer` iOS Target 的 **Signing & Capabilities**，选择你自己的 **Team**。其他设置保持默认即可用于本地开发。
 
 ## ⚖️ 授权协议 (License)
 

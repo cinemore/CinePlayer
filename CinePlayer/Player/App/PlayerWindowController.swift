@@ -120,6 +120,21 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
         window.collectionBehavior.insert(.fullScreenPrimary)
     }
 
+    // 原始行为实验需要：暂时不在这里做额外的激活/前置逻辑。
+    // 如需重新启用修复，可恢复此方法。
+    // func ensureWindowActivated() {
+    //     DispatchQueue.main.async { [weak self] in
+    //         guard let window = self?.currentWindow else { return }
+    //         if #available(macOS 14.0, *) {
+    //             NSRunningApplication.current.activate()
+    //         } else {
+    //             NSApp.activate(ignoringOtherApps: true)
+    //         }
+    //         window.makeKeyAndOrderFront(nil)
+    //         window.orderFrontRegardless()
+    //     }
+    // }
+
     // MARK: - NSWindowDelegate
 
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {

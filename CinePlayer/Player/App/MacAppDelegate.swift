@@ -89,6 +89,18 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         openURLFromMenuOrDock()
     }
 
+    // 原始行为实验需要：暂时不覆盖默认的「最后窗口关闭是否退出」策略。
+    // 如需重新启用修复，可恢复此方法。
+    // func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
+    //     let windowCount = NSApp.windows.count
+    //     let visibleCount = NSApp.windows.filter { $0.isVisible }.count
+    //     cinemoreLog(
+    //         level: .debug,
+    //         "[WindowDebug] applicationShouldTerminateAfterLastWindowClosed windows=\(windowCount) visible=\(visibleCount)"
+    //     )
+    //     return false
+    // }
+
     func application(_: NSApplication, open urls: [URL]) {
         cinemoreLog(level: .debug, "[OpenFlow] application:open urls=\(urls)")
         guard let url = urls.first else {
@@ -113,10 +125,10 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
 
         cinemoreLog(level: .debug, "[OpenFlow] application:open dispatched url=\(url)")
 
-        // 确保应用被前置到顶层，用户能立刻看到播放界面
-        NSApp.activate(ignoringOtherApps: true)
-        // 如已有窗口存在，尽量将其置为 keyWindow
-        NSApp.mainWindow?.makeKeyAndOrderFront(nil)
+        // 仅在应用不活跃时激活一次，不在此处做窗口前置，窗口控制交给视图层。
+        if !NSApp.isActive {
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }
 #endif
