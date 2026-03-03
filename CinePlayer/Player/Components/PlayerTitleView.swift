@@ -7,6 +7,8 @@ struct PlayerTitleView: View {
         HStack {
             Text(title)
                 .lineLimit(1)
+                .truncationMode(.middle)
+                .padding(.horizontal, 40)
         }
         .f12r()
         .fontWeight(.medium)

@@ -24,6 +24,17 @@ struct ControllerPanelViewMacOS: View {
         sessionStore.controlConfig
     }
 
+    private var playerTitle: String {
+        guard let source = sessionStore.currentSource else {
+            return ""
+        }
+        if source.url.isFileURL {
+            return source.url.lastPathComponent
+        } else {
+            return source.url.absoluteString
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             topBar
@@ -52,9 +63,9 @@ struct ControllerPanelViewMacOS: View {
             // 第一行：标题，单独占一行居中显示
             HStack {
                 Spacer()
-                PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
+                PlayerTitleView(title: playerTitle)
                     .lineLimit(1)
-                        .padding(.top, 8)
+                    .padding(.top, 8)
                 Spacer()
             }
 

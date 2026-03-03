@@ -36,7 +36,6 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// 完全复制 cinemore：输入 URL 后交由系统打开。
     func openURLFromMenuOrDock() {
         DispatchQueue.main.async {
             let alert = NSAlert()
@@ -53,10 +52,39 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
             let response = alert.runModal()
             guard response == .alertFirstButtonReturn else { return }
 
-            let text = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !text.isEmpty, let url = URL(string: text) else { return }
-            NSWorkspace.shared.open(url)
+            guard let url = Self.resolveInputURL(input.stringValue) else { return }
+
+            if url.isFileURL {
+                NotificationCenter.default.post(
+                    name: .cinePlayerOpenFileEvent,
+                    object: nil,
+                    userInfo: ["url": url]
+                )
+            } else {
+                NotificationCenter.default.post(
+                    name: .cinePlayerURLEvent,
+                    object: nil,
+                    userInfo: ["url": url]
+                )
+            }
         }
+    }
+
+    /// 将用户输入解析为 URL（支持已有 scheme、绝对路径、裸地址）
+    private static func resolveInputURL(_ rawInput: String) -> URL? {
+        let text = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+
+        if let url = URL(string: text), url.scheme != nil {
+            return url
+        }
+
+        let expandedPath = (text as NSString).expandingTildeInPath
+        if expandedPath.hasPrefix("/") {
+            return URL(fileURLWithPath: expandedPath)
+        }
+
+        return URL(string: text)
     }
 
     func applicationDockMenu(_: NSApplication) -> NSMenu? {

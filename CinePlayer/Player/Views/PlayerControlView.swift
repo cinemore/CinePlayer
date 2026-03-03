@@ -152,6 +152,7 @@ struct PlayerControlView: View {
                                 .environmentObject(playerModel.playerCoordinator)
                                 .environmentObject(playerModel.config.subtitleStyle)
 
+                            // macOS: 顶部 toast 独立于 mask 显示，保持与顶部控制栏同一高度
                             if !isLoadingOrErrorOverlayVisible,
                                let toast = toastModel.presentedToast
                             {
@@ -162,6 +163,7 @@ struct PlayerControlView: View {
                                         playbackRate: playerModel.playerCoordinator.playbackRate,
                                         brightness: brightness
                                     )
+                                    .frame(height: 44)
                                     Spacer()
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)

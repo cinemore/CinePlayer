@@ -66,9 +66,16 @@ struct CinePlayerApp: App {
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .cinePlayerURLEvent)) { notification in
-                    if let url = notification.userInfo?["url"] as? URL {
-                        sessionStore.open(url: url)
+                    guard
+                        let url = notification.userInfo?["url"] as? URL,
+                        let scheme = url.scheme?.lowercased(),
+                        scheme == "http" || scheme == "https"
+                    else {
+                        return
                     }
+
+                    cinemoreLog(level: .debug, "[OpenFlow] rootContentView open network URL: \(url.absoluteString)")
+                    sessionStore.open(url: url)
                 }
             #else
                 .onOpenURL { url in

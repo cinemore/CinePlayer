@@ -52,23 +52,23 @@ enum PlayerToast: Identifiable {
         switch self {
         case .playbackRate:
             return "playbackRate"
-        case let .playbackRateChanged(num):
+        case .playbackRateChanged(let num):
             return "playbackRate_\(num)"
-        case let .skip(seconds):
+        case .skip(let seconds):
             return "skip_\(seconds)"
-        case let .continuousSeek(seconds):
+        case .continuousSeek(let seconds):
             return "continuousSeek_\(seconds)"
         case .progressChanged:
             return "progressChanged"
-        case let .brightness(value):
+        case .brightness(let value):
             return "brightness_\(value)"
         case .networkConnecting:
             return "networkConnecting"
-        case let .networkRetrying(attempt, total):
+        case .networkRetrying(let attempt, let total):
             return "networkRetrying_\(attempt)_\(total)"
-        case let .networkSwitchingURL(currentIndex, totalURLs):
+        case .networkSwitchingURL(let currentIndex, let totalURLs):
             return "networkSwitchingURL_\(currentIndex)_\(totalURLs)"
-        case let .networkError(message):
+        case .networkError(let message):
             return "networkError_\(message)"
         case .networkStable:
             return "networkStable"
@@ -89,35 +89,35 @@ struct PlayerToastView: View {
                 let text = "\(playbackRate.playbackRateText)x"
                 HStack(spacing: 10) {
                     Text(text)
-                        .f20m()
                     Image(systemName: "forward.fill")
                 }
-            case let .playbackRateChanged(num):
+                .f17s()
+            case .playbackRateChanged(let num):
                 let text = "\(num.playbackRateText)x"
                 HStack(spacing: 10) {
                     Text("倍速")
                     Text(text)
-                        .f20m()
                 }
-            case let .skip(seconds), let .continuousSeek(seconds):
+                .f17s()
+            case .skip(let seconds), .continuousSeek(let seconds):
                 HStack(spacing: 10) {
                     if seconds < 0 {
                         Image(systemName: "backward.fill")
                     }
                     Text("\(seconds) s")
-                        .f20m()
                     if seconds > 0 {
                         Image(systemName: "forward.fill")
                     }
                 }
+                .f17s()
             case .progressChanged:
                 HStack(spacing: 10) {
                     Text(progress.currentTime.toString(for: .minOrHour))
                     Text("/")
                     Text(progress.totalTime.toString(for: .minOrHour))
                 }
-                .f20m()
-            case let .brightness(value):
+                .f17s()
+            case .brightness(let value):
                 HStack(spacing: 12) {
                     ZStack {
                         Image(systemName: "sun.min")
@@ -127,8 +127,6 @@ struct PlayerToastView: View {
                         Image(systemName: "sun.max.fill")
                             .opacity(value >= 0.66 ? 1 : 0)
                     }
-                    .f20m()
-
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.white.opacity(0.3))
@@ -139,45 +137,46 @@ struct PlayerToastView: View {
                     }
                     .frame(width: 120)
                 }
+                .f17s()
             case .networkConnecting:
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.8)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("正在连接...")
-                        .f14m()
                 }
-            case let .networkRetrying(attempt, total):
+                .f17s()
+            case .networkRetrying(let attempt, let total):
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.8)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("网络重试中 (\(attempt)/\(total))")
-                        .f14m()
                 }
-            case let .networkSwitchingURL(currentIndex, totalURLs):
+                .f17s()
+            case .networkSwitchingURL(let currentIndex, let totalURLs):
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.8)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("切换备用源 (\(currentIndex)/\(totalURLs))")
-                        .f14m()
                 }
-            case let .networkError(message):
+                .f17s()
+            case .networkError(let message):
                 HStack(spacing: 6) {
                     Image(systemName: "wifi.exclamationmark")
                         .foregroundStyle(.red)
                     Text(message)
-                        .f14m()
                         .lineLimit(2)
                 }
+                .f17s()
             case .networkStable:
                 HStack(spacing: 6) {
                     Image(systemName: "wifi")
                         .foregroundStyle(.green)
                     Text("连接稳定")
-                        .f14m()
                 }
+                .f17s()
             }
         }
         .brightness(0.2)
@@ -186,7 +185,7 @@ struct PlayerToastView: View {
         .padding(.vertical, 10)
         .modifier(GlassEffectModifier(cornerRadius: 24))
         #if os(macOS)
-        .shadow(radius: 10)
+            .shadow(radius: 10)
         #endif
     }
 
@@ -195,6 +194,6 @@ struct PlayerToastView: View {
             Image(systemName: icon)
             Text(text)
         }
-        .f14m()
+        .f17s()
     }
 }
