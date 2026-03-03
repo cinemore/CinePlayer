@@ -87,7 +87,7 @@ struct ControllerPanelViewMacOS: View {
 
     private var playerControlButtonGroup: some View {
         HStack(spacing: 8) {
-            if isPictureInPictureSupported {
+            if isPictureInPictureSupported && !isFullScreen {
                 groupIconButton(
                     icon: playerCoordinator.isPictureInPictureActive
                         ? "pip.exit" : "pip.enter"
