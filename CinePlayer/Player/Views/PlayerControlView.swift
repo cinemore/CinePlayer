@@ -3,80 +3,80 @@ import SwiftData
 import SwiftUI
 
 #if !os(tvOS) && !os(visionOS)
-@preconcurrency import Translation
+    @preconcurrency import Translation
 #endif
 
 #if os(macOS)
-import AppKit
+    import AppKit
 #endif
 
 #if !os(tvOS) && !os(visionOS)
-private enum LanguagePackSheetStatus {
-    case canDownload
-    case unsupported
-}
+    private enum LanguagePackSheetStatus {
+        case canDownload
+        case unsupported
+    }
 
-private struct LanguagePackSheetContent: View {
-    let presetFrom: String?
-    let presetTo: String?
-    let packStatus: LanguagePackSheetStatus?
-    let onComplete: () -> Void
+    private struct LanguagePackSheetContent: View {
+        let presetFrom: String?
+        let presetTo: String?
+        let packStatus: LanguagePackSheetStatus?
+        let onComplete: () -> Void
 
-    var body: some View {
-        if #available(iOS 18.0, macOS 15.0, *) {
-            if packStatus == .unsupported {
-                unsupportedView
+        var body: some View {
+            if #available(iOS 18.0, macOS 15.0, *) {
+                if packStatus == .unsupported {
+                    unsupportedView
+                } else {
+                    downloadView
+                }
             } else {
-                downloadView
+                EmptyView()
             }
-        } else {
-            EmptyView()
         }
-    }
 
-    private var unsupportedView: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("Apple 翻译暂不支持该语言对，已自动关闭字幕翻译。")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle("翻译语言")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("完成", action: onComplete)
-                }
-            }
-            #if os(macOS)
-            .frame(minWidth: 420, minHeight: 280)
-            #endif
-        }
-    }
-
-    @ViewBuilder
-    private var downloadView: some View {
-        if #available(iOS 18.0, macOS 15.0, *) {
+        private var unsupportedView: some View {
             NavigationStack {
-                AppleSubtitleTranslationLanguagePage(
-                    presetFrom: presetFrom,
-                    presetTo: presetTo
-                )
+                List {
+                    Section {
+                        Text("Apple 翻译暂不支持该语言对，已自动关闭字幕翻译。")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .navigationTitle("翻译语言")
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("完成", action: onComplete)
                     }
                 }
+                #if os(macOS)
+                    .frame(minWidth: 420, minHeight: 280)
+                #endif
             }
-            #if os(macOS)
-            .frame(minWidth: 420, minHeight: 480)
-            #endif
-        } else {
-            EmptyView()
+        }
+
+        @ViewBuilder
+        private var downloadView: some View {
+            if #available(iOS 18.0, macOS 15.0, *) {
+                NavigationStack {
+                    AppleSubtitleTranslationLanguagePage(
+                        presetFrom: presetFrom,
+                        presetTo: presetTo
+                    )
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("完成", action: onComplete)
+                        }
+                    }
+                }
+                #if os(macOS)
+                    .frame(minWidth: 420, minHeight: 480)
+                #endif
+            } else {
+                EmptyView()
+            }
         }
     }
-}
 #endif
 
 @MainActor
@@ -91,9 +91,9 @@ struct PlayerControlView: View {
     @StateObject private var remoteCommandService = PurePlayerRemoteCommandService()
 
     #if os(macOS)
-    @EnvironmentObject private var windowController: PlayerWindowController
-    /// 是否已经为当前视频应用过一次窗口布局（避免每次 seek / 状态变化都重置用户手动调整过的窗口大小）
-    @State private var hasAppliedMacWindowLayout = false
+        @EnvironmentObject private var windowController: PlayerWindowController
+        /// 是否已经为当前视频应用过一次窗口布局（避免每次 seek / 状态变化都重置用户手动调整过的窗口大小）
+        @State private var hasAppliedMacWindowLayout = false
     #endif
 
     @State private var isPlayerInitializing = true
@@ -104,9 +104,9 @@ struct PlayerControlView: View {
     @State private var lastHistoryDurationSecond = -1
 
     #if !os(tvOS) && !os(visionOS)
-    @State private var showLanguagePackDownloadSheet = false
-    @State private var languagePackSheetPresetPair: (from: String, to: String)?
-    @State private var languagePackSheetStatus: LanguagePackSheetStatus?
+        @State private var showLanguagePackDownloadSheet = false
+        @State private var languagePackSheetPresetPair: (from: String, to: String)?
+        @State private var languagePackSheetStatus: LanguagePackSheetStatus?
     #endif
 
     private var controlConfig: PlayerControlConfig {
@@ -118,108 +118,203 @@ struct PlayerControlView: View {
     var body: some View {
         GeometryReader { geometry in
             #if os(macOS)
-            // macOS: 对齐 cinemore 布局，将控制面板与 SiderView 放在同一个 overlay geometry 下
-            playerSurface(geometry: geometry)
-                .overlay {
-                    GeometryReader { overlayGeometry in
-                        ZStack {
-                            if playerMaskModel.isMaskShow {
-                                controlOverlay(geometry: overlayGeometry)
-                                    .transition(.opacity)
-                            }
+                // macOS: 对齐 cinemore 布局，将控制面板与 SiderView 放在同一个 overlay geometry 下
+                playerSurface(geometry: geometry)
+                    .overlay {
+                        GeometryReader { overlayGeometry in
+                            ZStack {
+                                if playerMaskModel.isMaskShow {
+                                    controlOverlay(geometry: overlayGeometry)
+                                        .transition(.opacity)
+                                }
 
-                            if playerControlModel.showMediaInfoCard {
-                                Color.black.opacity(mediaInfoMaskOpacity)
-                                    .ignoresSafeArea()
-                                    .onTapGesture {
+                                if playerControlModel.showMediaInfoCard {
+                                    Color.black.opacity(mediaInfoMaskOpacity)
+                                        .ignoresSafeArea()
+                                        .onTapGesture {
+                                            playerControlModel.showMediaInfoCard = false
+                                            playerMaskModel.showMask()
+                                        }
+
+                                    PlayerMediaInfoCardView {
                                         playerControlModel.showMediaInfoCard = false
                                         playerMaskModel.showMask()
                                     }
-
-                                PlayerMediaInfoCardView {
-                                    playerControlModel.showMediaInfoCard = false
-                                    playerMaskModel.showMask()
+                                    .environmentObject(playerModel.playerCoordinator)
+                                    .padding(.horizontal, 16)
                                 }
-                                .environmentObject(playerModel.playerCoordinator)
-                                .padding(.horizontal, 16)
-                            }
 
-                            SiderView(geometry: overlayGeometry)
-                                .environmentObject(sessionStore)
-                                .environmentObject(playerModel)
-                                .environmentObject(playerControlModel)
-                                .environmentObject(playerMaskModel)
-                                .environmentObject(playerModel.playerCoordinator)
-                                .environmentObject(playerModel.config.subtitleStyle)
+                                SiderView(geometry: overlayGeometry)
+                                    .environmentObject(sessionStore)
+                                    .environmentObject(playerModel)
+                                    .environmentObject(playerControlModel)
+                                    .environmentObject(playerMaskModel)
+                                    .environmentObject(playerModel.playerCoordinator)
+                                    .environmentObject(playerModel.config.subtitleStyle)
 
-                            // macOS: 顶部 toast 独立于 mask 显示，保持与顶部控制栏同一高度
-                            if !isLoadingOrErrorOverlayVisible,
-                               let toast = toastModel.presentedToast
-                            {
-                                VStack {
-                                    PlayerToastView(
-                                        toast: toast,
-                                        progress: playerModel.playerCoordinator.progress,
-                                        playbackRate: playerModel.playerCoordinator.playbackRate,
-                                        brightness: brightness
-                                    )
-                                    .frame(height: 44)
-                                    Spacer()
+                                // macOS: 顶部 toast 独立于 mask 显示，保持与顶部控制栏同一高度
+                                if !isLoadingOrErrorOverlayVisible,
+                                    let toast = toastModel.presentedToast
+                                {
+                                    VStack {
+                                        PlayerToastView(
+                                            toast: toast,
+                                            progress: playerModel.playerCoordinator.progress,
+                                            playbackRate: playerModel.playerCoordinator
+                                                .playbackRate,
+                                            brightness: brightness
+                                        )
+                                        .frame(height: 44)
+                                        Spacer()
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .padding(.top, 28)
+                                    .ignoresSafeArea(edges: .top)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .padding(.top, 28)
-                                .ignoresSafeArea(edges: .top)
                             }
                         }
                     }
+                    .background(.black)
+                    .onAppear {
+                        brightness = PlatformServices.screenBrightness(default: brightness)
+                        openCurrentSource(resetPlayerState: true)
+                        remoteCommandService.activate(
+                            sessionStore: sessionStore, playerModel: playerModel)
+                        let windowCount = NSApp.windows.count
+                        let visibleCount = NSApp.windows.filter { $0.isVisible }.count
+                        cinemoreLog(
+                            level: .debug,
+                            "[WindowDebug] PlayerControlView.onAppear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
+                        )
+                        DispatchQueue.main.async {
+                            windowController.attachToKeyWindowIfNeeded()
+                            PlatformServices.setMacTrafficLightsHidden(true)
+                            // 确保用于播放的窗口在视图出现时可见且前置（与 SwiftUI 场景切换解耦）。
+                            let windows = NSApp.windows
+                            let target =
+                                NSApp.keyWindow
+                                ?? NSApp.mainWindow
+                                ?? windows.first(where: { $0.isVisible })
+                                ?? windows.first(where: { $0.contentView != nil })
+
+                            if let window = target {
+                                if !window.isVisible {
+                                    window.orderFrontRegardless()
+                                }
+                                if !window.isKeyWindow {
+                                    window.makeKeyAndOrderFront(nil)
+                                }
+                            }
+
+                            let afterVisible = NSApp.windows.filter { $0.isVisible }.count
+                            cinemoreLog(
+                                level: .debug,
+                                "[WindowDebug] PlayerControlView.ensureVisible currentSource=\(sessionStore.currentSource != nil) windows=\(windows.count) visibleAfter=\(afterVisible)"
+                            )
+                        }
+                    }
+                    .onDisappear {
+                        let windowCount = NSApp.windows.count
+                        let visibleCount = NSApp.windows.filter { $0.isVisible }.count
+                        cinemoreLog(
+                            level: .debug,
+                            "[WindowDebug] PlayerControlView.onDisappear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
+                        )
+                        PlatformServices.setMacTrafficLightsHidden(false)
+                        remoteCommandService.deactivate()
+                    }
+                    .compatibleOnChange(of: sessionStore.currentSource?.id) { _ in
+                        openCurrentSource(resetPlayerState: true)
+                    }
+                    .onReceive(playerModel.playerCoordinator.progress.$currentTime) { _ in
+                        remoteCommandService.refreshNowPlayingInfo()
+                    }
+                    .onReceive(playerModel.playerCoordinator.$playbackRate) { _ in
+                        remoteCommandService.refreshNowPlayingInfo()
+                    }
+                    .onReceive(playerModel.playerCoordinator.$playbackState) { _ in
+                        remoteCommandService.refreshNowPlayingInfo()
+                    }
+                    .overlay {
+                        loadingOrErrorOverlay
+                    }
+            #else
+                // 其它平台保持现有布局不变
+                ZStack {
+                    playerSurface(geometry: geometry)
+
+                    if playerMaskModel.isMaskShow {
+                        controlOverlay(geometry: geometry)
+                            .transition(.opacity)
+                    }
+
+                    if playerControlModel.showMediaInfoCard {
+                        Color.black.opacity(mediaInfoMaskOpacity)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                playerControlModel.showMediaInfoCard = false
+                                playerMaskModel.showMask()
+                            }
+
+                        PlayerMediaInfoCardView {
+                            playerControlModel.showMediaInfoCard = false
+                            playerMaskModel.showMask()
+                        }
+                        .environmentObject(playerModel.playerCoordinator)
+                    }
+
+                    SiderView(geometry: geometry)
+                        .environmentObject(sessionStore)
+                        .environmentObject(playerModel)
+                        .environmentObject(playerControlModel)
+                        .environmentObject(playerMaskModel)
+                        .environmentObject(playerModel.playerCoordinator)
+                        .environmentObject(playerModel.config.subtitleStyle)
+
+                    if !isLoadingOrErrorOverlayVisible,
+                        let toast = toastModel.presentedToast
+                    {
+                        VStack {
+                            PlayerToastView(
+                                toast: toast,
+                                progress: playerModel.playerCoordinator.progress,
+                                playbackRate: playerModel.playerCoordinator.playbackRate,
+                                brightness: brightness
+                            )
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(
+                            .top,
+                            {
+                                #if os(iOS)
+                                    // 竖屏模式下顶部 toast 额外向下偏移，避免贴近状态栏 / 刘海
+                                    return geometry.size.height > geometry.size.width ? 44 : 28
+                                #else
+                                    return 28
+                                #endif
+                            }()
+                        )
+                        .ignoresSafeArea(edges: .top)
+                    }
+
+                    loadingOrErrorOverlay
                 }
                 .background(.black)
                 .onAppear {
                     brightness = PlatformServices.screenBrightness(default: brightness)
                     openCurrentSource(resetPlayerState: true)
-                    remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
-                    let windowCount = NSApp.windows.count
-                    let visibleCount = NSApp.windows.filter { $0.isVisible }.count
-                    cinemoreLog(
-                        level: .debug,
-                        "[WindowDebug] PlayerControlView.onAppear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
-                    )
-                    DispatchQueue.main.async {
-                        windowController.attachToKeyWindowIfNeeded()
-                        PlatformServices.setMacTrafficLightsHidden(true)
-                        // 确保用于播放的窗口在视图出现时可见且前置（与 SwiftUI 场景切换解耦）。
-                        let windows = NSApp.windows
-                        let target =
-                            NSApp.keyWindow
-                            ?? NSApp.mainWindow
-                            ?? windows.first(where: { $0.isVisible })
-                            ?? windows.first(where: { $0.contentView != nil })
-
-                        if let window = target {
-                            if !window.isVisible {
-                                window.orderFrontRegardless()
-                            }
-                            if !window.isKeyWindow {
-                                window.makeKeyAndOrderFront(nil)
-                            }
-                        }
-
-                        let afterVisible = NSApp.windows.filter { $0.isVisible }.count
-                        cinemoreLog(
-                            level: .debug,
-                            "[WindowDebug] PlayerControlView.ensureVisible currentSource=\(sessionStore.currentSource != nil) windows=\(windows.count) visibleAfter=\(afterVisible)"
-                        )
-                    }
+                    remoteCommandService.activate(
+                        sessionStore: sessionStore, playerModel: playerModel)
+                    #if os(iOS)
+                        PlatformServices.enterIOSPlaybackOrientationIfNeeded()
+                    #endif
                 }
                 .onDisappear {
-                    let windowCount = NSApp.windows.count
-                    let visibleCount = NSApp.windows.filter { $0.isVisible }.count
-                    cinemoreLog(
-                        level: .debug,
-                        "[WindowDebug] PlayerControlView.onDisappear currentSource=\(sessionStore.currentSource != nil) windows=\(windowCount) visible=\(visibleCount)"
-                    )
-                    PlatformServices.setMacTrafficLightsHidden(false)
                     remoteCommandService.deactivate()
+                    #if os(iOS)
+                        PlatformServices.exitIOSPlaybackOrientationIfNeeded()
+                    #endif
                 }
                 .compatibleOnChange(of: sessionStore.currentSource?.id) { _ in
                     openCurrentSource(resetPlayerState: true)
@@ -233,88 +328,6 @@ struct PlayerControlView: View {
                 .onReceive(playerModel.playerCoordinator.$playbackState) { _ in
                     remoteCommandService.refreshNowPlayingInfo()
                 }
-                .overlay {
-                    loadingOrErrorOverlay
-                }
-            #else
-            // 其它平台保持现有布局不变
-            ZStack {
-                playerSurface(geometry: geometry)
-
-                if playerMaskModel.isMaskShow {
-                    controlOverlay(geometry: geometry)
-                        .transition(.opacity)
-                }
-
-                if playerControlModel.showMediaInfoCard {
-                    Color.black.opacity(mediaInfoMaskOpacity)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            playerControlModel.showMediaInfoCard = false
-                            playerMaskModel.showMask()
-                        }
-
-                    PlayerMediaInfoCardView {
-                        playerControlModel.showMediaInfoCard = false
-                        playerMaskModel.showMask()
-                    }
-                    .environmentObject(playerModel.playerCoordinator)
-                }
-
-                SiderView(geometry: geometry)
-                    .environmentObject(sessionStore)
-                    .environmentObject(playerModel)
-                    .environmentObject(playerControlModel)
-                    .environmentObject(playerMaskModel)
-                    .environmentObject(playerModel.playerCoordinator)
-                    .environmentObject(playerModel.config.subtitleStyle)
-
-                if !isLoadingOrErrorOverlayVisible,
-                   let toast = toastModel.presentedToast
-                {
-                    VStack {
-                        PlayerToastView(
-                            toast: toast,
-                            progress: playerModel.playerCoordinator.progress,
-                            playbackRate: playerModel.playerCoordinator.playbackRate,
-                            brightness: brightness
-                        )
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 28)
-                    .ignoresSafeArea(edges: .top)
-                }
-
-                loadingOrErrorOverlay
-            }
-            .background(.black)
-            .onAppear {
-                brightness = PlatformServices.screenBrightness(default: brightness)
-                openCurrentSource(resetPlayerState: true)
-                remoteCommandService.activate(sessionStore: sessionStore, playerModel: playerModel)
-                #if os(iOS)
-                PlatformServices.enterIOSPlaybackOrientationIfNeeded()
-                #endif
-            }
-            .onDisappear {
-                remoteCommandService.deactivate()
-                #if os(iOS)
-                PlatformServices.exitIOSPlaybackOrientationIfNeeded()
-                #endif
-            }
-            .compatibleOnChange(of: sessionStore.currentSource?.id) { _ in
-                openCurrentSource(resetPlayerState: true)
-            }
-            .onReceive(playerModel.playerCoordinator.progress.$currentTime) { _ in
-                remoteCommandService.refreshNowPlayingInfo()
-            }
-            .onReceive(playerModel.playerCoordinator.$playbackRate) { _ in
-                remoteCommandService.refreshNowPlayingInfo()
-            }
-            .onReceive(playerModel.playerCoordinator.$playbackState) { _ in
-                remoteCommandService.refreshNowPlayingInfo()
-            }
             #endif
         }
         .environmentObject(playerMaskModel)
@@ -326,41 +339,41 @@ struct PlayerControlView: View {
             .navigationBarTitleDisplayMode(.inline)
         #endif
         #if !os(tvOS) && !os(visionOS)
-        .modifier(
-            PlayerLanguagePackCheckWhenAvailableModifier(
-                translationRuntime: playerModel.translationRuntime,
-                mode: sessionStore.controlConfig.subtitleTranslateMode,
-                showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
-                presetPair: $languagePackSheetPresetPair,
-                presetStatus: $languagePackSheetStatus,
-                isPlaying: playerModel.playerCoordinator.playbackState == .playing,
-                pause: { playerModel.playerCoordinator.controller?.pause() },
-                disableTranslation: { reason, pair in
-                    disableSubtitleTranslationMode(reason: reason, pair: pair)
-                }
+            .modifier(
+                PlayerLanguagePackCheckWhenAvailableModifier(
+                    translationRuntime: playerModel.translationRuntime,
+                    mode: sessionStore.controlConfig.subtitleTranslateMode,
+                    showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
+                    presetPair: $languagePackSheetPresetPair,
+                    presetStatus: $languagePackSheetStatus,
+                    isPlaying: playerModel.playerCoordinator.playbackState == .playing,
+                    pause: { playerModel.playerCoordinator.controller?.pause() },
+                    disableTranslation: { reason, pair in
+                        disableSubtitleTranslationMode(reason: reason, pair: pair)
+                    }
+                )
             )
-        )
-        .sheet(
-            isPresented: $showLanguagePackDownloadSheet,
-            onDismiss: {
-                handleLanguagePackSheetDismiss()
+            .sheet(
+                isPresented: $showLanguagePackDownloadSheet,
+                onDismiss: {
+                    handleLanguagePackSheetDismiss()
+                }
+            ) {
+                LanguagePackSheetContent(
+                    presetFrom: languagePackSheetPresetPair?.from,
+                    presetTo: languagePackSheetPresetPair?.to,
+                    packStatus: languagePackSheetStatus,
+                    onComplete: {
+                        showLanguagePackDownloadSheet = false
+                    }
+                )
             }
-        ) {
-            LanguagePackSheetContent(
-                presetFrom: languagePackSheetPresetPair?.from,
-                presetTo: languagePackSheetPresetPair?.to,
-                packStatus: languagePackSheetStatus,
-                onComplete: {
-                    showLanguagePackDownloadSheet = false
-                }
-            )
-        }
         #endif
         .compatibleOnChange(of: sessionStore.controlConfig.subtitleTranslateMode) { newMode in
             handleSubtitleTranslateModeChange(newMode)
         }
         #if os(macOS)
-        .environmentObject(windowController)
+            .environmentObject(windowController)
         #endif
     }
 
@@ -374,51 +387,57 @@ struct PlayerControlView: View {
                 .onPlaybackStateChanged { status in
                     if status == .ready || status == .playing {
                         isPlayerInitializing = false
-                        let playbackTime = playerModel.playerCoordinator.controller?.currentPlaybackTime
+                        let playbackTime =
+                            playerModel.playerCoordinator.controller?.currentPlaybackTime
                             ?? Double(playerModel.playerCoordinator.progress.currentTime)
                         handleHistoryRecordCreationIfNeeded(currentTime: playbackTime)
                         #if os(macOS)
-                        // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
-                        // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
-                        if !hasAppliedMacWindowLayout {
-                            if let track = playerModel.playerCoordinator.controller?.videoTrack {
-                                let size = track.naturalSize
-                                if size.width > 0, size.height > 0 {
-                                    hasAppliedMacWindowLayout = true
-                                    DispatchQueue.main.async {
-                                        PlatformServices.configureMacPlayerWindowForVideo(naturalSize: size)
+                            // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
+                            // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
+                            if !hasAppliedMacWindowLayout {
+                                if let track = playerModel.playerCoordinator.controller?.videoTrack
+                                {
+                                    let size = track.naturalSize
+                                    if size.width > 0, size.height > 0 {
+                                        hasAppliedMacWindowLayout = true
+                                        DispatchQueue.main.async {
+                                            PlatformServices.configureMacPlayerWindowForVideo(
+                                                naturalSize: size)
+                                        }
                                     }
                                 }
                             }
-                        }
                         #endif
 
                         #if !os(tvOS)
-                        if status == .ready {
-                            if let track = playerModel.playerCoordinator.controller?.videoTrack {
-                                let size = track.naturalSize
-                                let width = Int(size.width)
-                                let height = Int(size.height)
-                                if width > 0, height > 0 {
-                                    PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
-                                        width: width,
-                                        height: height
-                                    )
+                            if status == .ready {
+                                if let track = playerModel.playerCoordinator.controller?.videoTrack
+                                {
+                                    let size = track.naturalSize
+                                    let width = Int(size.width)
+                                    let height = Int(size.height)
+                                    if width > 0, height > 0 {
+                                        PlayerEnhancementModel.shared
+                                            .updateAvailabilityForCurrentVideo(
+                                                width: width,
+                                                height: height
+                                            )
+                                    } else {
+                                        PlayerEnhancementModel.shared
+                                            .updateAvailabilityForCurrentVideo(
+                                                width: nil,
+                                                height: nil
+                                            )
+                                    }
                                 } else {
                                     PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
                                         width: nil,
                                         height: nil
                                     )
                                 }
-                            } else {
-                                PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
-                                    width: nil,
-                                    height: nil
-                                )
-                            }
 
-                            handleHistoryThumbnailIfNeededOnReady()
-                        }
+                                handleHistoryThumbnailIfNeededOnReady()
+                            }
                         #endif
                     }
                 }
@@ -440,25 +459,25 @@ struct PlayerControlView: View {
                     toastModel.show(.networkError(message: "播放出错，请重试或检查网络"), duration: .infinity)
                 }
                 #if os(macOS)
-                .onTapGesture(count: 2) {
-                    // 如果窗口处于悬浮锁定状态，先恢复为普通层级
-                    if windowController.isFloating {
-                        windowController.toggleWindowLevel()
-                    }
-
-                    if let window = NSApplication.shared.keyWindow {
-                        let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
-                        if wasPlaying {
-                            playerModel.playerCoordinator.controller?.pause()
+                    .onTapGesture(count: 2) {
+                        // 如果窗口处于悬浮锁定状态，先恢复为普通层级
+                        if windowController.isFloating {
+                            windowController.toggleWindowLevel()
                         }
-                        window.toggleFullScreen(nil)
-                        if wasPlaying {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                playerModel.playerCoordinator.controller?.play()
+
+                        if let window = NSApplication.shared.keyWindow {
+                            let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
+                            if wasPlaying {
+                                playerModel.playerCoordinator.controller?.pause()
+                            }
+                            window.toggleFullScreen(nil)
+                            if wasPlaying {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    playerModel.playerCoordinator.controller?.play()
+                                }
                             }
                         }
                     }
-                }
                 #endif
                 .ignoresSafeArea()
             } else {
@@ -467,37 +486,39 @@ struct PlayerControlView: View {
             }
 
             #if os(iOS)
-            GestureController(brightness: $brightness, geometry: geometry)
-                .environmentObject(sessionStore)
-                .environmentObject(playerModel.playerCoordinator)
-                .environmentObject(playerMaskModel)
-                .environmentObject(playerControlModel)
-                .environmentObject(toastModel)
-                .ignoresSafeArea()
+                GestureController(brightness: $brightness, geometry: geometry)
+                    .environmentObject(sessionStore)
+                    .environmentObject(playerModel.playerCoordinator)
+                    .environmentObject(playerMaskModel)
+                    .environmentObject(playerControlModel)
+                    .environmentObject(toastModel)
+                    .ignoresSafeArea()
             #endif
 
             #if os(tvOS)
-            GestureController()
-                .environmentObject(sessionStore)
-                .environmentObject(playerModel.playerCoordinator)
-                .environmentObject(playerMaskModel)
-                .environmentObject(toastModel)
-                .ignoresSafeArea()
+                GestureController()
+                    .environmentObject(sessionStore)
+                    .environmentObject(playerModel.playerCoordinator)
+                    .environmentObject(playerMaskModel)
+                    .environmentObject(toastModel)
+                    .ignoresSafeArea()
             #endif
 
             #if os(macOS)
-            MacInteractionLayer(
-                onMouseMoved: {
-                    // 与 cinemore-apple 一致：侧边面板或媒体信息卡片打开时，滑动鼠标不显示主控件
-                    if !playerControlModel.isSiderContainerShow, !playerControlModel.showMediaInfoCard {
-                        playerMaskModel.showMask()
+                MacInteractionLayer(
+                    onMouseMoved: {
+                        // 与 cinemore-apple 一致：侧边面板或媒体信息卡片打开时，滑动鼠标不显示主控件
+                        if !playerControlModel.isSiderContainerShow,
+                            !playerControlModel.showMediaInfoCard
+                        {
+                            playerMaskModel.showMask()
+                        }
+                    },
+                    onKeyDown: { event in
+                        handleMacKeyDown(event)
                     }
-                },
-                onKeyDown: { event in
-                    handleMacKeyDown(event)
-                }
-            )
-            .ignoresSafeArea()
+                )
+                .ignoresSafeArea()
             #endif
         }
     }
@@ -515,33 +536,33 @@ struct PlayerControlView: View {
     @ViewBuilder
     private func platformPanel(geometry: GeometryProxy) -> some View {
         #if os(iOS)
-        ControllerPanelViewIOS(geometry: geometry)
+            ControllerPanelViewIOS(geometry: geometry)
         #elseif os(macOS)
-        ControllerPanelViewMacOS(geometry: geometry)
+            ControllerPanelViewMacOS(geometry: geometry)
         #elseif os(tvOS)
-        ControllerPanelViewTvOS(geometry: geometry)
+            ControllerPanelViewTvOS(geometry: geometry)
         #elseif os(visionOS)
-        ControllerPanelViewVision(geometry: geometry)
+            ControllerPanelViewVision(geometry: geometry)
         #else
-        EmptyView()
+            EmptyView()
         #endif
     }
 
     @ViewBuilder
     private var subtitleTranslationTaskHost: some View {
         #if !os(tvOS) && !os(visionOS)
-        if #available(iOS 18.0, macOS 15.0, *) {
-            AppleSubtitleTranslationTaskHostView(
-                runtime: playerModel.translationRuntime,
-                router: playerModel.translationRouter
-            )
-        } else {
-            Color.clear
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-        }
+            if #available(iOS 18.0, macOS 15.0, *) {
+                AppleSubtitleTranslationTaskHostView(
+                    runtime: playerModel.translationRuntime,
+                    router: playerModel.translationRouter
+                )
+            } else {
+                Color.clear
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         #else
-        EmptyView()
+            EmptyView()
         #endif
     }
 
@@ -549,7 +570,7 @@ struct PlayerControlView: View {
     private var isLoadingOrErrorOverlayVisible: Bool {
         if isPlayerInitializing { return true }
         if let toast = toastModel.presentedToast,
-           case .networkError = toast
+            case .networkError = toast
         {
             return true
         }
@@ -562,7 +583,8 @@ struct PlayerControlView: View {
         let showLoading = isPlayerInitializing
         let errorMessage: String? = {
             guard let toast = toastModel.presentedToast,
-                  case let .networkError(msg) = toast else { return nil }
+                case .networkError(let msg) = toast
+            else { return nil }
             return msg
         }()
         if isLoadingOrErrorOverlayVisible {
@@ -605,9 +627,9 @@ struct PlayerControlView: View {
         switch toast {
         case .networkConnecting:
             return "正在连接..."
-        case let .networkRetrying(attempt, total):
+        case .networkRetrying(let attempt, let total):
             return "重试中 (\(attempt)/\(total))"
-        case let .networkSwitchingURL(currentIndex, totalURLs):
+        case .networkSwitchingURL(let currentIndex, let totalURLs):
             return "切换线路 (\(currentIndex)/\(totalURLs))"
         default:
             return "初始化中..."
@@ -625,8 +647,8 @@ struct PlayerControlView: View {
             lastHistoryProgressSecond = -1
             lastHistoryDurationSecond = -1
             #if os(macOS)
-            // 切换到新的视频源时，允许重新根据新视频尺寸应用一次窗口布局
-            hasAppliedMacWindowLayout = false
+                // 切换到新的视频源时，允许重新根据新视频尺寸应用一次窗口布局
+                hasAppliedMacWindowLayout = false
             #endif
         }
         playerModel.open(url: source.url, startTime: source.startTime, controlConfig: controlConfig)
@@ -657,7 +679,8 @@ struct PlayerControlView: View {
         let totalDuration = historyTotalDuration()
         let totalSecond = Int(totalDuration.rounded(.down))
 
-        guard currentSecond != lastHistoryProgressSecond || totalSecond != lastHistoryDurationSecond else {
+        guard currentSecond != lastHistoryProgressSecond || totalSecond != lastHistoryDurationSecond
+        else {
             return
         }
         lastHistoryProgressSecond = currentSecond
@@ -689,7 +712,8 @@ struct PlayerControlView: View {
             return
         }
 
-        let duration = max(controller.duration, Double(playerModel.playerCoordinator.progress.totalTime))
+        let duration = max(
+            controller.duration, Double(playerModel.playerCoordinator.progress.totalTime))
         guard duration > 0 else {
             return
         }
@@ -699,11 +723,13 @@ struct PlayerControlView: View {
         let targetSize = CGSize(width: 320, height: 180)
 
         Task { @MainActor in
-            guard let result = await controller.requestScrubThumbnail(
-                time: captureTime,
-                targetPointSize: targetSize,
-                scale: 1
-            ) else {
+            guard
+                let result = await controller.requestScrubThumbnail(
+                    time: captureTime,
+                    targetPointSize: targetSize,
+                    scale: 1
+                )
+            else {
                 return
             }
             PlaybackHistoryRepository.saveThumbnailIfNeeded(
@@ -720,92 +746,93 @@ struct PlayerControlView: View {
     }
 
     #if !os(tvOS) && !os(visionOS)
-    private func disableSubtitleTranslationMode(
-        reason: String,
-        pair: (from: String, to: String)? = nil,
-        availabilityStatus: String = "n/a"
-    ) {
-        let previousMode = sessionStore.controlConfig.subtitleTranslateMode
-        guard previousMode.needsTranslation else {
+        private func disableSubtitleTranslationMode(
+            reason: String,
+            pair: (from: String, to: String)? = nil,
+            availabilityStatus: String = "n/a"
+        ) {
+            let previousMode = sessionStore.controlConfig.subtitleTranslateMode
+            guard previousMode.needsTranslation else {
+                let pairText = pair.map { "\($0.from)->\($0.to)" } ?? "unknown"
+                subtitleTranslationLog(
+                    .debug,
+                    "[LanguagePackPolicy] ignore disable request reason=\(reason) pair=\(pairText) mode=\(previousMode)"
+                )
+                return
+            }
+
+            var updatedConfig = sessionStore.controlConfig
+            updatedConfig.subtitleTranslateMode = .off
+            sessionStore.controlConfig = updatedConfig
+
             let pairText = pair.map { "\($0.from)->\($0.to)" } ?? "unknown"
             subtitleTranslationLog(
-                .debug,
-                "[LanguagePackPolicy] ignore disable request reason=\(reason) pair=\(pairText) mode=\(previousMode)"
+                .error,
+                "[LanguagePackPolicy] force mode off reason=\(reason) pair=\(pairText) previousMode=\(previousMode) availability=\(availabilityStatus)"
             )
-            return
         }
 
-        var updatedConfig = sessionStore.controlConfig
-        updatedConfig.subtitleTranslateMode = .off
-        sessionStore.controlConfig = updatedConfig
+        private func handleLanguagePackSheetDismiss() {
+            let dismissedPair = languagePackSheetPresetPair
+            let dismissedStatus = languagePackSheetStatus
 
-        let pairText = pair.map { "\($0.from)->\($0.to)" } ?? "unknown"
-        subtitleTranslationLog(
-            .error,
-            "[LanguagePackPolicy] force mode off reason=\(reason) pair=\(pairText) previousMode=\(previousMode) availability=\(availabilityStatus)"
-        )
-    }
+            languagePackSheetPresetPair = nil
+            languagePackSheetStatus = nil
 
-    private func handleLanguagePackSheetDismiss() {
-        let dismissedPair = languagePackSheetPresetPair
-        let dismissedStatus = languagePackSheetStatus
-
-        languagePackSheetPresetPair = nil
-        languagePackSheetStatus = nil
-
-        guard dismissedStatus == .canDownload,
-              let pair = dismissedPair
-        else {
-            return
-        }
-
-        guard sessionStore.controlConfig.subtitleTranslateMode.needsTranslation else {
-            subtitleTranslationLog(
-                .debug,
-                "[LanguagePackPolicy] sheet dismissed with mode already off pair=\(pair.from)->\(pair.to)"
-            )
-            return
-        }
-
-        if #available(iOS 18.0, macOS 15.0, *) {
-            Task {
-                let sourceLang = Locale.Language(identifier: pair.from)
-                let targetLang = Locale.Language(identifier: pair.to)
-                let status = await LanguageAvailability().status(from: sourceLang, to: targetLang)
-                let statusText = String(describing: status)
-                await MainActor.run {
-                    if let currentPair = playerModel.translationRuntime.desiredApplePair,
-                       currentPair.from != pair.from || currentPair.to != pair.to
-                    {
-                        subtitleTranslationLog(
-                            .debug,
-                            "[LanguagePackPolicy] skip dismiss fallback because pair changed dismissed=\(pair.from)->\(pair.to) current=\(currentPair.from)->\(currentPair.to)"
-                        )
-                        return
-                    }
-                    if status == .installed {
-                        subtitleTranslationLog(
-                            .debug,
-                            "[LanguagePackPolicy] sheet dismissed after install pair=\(pair.from)->\(pair.to) status=\(statusText), keep mode=\(sessionStore.controlConfig.subtitleTranslateMode)"
-                        )
-                        return
-                    }
-                    disableSubtitleTranslationMode(
-                        reason: "language_pack_sheet_dismissed_without_install",
-                        pair: pair,
-                        availabilityStatus: statusText
-                    )
-                }
+            guard dismissedStatus == .canDownload,
+                let pair = dismissedPair
+            else {
+                return
             }
-            return
-        }
 
-        disableSubtitleTranslationMode(
-            reason: "language_pack_sheet_dismissed_on_unsupported_os",
-            pair: pair,
-            availabilityStatus: "unknown"
-        )
-    }
+            guard sessionStore.controlConfig.subtitleTranslateMode.needsTranslation else {
+                subtitleTranslationLog(
+                    .debug,
+                    "[LanguagePackPolicy] sheet dismissed with mode already off pair=\(pair.from)->\(pair.to)"
+                )
+                return
+            }
+
+            if #available(iOS 18.0, macOS 15.0, *) {
+                Task {
+                    let sourceLang = Locale.Language(identifier: pair.from)
+                    let targetLang = Locale.Language(identifier: pair.to)
+                    let status = await LanguageAvailability().status(
+                        from: sourceLang, to: targetLang)
+                    let statusText = String(describing: status)
+                    await MainActor.run {
+                        if let currentPair = playerModel.translationRuntime.desiredApplePair,
+                            currentPair.from != pair.from || currentPair.to != pair.to
+                        {
+                            subtitleTranslationLog(
+                                .debug,
+                                "[LanguagePackPolicy] skip dismiss fallback because pair changed dismissed=\(pair.from)->\(pair.to) current=\(currentPair.from)->\(currentPair.to)"
+                            )
+                            return
+                        }
+                        if status == .installed {
+                            subtitleTranslationLog(
+                                .debug,
+                                "[LanguagePackPolicy] sheet dismissed after install pair=\(pair.from)->\(pair.to) status=\(statusText), keep mode=\(sessionStore.controlConfig.subtitleTranslateMode)"
+                            )
+                            return
+                        }
+                        disableSubtitleTranslationMode(
+                            reason: "language_pack_sheet_dismissed_without_install",
+                            pair: pair,
+                            availabilityStatus: statusText
+                        )
+                    }
+                }
+                return
+            }
+
+            disableSubtitleTranslationMode(
+                reason: "language_pack_sheet_dismissed_on_unsupported_os",
+                pair: pair,
+                availabilityStatus: "unknown"
+            )
+        }
     #endif
 
     private func refreshSubtitleForTranslationModeChange() {
@@ -846,13 +873,16 @@ struct PlayerControlView: View {
         switch status {
         case .connecting:
             toastModel.show(.networkConnecting, duration: .infinity)
-        case let .retrying(attempt, totalAttempts):
-            toastModel.show(.networkRetrying(attempt: attempt, total: totalAttempts), duration: .infinity)
-        case let .switchingURL(currentIndex, totalURLs):
-            toastModel.show(.networkSwitchingURL(currentIndex: currentIndex, totalURLs: totalURLs), duration: .infinity)
+        case .retrying(let attempt, let totalAttempts):
+            toastModel.show(
+                .networkRetrying(attempt: attempt, total: totalAttempts), duration: .infinity)
+        case .switchingURL(let currentIndex, let totalURLs):
+            toastModel.show(
+                .networkSwitchingURL(currentIndex: currentIndex, totalURLs: totalURLs),
+                duration: .infinity)
         case .stable:
             toastModel.show(.networkStable, duration: 1.0)
-        case let .failed(reason):
+        case .failed(let reason):
             isPlayerInitializing = false
             toastModel.show(.networkError(message: reason), duration: .infinity)
         case .buffering:
@@ -893,116 +923,125 @@ struct PlayerControlView: View {
     }
 
     #if os(macOS)
-    private func handleMacKeyDown(_ event: NSEvent) {
-        switch event.keyCode {
-        case 49: // Space
-            playerModel.playerCoordinator.controller?.switchPlayPause()
-        case 123: // Left Arrow
-            playerModel.playerCoordinator.controller?.skip(interval: -controlConfig.skipBackwardSeconds)
-            toastModel.show(.skip(seconds: -controlConfig.skipBackwardSeconds))
-        case 124: // Right Arrow
-            playerModel.playerCoordinator.controller?.skip(interval: controlConfig.skipForwardSeconds)
-            toastModel.show(.skip(seconds: controlConfig.skipForwardSeconds))
-        case 126: // Up Arrow
-            let next = min(playerModel.playerCoordinator.playbackRate + controlConfig.macOSPlaybackRateStep, 6.0)
-            playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
-            toastModel.show(.playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
-        case 125: // Down Arrow
-            let next = max(playerModel.playerCoordinator.playbackRate - controlConfig.macOSPlaybackRateStep, 0.25)
-            playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
-            toastModel.show(.playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
-        case 53: // Esc
-            if let window = NSApplication.shared.keyWindow,
-               window.styleMask.contains(.fullScreen)
-            {
-                window.toggleFullScreen(nil)
+        private func handleMacKeyDown(_ event: NSEvent) {
+            switch event.keyCode {
+            case 49:  // Space
+                playerModel.playerCoordinator.controller?.switchPlayPause()
+            case 123:  // Left Arrow
+                playerModel.playerCoordinator.controller?.skip(
+                    interval: -controlConfig.skipBackwardSeconds)
+                toastModel.show(.skip(seconds: -controlConfig.skipBackwardSeconds))
+            case 124:  // Right Arrow
+                playerModel.playerCoordinator.controller?.skip(
+                    interval: controlConfig.skipForwardSeconds)
+                toastModel.show(.skip(seconds: controlConfig.skipForwardSeconds))
+            case 126:  // Up Arrow
+                let next = min(
+                    playerModel.playerCoordinator.playbackRate
+                        + controlConfig.macOSPlaybackRateStep, 6.0)
+                playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
+                toastModel.show(
+                    .playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
+            case 125:  // Down Arrow
+                let next = max(
+                    playerModel.playerCoordinator.playbackRate
+                        - controlConfig.macOSPlaybackRateStep, 0.25)
+                playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
+                toastModel.show(
+                    .playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
+            case 53:  // Esc
+                if let window = NSApplication.shared.keyWindow,
+                    window.styleMask.contains(.fullScreen)
+                {
+                    window.toggleFullScreen(nil)
+                }
+            default:
+                break
             }
-        default:
-            break
         }
-    }
     #endif
 }
 
 #if !os(tvOS) && !os(visionOS)
-private struct PlayerLanguagePackCheckWhenAvailableModifier: ViewModifier {
-    @ObservedObject var translationRuntime: SubtitleTranslationRuntime
-    let mode: SubtitleTranslateMode
-    @Binding var showLanguagePackDownloadSheet: Bool
-    @Binding var presetPair: (from: String, to: String)?
-    @Binding var presetStatus: LanguagePackSheetStatus?
-    let isPlaying: Bool
-    let pause: () -> Void
-    let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
+    private struct PlayerLanguagePackCheckWhenAvailableModifier: ViewModifier {
+        @ObservedObject var translationRuntime: SubtitleTranslationRuntime
+        let mode: SubtitleTranslateMode
+        @Binding var showLanguagePackDownloadSheet: Bool
+        @Binding var presetPair: (from: String, to: String)?
+        @Binding var presetStatus: LanguagePackSheetStatus?
+        let isPlaying: Bool
+        let pause: () -> Void
+        let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
 
-    func body(content: Content) -> some View {
-        if #available(iOS 18.0, macOS 15.0, *) {
-            content.modifier(
-                PlayerLanguagePackCheckModifier(
-                    translationRuntime: translationRuntime,
-                    mode: mode,
-                    showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
-                    presetPair: $presetPair,
-                    presetStatus: $presetStatus,
-                    isPlaying: isPlaying,
-                    pause: pause,
-                    disableTranslation: disableTranslation
+        func body(content: Content) -> some View {
+            if #available(iOS 18.0, macOS 15.0, *) {
+                content.modifier(
+                    PlayerLanguagePackCheckModifier(
+                        translationRuntime: translationRuntime,
+                        mode: mode,
+                        showLanguagePackDownloadSheet: $showLanguagePackDownloadSheet,
+                        presetPair: $presetPair,
+                        presetStatus: $presetStatus,
+                        isPlaying: isPlaying,
+                        pause: pause,
+                        disableTranslation: disableTranslation
+                    )
                 )
-            )
-        } else {
-            content
-        }
-    }
-}
-
-@available(iOS 18.0, macOS 15.0, *)
-private struct PlayerLanguagePackCheckModifier: ViewModifier {
-    @ObservedObject var translationRuntime: SubtitleTranslationRuntime
-    let mode: SubtitleTranslateMode
-    @Binding var showLanguagePackDownloadSheet: Bool
-    @Binding var presetPair: (from: String, to: String)?
-    @Binding var presetStatus: LanguagePackSheetStatus?
-    let isPlaying: Bool
-    let pause: () -> Void
-    let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
-
-    private var languagePackCheckId: String {
-        guard mode.needsTranslation, isPlaying, let pair = translationRuntime.desiredApplePair else {
-            return ""
-        }
-        return "\(pair.from)_\(pair.to)_\(isPlaying)"
-    }
-
-    func body(content: Content) -> some View {
-        content
-            .task(id: languagePackCheckId) {
-                guard !languagePackCheckId.isEmpty,
-                      !showLanguagePackDownloadSheet,
-                      let pair = translationRuntime.desiredApplePair
-                else {
-                    return
-                }
-
-                let sourceLang = Locale.Language(identifier: pair.from)
-                let targetLang = Locale.Language(identifier: pair.to)
-                let availability = LanguageAvailability()
-                let status = await availability.status(from: sourceLang, to: targetLang)
-
-                if status == .unsupported {
-                    let currentPair = (from: pair.from, to: pair.to)
-                    await MainActor.run {
-                        disableTranslation("apple_language_pair_unsupported", currentPair)
-                    }
-                    presetPair = currentPair
-                    presetStatus = .unsupported
-                    showLanguagePackDownloadSheet = true
-                } else if status != .installed {
-                    pause()
-                    presetPair = (pair.from, pair.to)
-                    presetStatus = .canDownload
-                    showLanguagePackDownloadSheet = true
-                }
+            } else {
+                content
             }
+        }
     }
-}
+
+    @available(iOS 18.0, macOS 15.0, *)
+    private struct PlayerLanguagePackCheckModifier: ViewModifier {
+        @ObservedObject var translationRuntime: SubtitleTranslationRuntime
+        let mode: SubtitleTranslateMode
+        @Binding var showLanguagePackDownloadSheet: Bool
+        @Binding var presetPair: (from: String, to: String)?
+        @Binding var presetStatus: LanguagePackSheetStatus?
+        let isPlaying: Bool
+        let pause: () -> Void
+        let disableTranslation: (_ reason: String, _ pair: (from: String, to: String)?) -> Void
+
+        private var languagePackCheckId: String {
+            guard mode.needsTranslation, isPlaying, let pair = translationRuntime.desiredApplePair
+            else {
+                return ""
+            }
+            return "\(pair.from)_\(pair.to)_\(isPlaying)"
+        }
+
+        func body(content: Content) -> some View {
+            content
+                .task(id: languagePackCheckId) {
+                    guard !languagePackCheckId.isEmpty,
+                        !showLanguagePackDownloadSheet,
+                        let pair = translationRuntime.desiredApplePair
+                    else {
+                        return
+                    }
+
+                    let sourceLang = Locale.Language(identifier: pair.from)
+                    let targetLang = Locale.Language(identifier: pair.to)
+                    let availability = LanguageAvailability()
+                    let status = await availability.status(from: sourceLang, to: targetLang)
+
+                    if status == .unsupported {
+                        let currentPair = (from: pair.from, to: pair.to)
+                        await MainActor.run {
+                            disableTranslation("apple_language_pair_unsupported", currentPair)
+                        }
+                        presetPair = currentPair
+                        presetStatus = .unsupported
+                        showLanguagePackDownloadSheet = true
+                    } else if status != .installed {
+                        pause()
+                        presetPair = (pair.from, pair.to)
+                        presetStatus = .canDownload
+                        showLanguagePackDownloadSheet = true
+                    }
+                }
+        }
+    }
 #endif
