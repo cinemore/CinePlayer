@@ -104,21 +104,11 @@ struct PlayerOpenView: View {
             .overlay {
                 LinearGradient(
                     colors: [
-                        .white.opacity(0.2),
-                        .clear
+                        Color.black.opacity(0.08),
+                        .white.opacity(0.2)
                     ],
-                    startPoint: .top,
-                    endPoint: .center
-                )
-            }
-            .overlay {
-                LinearGradient(
-                    colors: [
-                        .clear,
-                        Color.black.opacity(0.08)
-                    ],
-                    startPoint: .center,
-                    endPoint: .bottom
+                    startPoint: .bottom,
+                    endPoint: .top
                 )
             }
             .ignoresSafeArea()

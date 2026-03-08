@@ -181,9 +181,10 @@ struct PlaybackHistoryListView: View {
             thumbnailView(for: record)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(record.displayPath)
+                Text(historyDisplayTitle(for: record))
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(2)
+                    .truncationMode(usesMiddleTruncation(for: record) ? .middle : .tail)
                     .multilineTextAlignment(.leading)
 
                 Text(record.playedAt.formatted(date: .abbreviated, time: .shortened))
@@ -292,6 +293,39 @@ struct PlaybackHistoryListView: View {
             return URL(fileURLWithPath: record.displayPath)
         }
         return nil
+    }
+
+    private func historyDisplayTitle(for record: PlaybackHistoryRecord) -> String {
+        if let sourceURL = URL(string: record.sourceURL), sourceURL.isFileURL {
+            if !record.displayPath.isEmpty {
+                let fileName = (record.displayPath as NSString).lastPathComponent
+                return fileName.isEmpty ? record.displayPath : fileName
+            }
+            return sourceURL.lastPathComponent
+        }
+
+        if let sourceURL = URL(string: record.sourceURL) {
+            let scheme = sourceURL.scheme?.lowercased()
+            if scheme == "http" || scheme == "https" {
+                return record.displayPath.isEmpty ? sourceURL.absoluteString : record.displayPath
+            }
+        }
+
+        if !record.displayPath.isEmpty {
+            let fileName = (record.displayPath as NSString).lastPathComponent
+            return fileName.isEmpty ? record.displayPath : fileName
+        }
+
+        return record.sourceURL
+    }
+
+    private func usesMiddleTruncation(for record: PlaybackHistoryRecord) -> Bool {
+        if let sourceURL = URL(string: record.sourceURL) {
+            let scheme = sourceURL.scheme?.lowercased()
+            return scheme == "http" || scheme == "https"
+        }
+        return record.displayPath.lowercased().hasPrefix("http://")
+            || record.displayPath.lowercased().hasPrefix("https://")
     }
 
     private func decodeImage(data: Data?) -> Image? {
