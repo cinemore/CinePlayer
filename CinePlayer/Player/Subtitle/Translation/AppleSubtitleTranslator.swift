@@ -5,6 +5,80 @@ import NaturalLanguage
 @preconcurrency import Translation
 
 @available(iOS 18.0, macOS 15.0, *)
+enum AppleTranslationLanguageSupport {
+    nonisolated static func normalizedIdentifier(_ raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        let lowercased = trimmed.lowercased()
+        guard lowercased != "und" else {
+            return nil
+        }
+
+        if lowercased == "chi" || lowercased == "cmn" || lowercased == "yue" {
+            return "zh"
+        }
+
+        let canonical = NSLocale.canonicalLanguageIdentifier(from: trimmed)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "_", with: "-")
+        guard !canonical.isEmpty else {
+            return nil
+        }
+
+        let parts = canonical.split(separator: "-").map(String.init)
+        guard let languageCode = parts.first, !languageCode.isEmpty else {
+            return nil
+        }
+
+        var normalizedParts = [languageCode]
+        if parts.count >= 2 {
+            let second = parts[1]
+            if second.count == 4, second.allSatisfy(\.isLetter) {
+                let normalizedScript = second.prefix(1).uppercased() + second.dropFirst().lowercased()
+                normalizedParts.append(normalizedScript)
+            }
+        }
+
+        return normalizedParts.joined(separator: "-")
+    }
+
+    nonisolated static func normalizedLanguage(from raw: String) -> Locale.Language? {
+        guard let identifier = normalizedIdentifier(raw) else {
+            return nil
+        }
+        return Locale.Language(identifier: identifier)
+    }
+
+    nonisolated static func availabilityStatus(from sourceIdentifier: String, to targetIdentifier: String)
+        async -> LanguageAvailability.Status
+    {
+        guard let source = normalizedLanguage(from: sourceIdentifier),
+              let target = normalizedLanguage(from: targetIdentifier)
+        else {
+            return .unsupported
+        }
+
+        let availability = LanguageAvailability()
+        return await availability.status(from: source, to: target)
+    }
+
+    nonisolated static func translationConfiguration(from sourceIdentifier: String, to targetIdentifier: String)
+        -> TranslationSession.Configuration?
+    {
+        guard let source = normalizedLanguage(from: sourceIdentifier),
+              let target = normalizedLanguage(from: targetIdentifier)
+        else {
+            return nil
+        }
+
+        return TranslationSession.Configuration(source: source, target: target)
+    }
+}
+
+@available(iOS 18.0, macOS 15.0, *)
 enum AppleSubtitleTranslationError: Error {
     case sessionUnavailable
 }
@@ -47,40 +121,19 @@ actor AppleSubtitleTranslator {
     func updateDesiredPairIfNeeded(from: String, to: String, sampleText: String) -> (
         pair: (String, String), didChange: Bool
     ) {
-        func canonicalizeLanguageID(_ raw: String) -> String? {
-            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else {
-                return nil
-            }
-            guard trimmed.lowercased() != "und" else {
-                return nil
-            }
-
-            let canonical =
-                NSLocale
-                .canonicalLanguageIdentifier(from: trimmed)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !canonical.isEmpty else {
-                return nil
-            }
-            guard canonical.lowercased() != "und" else {
-                return nil
-            }
-
-            return canonical.replacingOccurrences(of: "_", with: "-")
-        }
-
         let resolvedFrom: String = {
             if from == "auto" {
-                return detectLanguageCode(from: sampleText) ?? "en"
+                let detected = detectLanguageCode(from: sampleText) ?? "en"
+                return AppleTranslationLanguageSupport.normalizedIdentifier(detected) ?? "en"
             }
-            if let canonical = canonicalizeLanguageID(from) {
+            if let canonical = AppleTranslationLanguageSupport.normalizedIdentifier(from) {
                 return canonical
             }
-            return detectLanguageCode(from: sampleText) ?? "en"
+            let detected = detectLanguageCode(from: sampleText) ?? "en"
+            return AppleTranslationLanguageSupport.normalizedIdentifier(detected) ?? "en"
         }()
 
-        let resolvedTo: String = canonicalizeLanguageID(to) ?? to
+        let resolvedTo: String = AppleTranslationLanguageSupport.normalizedIdentifier(to) ?? to
 
         let newPair = (resolvedFrom, resolvedTo)
         if let current = desiredPair, current.from == newPair.0, current.to == newPair.1 {

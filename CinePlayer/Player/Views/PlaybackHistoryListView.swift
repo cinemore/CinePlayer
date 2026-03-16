@@ -68,7 +68,7 @@ struct PlaybackHistoryListView: View {
                     }
                 }
 
-                #if !os(macOS)
+                #if os(iOS)
                 if isEditing {
                     ToolbarItemGroup(placement: .bottomBar) {
                         Button("全选") {
@@ -82,6 +82,28 @@ struct PlaybackHistoryListView: View {
                         .disabled(selectedRecordIDs.isEmpty)
 
                         Spacer(minLength: 0)
+
+                        Button(role: .destructive) {
+                            deleteSelected()
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .tint(.red)
+                        .disabled(selectedRecordIDs.isEmpty)
+                    }
+                }
+                #elseif os(tvOS) || os(visionOS)
+                if isEditing {
+                    ToolbarItemGroup(placement: .automatic) {
+                        Button("全选") {
+                            selectedRecordIDs = Set(records.map(\.persistentModelID))
+                        }
+                        .disabled(records.isEmpty)
+
+                        Button("取消") {
+                            selectedRecordIDs.removeAll()
+                        }
+                        .disabled(selectedRecordIDs.isEmpty)
 
                         Button(role: .destructive) {
                             deleteSelected()

@@ -59,14 +59,14 @@ struct AppleSubtitleTranslationLanguagePage: View {
         guard let from = presetFrom else {
             return nil
         }
-        return Locale.Language(identifier: from)
+        return AppleTranslationLanguageSupport.normalizedLanguage(from: from)
     }
 
     private var presetTargetLocale: Locale.Language? {
         guard let to = presetTo else {
             return nil
         }
-        return Locale.Language(identifier: to)
+        return AppleTranslationLanguageSupport.normalizedLanguage(from: to)
     }
 
     private var canDownload: Bool {
@@ -179,12 +179,16 @@ struct AppleSubtitleTranslationLanguagePage: View {
             }
             do {
                 try await session.prepareTranslation()
+                await refreshPairStatus()
+                await MainActor.run {
+                    isPreparing = false
+                }
             } catch {
                 await MainActor.run {
                     prepareError = error.localizedDescription
+                    isPreparing = false
                 }
             }
-            // Keep state stable during system download flow to avoid task view rebuild.
         }
         .onDisappear {
             isPreparing = false

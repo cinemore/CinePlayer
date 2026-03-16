@@ -5,6 +5,7 @@ struct EmbeddedSubtitleRowView: View {
     var language: String?
     var title: String?
     var codecName: String?
+    private let selectionAnimation = Animation.easeOut(duration: 0.12)
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -12,13 +13,11 @@ struct EmbeddedSubtitleRowView: View {
                 if let language, !language.isEmpty {
                     Text(language)
                         .foregroundColor(isSelected ? .white : .white.opacity(0.5))
-                        .if(isSelected) { $0.f14b() }
-                        .if(!isSelected) { $0.f13r() }
+                        .f13m()
                 }
                 if let title, !title.isEmpty {
                     Text(title)
-                        .if(isSelected) { $0.f12r() }
-                        .if(!isSelected) { $0.f11r() }
+                        .f11r()
                         .foregroundColor(.white.opacity(0.5))
                 }
             }
@@ -32,6 +31,10 @@ struct EmbeddedSubtitleRowView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(isSelected ? 0.08 : 0.02))
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(
@@ -40,6 +43,7 @@ struct EmbeddedSubtitleRowView: View {
                 )
         )
         .roundedCorner(8)
+        .animation(selectionAnimation, value: isSelected)
         .contentShape(Rectangle())
         .padding(.horizontal, 2)
     }

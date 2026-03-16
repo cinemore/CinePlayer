@@ -441,9 +441,13 @@ struct PlayerControlView: View {
                         #endif
                     }
                 }
-                .onTimeChanged { currentTime in
-                    handleHistoryRecordCreationIfNeeded(currentTime: currentTime)
-                    handleHistoryProgressUpdate(currentTime: currentTime)
+                .onTimeChanged { progress in
+                    handleHistoryRecordCreationIfNeeded(
+                        currentTime: TimeInterval(progress.currentTime)
+                    )
+                    handleHistoryProgressUpdate(
+                        currentTime: TimeInterval(progress.currentTime)
+                    )
                 }
                 .onBufferingStatusChanged { status in
                     handleBufferingStatus(status)
@@ -795,10 +799,10 @@ struct PlayerControlView: View {
 
             if #available(iOS 18.0, macOS 15.0, *) {
                 Task {
-                    let sourceLang = Locale.Language(identifier: pair.from)
-                    let targetLang = Locale.Language(identifier: pair.to)
-                    let status = await LanguageAvailability().status(
-                        from: sourceLang, to: targetLang)
+                    let status = await AppleTranslationLanguageSupport.availabilityStatus(
+                        from: pair.from,
+                        to: pair.to
+                    )
                     let statusText = String(describing: status)
                     await MainActor.run {
                         if let currentPair = playerModel.translationRuntime.desiredApplePair,
@@ -844,12 +848,10 @@ struct PlayerControlView: View {
             if let item = playerControlModel.localSubtitleItems.first(
                 where: { $0.id == playerControlModel.currentSubtitlePath }
             ) {
-                controller.clearSubtitle()
                 controller.loadSubtitleFile(subtitleID: item.displayName, url: item.url)
             }
         } else if playerModel.playerCoordinator.subtitleTrackIndex != -1 {
             let selectedIndex = playerModel.playerCoordinator.subtitleTrackIndex
-            controller.clearSubtitle()
             controller.loadSubtitleTrack(subtitlesTrackIndex: selectedIndex)
         } else {
             return
@@ -1022,10 +1024,10 @@ struct PlayerControlView: View {
                         return
                     }
 
-                    let sourceLang = Locale.Language(identifier: pair.from)
-                    let targetLang = Locale.Language(identifier: pair.to)
-                    let availability = LanguageAvailability()
-                    let status = await availability.status(from: sourceLang, to: targetLang)
+                    let status = await AppleTranslationLanguageSupport.availabilityStatus(
+                        from: pair.from,
+                        to: pair.to
+                    )
 
                     if status == .unsupported {
                         let currentPair = (from: pair.from, to: pair.to)

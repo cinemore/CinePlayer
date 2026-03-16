@@ -7,12 +7,14 @@ struct EmbeddedSubtitleView: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerModel: VideoPlayerModel
+    @State private var pendingSubtitleTrackIndex: Int32? = nil
+    @State private var subtitleCommandScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
         Group {
             if !subtitleTracks.isEmpty {
                 VStack(spacing: 12) {
-                    HStack {
+                    HStack(spacing: 12) {
                         Text("开启")
                             .f16b()
                             .foregroundColor(.white)
@@ -35,11 +37,27 @@ struct EmbeddedSubtitleView: View {
                         #endif
                     }
 
-                    HStack {
+                    HStack(spacing: 12) {
                         Text("翻译")
                             .f16b()
                             .foregroundColor(.white)
-                        Spacer()
+
+                        if isAppleTranslationEnabled {
+                            Button {
+                                playerModel.restartSubtitleTranslationService()
+                            } label: {
+                                Text("重启")
+                                    .f12r()
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(.white.opacity(0.12), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        Spacer(minLength: 0)
+
                         Picker("", selection: translationModeBinding) {
                             ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
                                 Text(mode.displayName).tag(mode)
@@ -47,24 +65,8 @@ struct EmbeddedSubtitleView: View {
                         }
                         .pickerStyle(.menu)
                         .labelsHidden()
-                        #if os(macOS)
-                        .frame(maxWidth: 130, alignment: .trailing)
-                        #endif
-                    }
-
-                    HStack {
-                        Spacer()
-                        Button {
-                            playerModel.restartSubtitleTranslationService()
-                        } label: {
-                            Text("重启翻译服务")
-                                .f12r()
-                                .foregroundStyle(.white.opacity(0.9))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(.white.opacity(0.12), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .layoutPriority(1)
                     }
 
                     ScrollView(showsIndicators: false) {
@@ -104,6 +106,25 @@ struct EmbeddedSubtitleView: View {
                 }
             }
         }
+        .onAppear {
+            pendingSubtitleTrackIndex = nil
+            subtitleCommandScheduler.cancel()
+        }
+        .compatibleOnChange(of: playerCoordinator.subtitleTrackIndex) { _ in
+            pendingSubtitleTrackIndex = nil
+        }
+        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { isShown in
+            if !isShown {
+                pendingSubtitleTrackIndex = nil
+                subtitleCommandScheduler.cancel()
+            }
+        }
+        .compatibleOnChange(of: playerControlModel.currentSubtitlePath) { newPath in
+            if !newPath.isEmpty {
+                pendingSubtitleTrackIndex = nil
+                subtitleCommandScheduler.cancel()
+            }
+        }
     }
 
     private var subtitleTracks: [FFmpegStreamAsset] {
@@ -114,7 +135,7 @@ struct EmbeddedSubtitleView: View {
     }
 
     private var selectedTrackIndex: Int32 {
-        playerCoordinator.subtitleTrackIndex
+        pendingSubtitleTrackIndex ?? playerCoordinator.subtitleTrackIndex
     }
 
     private var translationModeBinding: Binding<SubtitleTranslateMode> {
@@ -133,20 +154,33 @@ struct EmbeddedSubtitleView: View {
         )
     }
 
+    private var isAppleTranslationEnabled: Bool {
+        sessionStore.controlConfig.subtitleTranslateMode.needsTranslation
+    }
+
     private func updateToggleState(_ newValue: Bool) {
         if newValue {
             if let firstTrack = subtitleTracks.first {
                 selectSubtitleTrack(firstTrack)
             }
         } else if playerControlModel.currentSubtitlePath.isEmpty {
-            playerCoordinator.subtitleTrackIndex = -1
-            playerCoordinator.controller?.clearSubtitle()
+            pendingSubtitleTrackIndex = -1
+            subtitleCommandScheduler.schedule {
+                playerCoordinator.controller?.clearSubtitle()
+            }
         }
     }
 
     private func selectSubtitleTrack(_ subtitleTrack: FFmpegStreamAsset) {
-        playerCoordinator.subtitleTrackIndex = subtitleTrack.streamIndex
+        guard selectedTrackIndex != subtitleTrack.streamIndex
+            || !playerControlModel.currentSubtitlePath.isEmpty
+        else { return }
+        pendingSubtitleTrackIndex = subtitleTrack.streamIndex
         playerControlModel.currentSubtitlePath = ""
-        playerCoordinator.controller?.loadSubtitleTrack(subtitlesTrackIndex: subtitleTrack.streamIndex)
+        subtitleCommandScheduler.schedule {
+            playerCoordinator.controller?.loadSubtitleTrack(
+                subtitlesTrackIndex: subtitleTrack.streamIndex
+            )
+        }
     }
 }

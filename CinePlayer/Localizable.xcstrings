@@ -17711,7 +17711,11 @@
         }
       }
     },
+    "重启" : {
+
+    },
     "重启翻译服务" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

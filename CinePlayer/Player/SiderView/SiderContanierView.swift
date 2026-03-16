@@ -59,12 +59,28 @@ struct SiderContanierView<Content: View>: View {
         #endif
     }
 
+    private var interceptTransparentArea: Bool {
+        direction == .trailing
+    }
+
     var body: some View {
         ZStack {
             content
                 .frame(maxWidth: direction == .trailing ? (width ?? 380) : .infinity)
                 .if(direction == .trailing) {
                     $0.frame(maxHeight: .infinity, alignment: .top)
+                }
+                .background {
+                    if interceptTransparentArea {
+                        Rectangle()
+                            .fill(Color.black.opacity(show ? 0.001 : 0))
+                            .contentShape(Rectangle())
+                            .allowsHitTesting(show)
+                            .onTapGesture {}
+                    }
+                }
+                .if(interceptTransparentArea) {
+                    $0.contentShape(Rectangle())
                 }
                 .if(showBackground) {
                     if direction == .trailing {
@@ -92,6 +108,7 @@ struct SiderContanierView<Content: View>: View {
                     }
                 }
                 .offset(x: offset.width, y: offset.height)
+                .allowsHitTesting(show)
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: show)
         }
         .frame(

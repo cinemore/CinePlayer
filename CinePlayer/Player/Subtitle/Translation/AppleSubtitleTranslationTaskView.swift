@@ -37,10 +37,10 @@ struct AppleSubtitleTranslationTaskView: View {
             return
         }
 
-        let sourceLang = Locale.Language(identifier: pair.from)
-        let targetLang = Locale.Language(identifier: pair.to)
-        let availability = LanguageAvailability()
-        let status = await availability.status(from: sourceLang, to: targetLang)
+        let status = await AppleTranslationLanguageSupport.availabilityStatus(
+            from: pair.from,
+            to: pair.to
+        )
         await MainActor.run {
             pairInstalled = (status == .installed)
         }
@@ -73,9 +73,10 @@ struct AppleSubtitleTranslationTaskView: View {
             return nil
         }
 
-        let sourceLang = Locale.Language(identifier: pair.from)
-        let targetLang = Locale.Language(identifier: pair.to)
-        return TranslationSession.Configuration(source: sourceLang, target: targetLang)
+        return AppleTranslationLanguageSupport.translationConfiguration(
+            from: pair.from,
+            to: pair.to
+        )
     }
 }
 

@@ -123,6 +123,8 @@ struct PlayerOpenView: View {
     private var systemBackgroundColor: Color {
         #if os(macOS)
         return Color(nsColor: .windowBackgroundColor)
+        #elseif os(tvOS)
+        return .black
         #else
         return Color(uiColor: .systemBackground)
         #endif

@@ -9,6 +9,7 @@ import AppKit
 struct ExternalSubtitleView: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerControlModel: PlayerControlModel
+    @State private var subtitleCommandScheduler = DeferredMainActorCommandScheduler()
 
     #if os(iOS) || os(visionOS)
     @State private var showFileImporter = false
@@ -34,9 +35,10 @@ struct ExternalSubtitleView: View {
                                     playSubtitle(first)
                                 }
                             } else {
-                                playerCoordinator.subtitleTrackIndex = -1
-                                playerCoordinator.controller?.clearSubtitle()
                                 playerControlModel.currentSubtitlePath = ""
+                                subtitleCommandScheduler.schedule {
+                                    playerCoordinator.controller?.clearSubtitle()
+                                }
                             }
                         }
                     )
@@ -85,6 +87,14 @@ struct ExternalSubtitleView: View {
                         }
                     }
                 }
+            }
+        }
+        .onAppear {
+            subtitleCommandScheduler.cancel()
+        }
+        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { isShown in
+            if !isShown {
+                subtitleCommandScheduler.cancel()
             }
         }
         #if os(iOS) || os(visionOS)
@@ -164,9 +174,13 @@ struct ExternalSubtitleView: View {
     }
 
     private func playSubtitle(_ item: PlayerControlModel.LocalSubtitleItem) {
-        playerCoordinator.subtitleTrackIndex = -1
         playerControlModel.currentSubtitlePath = item.id
-        playerCoordinator.controller?.loadSubtitleFile(subtitleID: item.displayName, url: item.url)
+        subtitleCommandScheduler.schedule {
+            playerCoordinator.controller?.loadSubtitleFile(
+                subtitleID: item.displayName,
+                url: item.url
+            )
+        }
     }
 
     private func importSubtitles(urls: [URL]) {
@@ -220,4 +234,5 @@ struct ExternalSubtitleView: View {
         showFileImporter = true
         #endif
     }
+
 }

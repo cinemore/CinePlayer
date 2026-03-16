@@ -115,6 +115,12 @@ struct SiderPlaybackSpeedView: View {
             material: .regularMaterial,
             useCapsule: false
         ))
+        .background {
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.black.opacity(0.001))
+                .contentShape(RoundedRectangle(cornerRadius: 24))
+                .onTapGesture {}
+        }
         .padding(.horizontal)
         .padding(.bottom, 32)
     }

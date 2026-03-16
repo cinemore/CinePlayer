@@ -12,7 +12,10 @@ import AVFoundation
 // MARK: 音频设置
 
 struct SiderAudioSettingView: View {
+    @EnvironmentObject var playerControlModel: PlayerControlModel
     @EnvironmentObject var playerCoordinator: CinePlayer.Coordinator
+    @State private var pendingAudioTrackIndex: Int32? = nil
+    @State private var selectionScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -34,16 +37,25 @@ struct SiderAudioSettingView: View {
                             bitRate: audioTrack.bitRate,
                             streamIndex: audioTrack.streamIndex
                         ) {
-                            guard let controller = playerCoordinator.controller else {
-                                return
-                            }
-                            controller.select(track: audioTrack)
-                            playerCoordinator.audioTrack = audioTrack
+                            selectAudioTrack(audioTrack)
                         }
                     }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
+            }
+        }
+        .onAppear {
+            pendingAudioTrackIndex = nil
+            selectionScheduler.cancel()
+        }
+        .compatibleOnChange(of: playerCoordinator.audioTrack?.streamIndex) { _ in
+            pendingAudioTrackIndex = nil
+        }
+        .compatibleOnChange(of: playerControlModel.showAudioContainer) { isShown in
+            if !isShown {
+                pendingAudioTrackIndex = nil
+                selectionScheduler.cancel()
             }
         }
     }
@@ -58,6 +70,14 @@ struct SiderAudioSettingView: View {
 
     /// 获取当前选中的音轨索引
     private var selectedTrackIndex: Int32 {
-        playerCoordinator.audioTrack?.streamIndex ?? -1
+        pendingAudioTrackIndex ?? playerCoordinator.audioTrack?.streamIndex ?? -1
+    }
+
+    private func selectAudioTrack(_ audioTrack: FFmpegStreamAsset) {
+        guard selectedTrackIndex != audioTrack.streamIndex else { return }
+        pendingAudioTrackIndex = audioTrack.streamIndex
+        selectionScheduler.schedule {
+            playerCoordinator.controller?.select(track: audioTrack)
+        }
     }
 }

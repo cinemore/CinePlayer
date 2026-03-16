@@ -20,6 +20,7 @@ struct VideoTrackRowView: View {
     var streamIndex: Int32
 
     var onClick: () -> Void
+    private let selectionAnimation = Animation.easeOut(duration: 0.12)
     var body: some View {
         Button {
             onClick()
@@ -44,18 +45,13 @@ struct VideoTrackRowView: View {
                     HStack(alignment: .center, spacing: 0) {
                         if let language, !language.isEmpty {
                             Text(language)
-                                .if(isSelected) {
-                                    $0.f15s()
-                                }
-                                .if(!isSelected) {
-                                    $0.f14r()
-                                }
+                                .f14m()
                                 .foregroundColor(isSelected ? Color.white : Color.white
                                     .opacity(0.4))
                         }
                         Spacer()
                         Text("\(codecName.uppercased())")
-                            .f14r()
+                            .f13m()
                             .foregroundColor(isSelected ? Color.white : Color.white.opacity(0.4))
                     }
                     .padding(.horizontal, 12)
@@ -96,6 +92,10 @@ struct VideoTrackRowView: View {
                 .padding(.vertical, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(isSelected ? 0.08 : 0.02))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(
@@ -104,6 +104,7 @@ struct VideoTrackRowView: View {
                     )
             )
             .roundedCorner(10)
+            .animation(selectionAnimation, value: isSelected)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

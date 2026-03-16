@@ -11,7 +11,10 @@ import CinePlayerSDK
 // MARK: 视频轨道设置
 
 struct SiderVideoTrackView: View {
+    @EnvironmentObject var playerControlModel: PlayerControlModel
     @EnvironmentObject var playerCoordinator: CinePlayer.Coordinator
+    @State private var pendingVideoTrackIndex: Int32? = nil
+    @State private var selectionScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -34,16 +37,25 @@ struct SiderVideoTrackView: View {
                             dynamicRange: videoTrack.dynamicRange != .sdr ? videoTrack.dynamicRange.description : nil,
                             streamIndex: videoTrack.streamIndex
                         ) {
-                            guard let controller = playerCoordinator.controller else {
-                                return
-                            }
-                            controller.select(track: videoTrack)
-                            playerCoordinator.videoTrack = videoTrack
+                            selectVideoTrack(videoTrack)
                         }
                     }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
+            }
+        }
+        .onAppear {
+            pendingVideoTrackIndex = nil
+            selectionScheduler.cancel()
+        }
+        .compatibleOnChange(of: playerCoordinator.videoTrack?.streamIndex) { _ in
+            pendingVideoTrackIndex = nil
+        }
+        .compatibleOnChange(of: playerControlModel.showVideoTrackContainer) { isShown in
+            if !isShown {
+                pendingVideoTrackIndex = nil
+                selectionScheduler.cancel()
             }
         }
     }
@@ -58,6 +70,14 @@ struct SiderVideoTrackView: View {
 
     /// 获取当前选中的视频轨道索引
     private var selectedTrackIndex: Int32 {
-        playerCoordinator.videoTrack?.streamIndex ?? -1
+        pendingVideoTrackIndex ?? playerCoordinator.videoTrack?.streamIndex ?? -1
+    }
+
+    private func selectVideoTrack(_ videoTrack: FFmpegStreamAsset) {
+        guard selectedTrackIndex != videoTrack.streamIndex else { return }
+        pendingVideoTrackIndex = videoTrack.streamIndex
+        selectionScheduler.schedule {
+            playerCoordinator.controller?.select(track: videoTrack)
+        }
     }
 }
