@@ -436,6 +436,8 @@ struct PlayerControlView: View {
                                     )
                                 }
 
+                                playerModel.playerCoordinator.controller?
+                                    .prewarmScrubThumbnailSession()
                                 handleHistoryThumbnailIfNeededOnReady()
                             }
                         #endif

@@ -15,6 +15,8 @@ import SwiftUI
 
     /// 定义一个自定义滑块视图
     struct CustomSlider<Component: View>: View {
+        typealias DragUpdateHandler = (DragGesture.Value) -> Void
+
         // MARK: Lifecycle
 
         init(
@@ -22,6 +24,7 @@ import SwiftUI
             range: (Int, Int),
             knobWidth: CGFloat?,
             onEditingChanged: @escaping (Bool) -> Void,
+            onDragChanged: DragUpdateHandler? = nil,
             _ viewBuilder: @escaping (CustomSliderData) -> Component
         ) {
             _value = value
@@ -29,6 +32,7 @@ import SwiftUI
             self.viewBuilder = viewBuilder
             self.knobWidth = knobWidth
             self.onEditingChanged = onEditingChanged
+            self.onDragChanged = onDragChanged
         }
 
         // MARK: Internal
@@ -38,6 +42,7 @@ import SwiftUI
         var range: (Int, Int)
         var knobWidth: CGFloat?
         var onEditingChanged: (Bool) -> Void
+        var onDragChanged: DragUpdateHandler?
         let viewBuilder: (CustomSliderData) -> Component
 
         var body: some View {
@@ -56,6 +61,7 @@ import SwiftUI
                     Task { @MainActor in
                         let value = newValue(drag, frame)
                         self.value = Int(value)
+                        onDragChanged?(drag)
                         onEditingChanged(true)
                     }
                 }

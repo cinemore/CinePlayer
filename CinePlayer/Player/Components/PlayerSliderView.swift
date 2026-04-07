@@ -18,6 +18,10 @@ import CinePlayerSDK
     }
 
     struct ProgressSliderView: View {
+        private static let previewActivationDelayNanoseconds: UInt64 = 200_000_000
+        private static let previewImmediateDragDistance: CGFloat = 8
+        private static let previewHoverSettleTolerance: CGFloat = 4
+
         @Binding var currentTime: Int
         var totalTime: Int
         var controller: PlayerController?
@@ -28,9 +32,138 @@ import CinePlayerSDK
         @Environment(\.displayScale) private var displayScale
         @State private var previewImageData: Data? = nil
         @State private var isPreviewLoading = false
+        @State private var hasActivatedPreview = false
+        @State private var previewSessionID: UInt64 = 0
+        @State private var isPreviewSessionActive = false
+        @State private var isPreviewTriggerQualified = false
+        @State private var previewQualificationTask: Task<Void, Never>? = nil
+        @State private var previewQualificationAnchorX: CGFloat? = nil
         #if os(macOS)
             @State private var hoverTime: Int? = nil
             @State private var hoverPosition: CGPoint? = nil
+        #endif
+
+        private func cancelPreviewQualificationTask() {
+            previewQualificationTask?.cancel()
+            previewQualificationTask = nil
+        }
+
+        private func resetPreviewTriggerQualification() {
+            cancelPreviewQualificationTask()
+            isPreviewTriggerQualified = false
+            previewQualificationAnchorX = nil
+        }
+
+        private func qualifyPreviewTriggerImmediately() {
+            guard isPreviewSessionActive else {
+                return
+            }
+            guard !isPreviewTriggerQualified else {
+                return
+            }
+
+            cancelPreviewQualificationTask()
+            previewQualificationAnchorX = nil
+            isPreviewTriggerQualified = true
+        }
+
+        private func schedulePreviewQualification(at anchorX: CGFloat) {
+            guard isPreviewSessionActive else {
+                return
+            }
+            guard !isPreviewTriggerQualified else {
+                return
+            }
+
+            if let previewQualificationAnchorX,
+               abs(previewQualificationAnchorX - anchorX) < Self.previewHoverSettleTolerance
+            {
+                return
+            }
+
+            previewQualificationAnchorX = anchorX
+            let sessionID = previewSessionID
+            cancelPreviewQualificationTask()
+            previewQualificationTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: Self.previewActivationDelayNanoseconds)
+                guard !Task.isCancelled else {
+                    return
+                }
+                guard isPreviewSessionActive, previewSessionID == sessionID else {
+                    return
+                }
+                #if os(macOS)
+                    guard isDragging || isHovering else {
+                        return
+                    }
+                #else
+                    guard isDragging else {
+                        return
+                    }
+                #endif
+                guard let previewQualificationAnchorX,
+                      abs(previewQualificationAnchorX - anchorX) < Self.previewHoverSettleTolerance
+                else {
+                    return
+                }
+
+                previewQualificationTask = nil
+                self.previewQualificationAnchorX = nil
+                isPreviewTriggerQualified = true
+            }
+        }
+
+        private func handleSliderDragChanged(_ drag: DragGesture.Value) {
+            let currentX = drag.startLocation.x + drag.translation.width
+            if abs(drag.translation.width) >= Self.previewImmediateDragDistance {
+                qualifyPreviewTriggerImmediately()
+            } else {
+                schedulePreviewQualification(at: currentX)
+            }
+        }
+
+        private func beginPreviewSession() {
+            guard !isPreviewSessionActive else {
+                return
+            }
+
+            isPreviewSessionActive = true
+            previewSessionID &+= 1
+            resetPreviewTriggerQualification()
+            hasActivatedPreview = false
+            previewImageData = nil
+            isPreviewLoading = false
+        }
+
+        private func endPreviewSession() {
+            guard isPreviewSessionActive || hasActivatedPreview || previewImageData != nil
+                || isPreviewLoading
+            else {
+                return
+            }
+
+            isPreviewSessionActive = false
+            previewSessionID &+= 1
+            resetPreviewTriggerQualification()
+            hasActivatedPreview = false
+            previewImageData = nil
+            isPreviewLoading = false
+        }
+
+        #if !os(macOS)
+            private func endTouchPreviewSession() {
+                endPreviewSession()
+            }
+        #endif
+
+        #if os(macOS)
+            private func beginHoverPreviewSession() {
+                beginPreviewSession()
+            }
+
+            private func endHoverPreviewSession() {
+                endPreviewSession()
+            }
         #endif
 
         var body: some View {
@@ -50,10 +183,20 @@ import CinePlayerSDK
                     range: (0, totalTime),
                     knobWidth: 15,
                     onEditingChanged: { value in
+                        let wasDragging = isDragging
                         isDragging = value
                         if value {
+                            if !wasDragging {
+                                beginPreviewSession()
+                            }
                             isHovering = true
                         } else {
+                            #if !os(macOS)
+                                if wasDragging {
+                                    controller?.cancelScrubThumbnailRequests()
+                                    endTouchPreviewSession()
+                                }
+                            #endif
                             #if !os(macOS)
                                 withAnimation {
                                     isHovering = false
@@ -66,6 +209,9 @@ import CinePlayerSDK
                             #endif
                         }
                         onEditingChanged(value)
+                    },
+                    onDragChanged: { drag in
+                        handleSliderDragChanged(drag)
                     }
                 ) { sliderData in
                     // 使用固定高度的容器，简化布局
@@ -111,11 +257,20 @@ import CinePlayerSDK
                                         : (isHovering && hoverPosition != nil
                                             ? max(0, min(geometry.size.width, hoverPosition!.x))
                                             : nil)
-                                let showPreview = isDragging || (isHovering && hoverTime != nil)
+                                let shouldRequestPreview =
+                                    isPreviewTriggerQualified
+                                        && (isDragging || (isHovering && hoverTime != nil))
+                                let showPreview =
+                                    shouldRequestPreview
+                                        && (hasActivatedPreview || (isDragging && isPreviewLoading))
                             #else
                                 let timeValue: Int? = isDragging ? currentTime : nil
                                 let positionX: CGFloat? = isDragging ? sliderData.knobCenterX : nil
-                                let showPreview = isDragging
+                                let shouldRequestPreview = isDragging && isPreviewTriggerQualified
+                                let showPreview =
+                                    isDragging
+                                        && shouldRequestPreview
+                                        && (hasActivatedPreview || isPreviewLoading)
                             #endif
 
                             let tooltipX: CGFloat? = positionX.map { pos in
@@ -125,7 +280,7 @@ import CinePlayerSDK
                             }
 
                             let requestKey: ScrubThumbnailRequestKey? = {
-                                guard showPreview, let timeValue, let controller else {
+                                guard shouldRequestPreview, let timeValue, let controller else {
                                     return nil
                                 }
                                 return ScrubThumbnailRequestKey(
@@ -252,17 +407,26 @@ import CinePlayerSDK
                             }
                             .task(id: requestKey) {
                                 guard let requestKey else {
-                                    previewImageData = nil
                                     isPreviewLoading = false
                                     return
                                 }
 
-                                isPreviewLoading = true
                                 previewImageData = nil
+                                let sessionID = previewSessionID
+                                let shouldShowImmediateLoader =
+                                    isPreviewTriggerQualified && isDragging
+                                let shouldDebounceRequest = hasActivatedPreview
+                                if shouldDebounceRequest || shouldShowImmediateLoader {
+                                    isPreviewLoading = true
+                                } else {
+                                    isPreviewLoading = false
+                                }
 
-                                try? await Task.sleep(nanoseconds: 100_000_000)
-                                if Task.isCancelled {
-                                    return
+                                if shouldDebounceRequest {
+                                    try? await Task.sleep(nanoseconds: 100_000_000)
+                                    if Task.isCancelled {
+                                        return
+                                    }
                                 }
 
                                 guard let controller else {
@@ -279,7 +443,36 @@ import CinePlayerSDK
                                     return
                                 }
 
-                                previewImageData = result?.imageData
+                                #if os(macOS)
+                                    let isStillRelevantRequest =
+                                        isPreviewSessionActive
+                                            && previewSessionID == sessionID
+                                            && (
+                                                (isDragging && currentTime == requestKey.second)
+                                                    || (isHovering && hoverTime == requestKey.second)
+                                            )
+                                    guard isStillRelevantRequest else {
+                                        return
+                                    }
+                                #else
+                                    let isStillRelevantRequest =
+                                        isPreviewSessionActive
+                                            && isDragging
+                                            && previewSessionID == sessionID
+                                            && currentTime == requestKey.second
+                                    guard isStillRelevantRequest else {
+                                        return
+                                    }
+                                #endif
+
+                                if let result {
+                                    previewImageData = result.imageData
+                                    hasActivatedPreview = true
+                                } else {
+                                    if hasActivatedPreview {
+                                        previewImageData = nil
+                                    }
+                                }
                                 isPreviewLoading = false
                             }
                             #if os(macOS)
@@ -291,6 +484,7 @@ import CinePlayerSDK
 
                                 switch phase {
                                 case let .active(location):
+                                    beginHoverPreviewSession()
                                     // 计算对应的时间
                                     let progressRatio = max(
                                         0, min(1, location.x / geometry.size.width)
@@ -298,7 +492,10 @@ import CinePlayerSDK
                                     let time = Int(Double(totalTime) * Double(progressRatio))
                                     hoverTime = time
                                     hoverPosition = location
+                                    schedulePreviewQualification(at: location.x)
                                 case .ended:
+                                    controller?.cancelScrubThumbnailRequests()
+                                    endHoverPreviewSession()
                                     hoverTime = nil
                                     hoverPosition = nil
                                 }
@@ -314,10 +511,16 @@ import CinePlayerSDK
                     #if os(macOS)
                         // 鼠标离开时清除 hover 时间
                         if !hovering {
+                            controller?.cancelScrubThumbnailRequests()
+                            endHoverPreviewSession()
                             hoverTime = nil
                             hoverPosition = nil
                         }
                     #endif
+                }
+                .onDisappear {
+                    controller?.cancelScrubThumbnailRequests()
+                    endPreviewSession()
                 }
 
                 Spacer()
