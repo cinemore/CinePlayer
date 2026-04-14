@@ -578,6 +578,20 @@ struct PlayerControlView: View {
                 }
             #endif
 
+            #if os(visionOS)
+                // visionOS 没有 GestureController，面板自动隐藏后需要一个透明的
+                // 点击层把控件重新唤出。面板显示时不渲染，避免与面板内的 Button
+                // 争抢点击事件。
+                if !playerMaskModel.isMaskShow {
+                    Color.black.opacity(0.001)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            playerMaskModel.showMask()
+                        }
+                        .ignoresSafeArea()
+                }
+            #endif
+
             #if os(macOS)
                 MacInteractionLayer(
                     onMouseMoved: {

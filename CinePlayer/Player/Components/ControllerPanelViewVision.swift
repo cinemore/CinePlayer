@@ -18,18 +18,9 @@ struct ControllerPanelViewVision: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            topBar
-                .padding(.horizontal, 16)
-                .padding(.top, max(geometry.safeAreaInsets.top, 12))
-
-            Spacer()
-
-            bottomBar
-                .padding(.horizontal, 16)
-                .padding(.bottom, max(geometry.safeAreaInsets.bottom, 12))
-        }
-        .background(
+        ZStack {
+            // 点击面板空白处收起控件，与 iOS 上 singleTap 行为一致。
+            // 放在 ZStack 最底层，让上层 Button / Slider 优先接管自身点击。
             LinearGradient(
                 colors: [
                     Color.black.opacity(0.56),
@@ -39,8 +30,24 @@ struct ControllerPanelViewVision: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                playerMaskModel.hideMask()
+            }
             .ignoresSafeArea()
-        )
+
+            VStack(spacing: 0) {
+                topBar
+                    .padding(.horizontal, 40)
+                    .padding(.top, max(geometry.safeAreaInsets.top, 32))
+
+                Spacer()
+
+                bottomBar
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, max(geometry.safeAreaInsets.bottom, 32))
+            }
+        }
     }
 
     private var topBar: some View {
@@ -53,21 +60,6 @@ struct ControllerPanelViewVision: View {
             PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
 
             Spacer()
-
-            actionButton(icon: "music.note") {
-                playerControlModel.hideContainer()
-                playerControlModel.showAudioContainer = true
-            }
-
-            actionButton(icon: "film") {
-                playerControlModel.hideContainer()
-                playerControlModel.showVideoTrackContainer = true
-            }
-
-            actionButton(icon: "speedometer") {
-                playerControlModel.hideContainer()
-                playerControlModel.showPlaybackSpeedContainer = true
-            }
         }
     }
 
@@ -104,6 +96,21 @@ struct ControllerPanelViewVision: View {
                 }
 
                 Spacer(minLength: 0)
+
+                actionButton(icon: "music.note") {
+                    playerControlModel.hideContainer()
+                    playerControlModel.showAudioContainer = true
+                }
+
+                actionButton(icon: "film") {
+                    playerControlModel.hideContainer()
+                    playerControlModel.showVideoTrackContainer = true
+                }
+
+                actionButton(icon: "speedometer") {
+                    playerControlModel.hideContainer()
+                    playerControlModel.showPlaybackSpeedContainer = true
+                }
 
                 actionButton(icon: "rectangle.arrowtriangle.2.inward") {
                     playerCoordinator.isScaleAspectFill.toggle()

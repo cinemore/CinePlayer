@@ -1,10 +1,11 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+
 #if os(macOS)
-import AppKit
+    import AppKit
 #else
-import UIKit
+    import UIKit
 #endif
 
 struct PlayerOpenView: View {
@@ -28,40 +29,42 @@ struct PlayerOpenView: View {
 
     private var homeContentSpacing: CGFloat {
         #if os(tvOS) || os(visionOS)
-        56
+            160
         #else
-        32
+            32
         #endif
     }
 
     private var brandingSize: CGFloat {
         #if os(tvOS) || os(visionOS)
-        128
+            128
         #else
-        86
+            86
         #endif
     }
 
     private var openControlsMaxWidth: CGFloat {
         #if os(tvOS) || os(visionOS)
-        980
+            980
         #else
-        640
+            640
         #endif
     }
 
     private var urlRowSpacing: CGFloat {
         #if os(tvOS) || os(visionOS)
-        12
+            12
         #else
-        8
+            8
         #endif
     }
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
-                backgroundLayer
+                #if !os(tvOS)
+                    backgroundLayer
+                #endif
 
                 VStack(spacing: homeContentSpacing) {
                     topBranding
@@ -71,7 +74,7 @@ struct PlayerOpenView: View {
                 .padding(.horizontal, 16)
 
                 #if os(macOS)
-                bottomHint
+                    bottomHint
                 #endif
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,10 +101,10 @@ struct PlayerOpenView: View {
             }
             #elseif !os(tvOS)
             .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        historyButton
-                    }
+                ToolbarItem(placement: .topBarTrailing) {
+                    historyButton
                 }
+            }
             #endif
         }
         #if !os(tvOS)
@@ -115,7 +118,7 @@ struct PlayerOpenView: View {
             allowedContentTypes: [.movie, .video],
             allowsMultipleSelection: false
         ) { result in
-            if case let .success(urls) = result, let url = urls.first {
+            if case .success(let urls) = result, let url = urls.first {
                 openMedia(url: url)
             }
         }
@@ -137,7 +140,7 @@ struct PlayerOpenView: View {
                 LinearGradient(
                     colors: [
                         Color.black.opacity(0.08),
-                        .white.opacity(0.2)
+                        .white.opacity(0.2),
                     ],
                     startPoint: .bottom,
                     endPoint: .top
@@ -154,11 +157,11 @@ struct PlayerOpenView: View {
 
     private var systemBackgroundColor: Color {
         #if os(macOS)
-        return Color(nsColor: .windowBackgroundColor)
+            return Color(nsColor: .windowBackgroundColor)
         #elseif os(tvOS)
-        return .black
+            return .black
         #else
-        return Color(uiColor: .systemBackground)
+            return Color(uiColor: .systemBackground)
         #endif
     }
 
@@ -181,8 +184,8 @@ struct PlayerOpenView: View {
             }
             .animation(.snappy, value: hasURLInput)
             #if !os(tvOS)
-            orDividerRow
-            openFileButton
+                orDividerRow
+                openFileButton
             #endif
         }
         .frame(maxWidth: openControlsMaxWidth)
@@ -192,35 +195,37 @@ struct PlayerOpenView: View {
 
     private var urlPlayContainer: some View {
         #if os(tvOS) || os(visionOS)
-        urlTextField
-            .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-        #else
-        HStack(alignment: .center, spacing: 8) {
             urlTextField
-                .textFieldStyle(.plain)
-                .font(.system(size: 15, weight: .regular))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 16)
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        #else
+            HStack(alignment: .center, spacing: 8) {
+                urlTextField
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15, weight: .regular))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 16)
 
-            if hasURLInput {
-                Button {
-                    urlInput = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.opacity(0.7))
+                if hasURLInput {
+                    Button {
+                        urlInput = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 8)
                 }
-                .buttonStyle(.plain)
-                .padding(.trailing, 8)
             }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 44)
-        .modifier(GlassEffectModifier(
-            cornerRadius: Self.openControlCornerRadius,
-            useCapsule: true,
-            clipsContent: true
-        ))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 44)
+            .modifier(
+                GlassEffectModifier(
+                    cornerRadius: Self.openControlCornerRadius,
+                    useCapsule: true,
+                    clipsContent: true
+                )
+            )
         #endif
     }
 
@@ -238,36 +243,38 @@ struct PlayerOpenView: View {
 
     private var playURLButton: some View {
         #if os(tvOS) || os(visionOS)
-        Button(action: {
-            guard let url = resolveInputURL(urlInput) else { return }
-            openMedia(url: url)
-        }) {
-            Image(systemName: "play.fill")
-                .font(.system(size: 24, weight: .bold))
-                .frame(width: 56, height: 56)
-        }
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.circle)
-        .tint(Color(red: 0.08, green: 0.5, blue: 0.97))
-        #else
-        Button(action: {
-            guard let url = resolveInputURL(urlInput) else { return }
-            openMedia(url: url)
-        }) {
-            ZStack {
-                Color(red: 0.08, green: 0.5, blue: 0.97)
+            Button(action: {
+                guard let url = resolveInputURL(urlInput) else { return }
+                openMedia(url: url)
+            }) {
                 Image(systemName: "play.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 24, weight: .bold))
+                    .frame(width: 56, height: 56)
             }
-            .frame(width: 44, height: 44)
-            .modifier(GlassEffectModifier(
-                cornerRadius: Self.openControlCornerRadius,
-                useCapsule: true,
-                clipsContent: true
-            ))
-        }
-        .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.circle)
+            .tint(Color(red: 0.08, green: 0.5, blue: 0.97))
+        #else
+            Button(action: {
+                guard let url = resolveInputURL(urlInput) else { return }
+                openMedia(url: url)
+            }) {
+                ZStack {
+                    Color(red: 0.08, green: 0.5, blue: 0.97)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 44, height: 44)
+                .modifier(
+                    GlassEffectModifier(
+                        cornerRadius: Self.openControlCornerRadius,
+                        useCapsule: true,
+                        clipsContent: true
+                    )
+                )
+            }
+            .buttonStyle(.plain)
         #endif
     }
 
@@ -298,11 +305,13 @@ struct PlayerOpenView: View {
                     .foregroundStyle(.white)
             }
             .frame(width: 240, height: 44)
-            .modifier(GlassEffectModifier(
-                cornerRadius: Self.openControlCornerRadius,
-                useCapsule: true,
-                clipsContent: true
-            ))
+            .modifier(
+                GlassEffectModifier(
+                    cornerRadius: Self.openControlCornerRadius,
+                    useCapsule: true,
+                    clipsContent: true
+                )
+            )
         }
         .buttonStyle(.plain)
     }
@@ -333,47 +342,50 @@ struct PlayerOpenView: View {
     }
 
     #if !os(tvOS)
-    private func handleDrop(providers: [NSItemProvider]) -> Bool {
-        guard let fileProvider = providers.first(where: {
-            $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
-        }) else {
-            return false
-        }
-
-        fileProvider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-            if let data = item as? Data,
-               let url = URL(dataRepresentation: data, relativeTo: nil)
-            {
-                Task { @MainActor in
-                    openMedia(url: url)
-                }
-                return
+        private func handleDrop(providers: [NSItemProvider]) -> Bool {
+            guard
+                let fileProvider = providers.first(where: {
+                    $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
+                })
+            else {
+                return false
             }
 
-            if let url = item as? URL {
-                Task { @MainActor in
-                    openMedia(url: url)
-                }
-                return
-            }
-
-            if let path = item as? String {
-                let sanitized = path.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let url = URL(string: sanitized) {
+            fileProvider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) {
+                item, _ in
+                if let data = item as? Data,
+                   let url = URL(dataRepresentation: data, relativeTo: nil)
+                {
                     Task { @MainActor in
                         openMedia(url: url)
                     }
+                    return
+                }
+
+                if let url = item as? URL {
+                    Task { @MainActor in
+                        openMedia(url: url)
+                    }
+                    return
+                }
+
+                if let path = item as? String {
+                    let sanitized = path.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let url = URL(string: sanitized) {
+                        Task { @MainActor in
+                            openMedia(url: url)
+                        }
+                    }
                 }
             }
-        }
 
-        return true
-    }
+            return true
+        }
     #endif
 
     private func openMedia(url: URL) {
         #if os(tvOS)
-        isURLFieldFocused = false
+            isURLFieldFocused = false
         #endif
         sessionStore.open(url: url)
     }
