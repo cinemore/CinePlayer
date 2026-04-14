@@ -182,6 +182,16 @@
     "%@" : {
       "shouldTranslate" : false
     },
+    "%@ / %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@"
+          }
+        }
+      }
+    },
     "%@/%@" : {
       "localizations" : {
         "zh-Hans" : {
@@ -6924,6 +6934,9 @@
         }
       }
     },
+    "字幕翻译" : {
+
+    },
     "字幕调整" : {
       "localizations" : {
         "ar" : {
@@ -10755,6 +10768,9 @@
 
     },
     "扫描顺序" : {
+
+    },
+    "按选择键跳转" : {
 
     },
     "按键" : {

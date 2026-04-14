@@ -89,6 +89,13 @@ struct PlayerControlView: View {
     @StateObject private var playerMaskModel = PlayerMaskModel()
     @StateObject private var toastModel = PlayerToastModel()
     @StateObject private var remoteCommandService = PurePlayerRemoteCommandService()
+    #if os(tvOS)
+        @StateObject private var tvOSPlaybackControlModel = TVOSPlaybackControlModel()
+        enum TVOSFocusableView: Hashable {
+            case controller
+        }
+        @FocusState private var tvOSFocusableView: TVOSFocusableView?
+    #endif
 
     #if os(macOS)
         @EnvironmentObject private var windowController: PlayerWindowController
@@ -272,6 +279,7 @@ struct PlayerControlView: View {
                         .environmentObject(playerModel.config.subtitleStyle)
 
                     if !isLoadingOrErrorOverlayVisible,
+                        toastModel.showContainer,
                         let toast = toastModel.presentedToast
                     {
                         VStack {
@@ -290,6 +298,8 @@ struct PlayerControlView: View {
                                 #if os(iOS)
                                     // 竖屏模式下顶部 toast 额外向下偏移，避免贴近状态栏 / 刘海
                                     return geometry.size.height > geometry.size.width ? 44 : 28
+                                #elseif os(tvOS)
+                                    return PlayerToastLayout.topInset
                                 #else
                                     return 28
                                 #endif
@@ -334,6 +344,33 @@ struct PlayerControlView: View {
         .background(subtitleTranslationTaskHost)
         .environment(\.colorScheme, .dark)
         .preferredColorScheme(.dark)
+        #if os(tvOS)
+            .compatibleOnChange(of: playerMaskModel.isMaskShow) { newValue in
+                if !newValue {
+                    // 控件面板隐藏后把焦点还给 GestureController，方便用户再次用遥控唤起
+                    tvOSFocusableView = .controller
+                }
+            }
+            .onExitCommand {
+                if tvOSPlaybackControlModel.isSeeking {
+                    tvOSPlaybackControlModel.cancelSeeking(
+                        progress: playerModel.playerCoordinator.progress
+                    ) {
+                        playerModel.playerCoordinator.controller?.play()
+                    }
+                    return
+                }
+
+                if playerMaskModel.isMaskShow {
+                    playerMaskModel.enableAutoHide()
+                    playerMaskModel.hideMask()
+                    return
+                }
+
+                playerModel.close()
+                sessionStore.close()
+            }
+        #endif
         .navigationTitle("")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -409,8 +446,8 @@ struct PlayerControlView: View {
                             }
                         #endif
 
-                        #if !os(tvOS)
-                            if status == .ready {
+                        if status == .ready {
+                            #if !os(tvOS)
                                 if let track = playerModel.playerCoordinator.controller?.videoTrack
                                 {
                                     let size = track.naturalSize
@@ -435,12 +472,11 @@ struct PlayerControlView: View {
                                         height: nil
                                     )
                                 }
-
-                                playerModel.playerCoordinator.controller?
-                                    .prewarmScrubThumbnailSession()
-                                handleHistoryThumbnailIfNeededOnReady()
-                            }
-                        #endif
+                            #endif
+                            playerModel.playerCoordinator.controller?
+                                .prewarmScrubThumbnailSession()
+                            handleHistoryThumbnailIfNeededOnReady()
+                        }
                     }
                 }
                 .onTimeChanged { progress in
@@ -450,6 +486,19 @@ struct PlayerControlView: View {
                     handleHistoryProgressUpdate(
                         currentTime: TimeInterval(progress.currentTime)
                     )
+                    if !didRequestHistoryThumbnail {
+                        handleHistoryThumbnailIfNeededOnReady()
+                    }
+                    #if os(tvOS)
+                        // 面板显示时，.focused(equals: .controller) 所在的 GestureController
+                        // 已从视图树移除；此时若继续把焦点写回 .controller，会使面板按钮失焦，
+                        // 导致 Menu 键绕过 .onExitCommand 被系统默认行为接管，把播放器整个关掉。
+                        if !playerMaskModel.isMaskShow,
+                           tvOSFocusableView != .controller
+                        {
+                            tvOSFocusableView = .controller
+                        }
+                    #endif
                 }
                 .onBufferingStatusChanged { status in
                     handleBufferingStatus(status)
@@ -502,12 +551,31 @@ struct PlayerControlView: View {
             #endif
 
             #if os(tvOS)
-                GestureController()
-                    .environmentObject(sessionStore)
-                    .environmentObject(playerModel.playerCoordinator)
-                    .environmentObject(playerMaskModel)
-                    .environmentObject(toastModel)
-                    .ignoresSafeArea()
+                // 面板显示时把 GestureController 从视图树里移除，避免它与面板里的
+                // Button / ProgressSlider 同时可聚焦，导致面板元素拿不到焦点、
+                // .onExitCommand 里 "isMaskShow → hideMask" 分支被绕过（菜单键
+                // 被外层 fullScreenCover 的系统默认行为接管，直接关掉播放器）。
+                if !playerMaskModel.isMaskShow {
+                    GestureController()
+                        .environmentObject(sessionStore)
+                        .environmentObject(playerModel.playerCoordinator)
+                        .environmentObject(playerMaskModel)
+                        .environmentObject(toastModel)
+                        .environmentObject(tvOSPlaybackControlModel)
+                        .contentShape(Rectangle())
+                        .focused($tvOSFocusableView, equals: .controller)
+                        .onAppear {
+                            tvOSFocusableView = .controller
+                            // 从带 TextField 焦点的入口（首页 URL 输入框）进入时，
+                            // tvOS 焦点引擎可能来不及把焦点切到 GestureViewTVOS，
+                            // 延迟一帧再补一次赋值作为保险。
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(50))
+                                tvOSFocusableView = .controller
+                            }
+                        }
+                        .ignoresSafeArea()
+                }
             #endif
 
             #if os(macOS)
@@ -537,6 +605,24 @@ struct PlayerControlView: View {
             .environmentObject(playerMaskModel)
             .environmentObject(playerControlModel)
             .environmentObject(toastModel)
+            #if os(tvOS)
+                .environmentObject(tvOSPlaybackControlModel)
+                // 面板显示且焦点在面板内部时，把 Menu 键拦在这里处理：
+                // 先取消正在进行的 seek；否则收起面板，而不是让外层 fullScreenCover
+                // 走系统默认的 "dismiss modal" 把整个播放器关掉。
+                .onExitCommand {
+                    if tvOSPlaybackControlModel.isSeeking {
+                        tvOSPlaybackControlModel.cancelSeeking(
+                            progress: playerModel.playerCoordinator.progress
+                        ) {
+                            playerModel.playerCoordinator.controller?.play()
+                        }
+                        return
+                    }
+                    playerMaskModel.enableAutoHide()
+                    playerMaskModel.hideMask()
+                }
+            #endif
     }
 
     @ViewBuilder
@@ -736,6 +822,8 @@ struct PlayerControlView: View {
                     scale: 1
                 )
             else {
+                // 本次抓取失败（可能缩略图会话尚未就绪），允许后续 onTimeChanged 重试
+                didRequestHistoryThumbnail = false
                 return
             }
             PlaybackHistoryRepository.saveThumbnailIfNeeded(

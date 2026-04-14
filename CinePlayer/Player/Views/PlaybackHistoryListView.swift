@@ -3,6 +3,10 @@ import ImageIO
 import SwiftData
 import SwiftUI
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 struct PlaybackHistoryListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var sessionStore: PlayerSessionStore
@@ -16,6 +20,9 @@ struct PlaybackHistoryListView: View {
     @State private var isShowingMissingFileAlert = false
 
     var body: some View {
+        #if os(tvOS) || os(visionOS)
+        gridBody
+        #else
         List(selection: isEditing ? $selectedRecordIDs : nil) {
             ForEach(records) { record in
                 if isEditing {
@@ -92,28 +99,6 @@ struct PlaybackHistoryListView: View {
                         .disabled(selectedRecordIDs.isEmpty)
                     }
                 }
-                #elseif os(tvOS) || os(visionOS)
-                if isEditing {
-                    ToolbarItemGroup(placement: .automatic) {
-                        Button("全选") {
-                            selectedRecordIDs = Set(records.map(\.persistentModelID))
-                        }
-                        .disabled(records.isEmpty)
-
-                        Button("取消") {
-                            selectedRecordIDs.removeAll()
-                        }
-                        .disabled(selectedRecordIDs.isEmpty)
-
-                        Button(role: .destructive) {
-                            deleteSelected()
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .tint(.red)
-                        .disabled(selectedRecordIDs.isEmpty)
-                    }
-                }
                 #endif
             }
         #if os(iOS)
@@ -155,7 +140,146 @@ struct PlaybackHistoryListView: View {
                 isEditing = false
             }
         }
+        #endif
     }
+
+    #if os(tvOS) || os(visionOS)
+    private var gridBody: some View {
+        GeometryReader { geo in
+            let hPad: CGFloat = 80
+            let spacing: CGFloat = 40
+            let columnCount = 4
+            let cardWidth = (geo.size.width - hPad * 2 - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)
+
+            ScrollView {
+                LazyVGrid(
+                    columns: Array(
+                        repeating: GridItem(.flexible(), spacing: spacing, alignment: .top),
+                        count: columnCount
+                    ),
+                    spacing: spacing
+                ) {
+                    ForEach(records) { record in
+                        historyCardMenu(for: record, cardWidth: cardWidth)
+                    }
+                }
+                .padding(.horizontal, hPad)
+                .padding(.bottom, hPad)
+            }
+        }
+        .navigationTitle("历史记录")
+        .overlay {
+            if records.isEmpty {
+                ContentUnavailableView(
+                    "暂无历史记录",
+                    systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90"
+                )
+            }
+        }
+        .alert(
+            "文件不存在",
+            isPresented: $isShowingMissingFileAlert,
+            presenting: missingFileAlertRecord
+        ) { record in
+            Button("删除", role: .destructive) {
+                PlaybackHistoryRepository.delete(record, in: modelContext)
+            }
+            Button("取消", role: .cancel) {}
+        } message: { _ in
+            Text("原始文件已被删除或移动，无法播放。是否从历史记录中删除这条记录？")
+        }
+    }
+
+    private func historyCardMenu(for record: PlaybackHistoryRecord, cardWidth: CGFloat) -> some View {
+        Button {
+            reopen(record: record)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                historyCardImage(for: record, cardWidth: cardWidth)
+
+                Text(historyDisplayTitle(for: record))
+                    .font(.system(size: 25, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(record.playedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 23, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(width: cardWidth)
+        }
+        .buttonStyle(.borderless)
+        .contextMenu {
+            Button(role: .destructive) {
+                PlaybackHistoryRepository.delete(record, in: modelContext)
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func historyCardImage(for record: PlaybackHistoryRecord, cardWidth: CGFloat) -> some View {
+        let imageHeight = cardWidth * 104.0 / 184.0
+        let progressWidth = cardWidth - 32
+
+        ZStack {
+            Color(white: 0.2)
+            if let image = decodeImage(data: record.thumbnailData) {
+                image
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "film")
+                    .font(.system(size: 40, weight: .semibold))
+                    .foregroundStyle(Color(white: 0.5))
+            }
+        }
+        .frame(width: cardWidth, height: imageHeight)
+        .clipped()
+        .overlay {
+            LinearGradient(
+                stops: [
+                    .init(color: .black.opacity(0.6), location: 0.1),
+                    .init(color: .black.opacity(0.2), location: 0.25),
+                    .init(color: .black.opacity(0), location: 0.4),
+                ],
+                startPoint: .bottom,
+                endPoint: .top
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(alignment: .bottom) {
+            if record.totalDuration > 0 {
+                let fraction = min(max(0.0, record.initialPlaybackTime / record.totalDuration), 1.0)
+                let innerWidth = max(0, min(progressWidth - 6, CGFloat(fraction) * progressWidth - 6))
+                VStack(spacing: 4) {
+                    HStack {
+                        Spacer()
+                        Text("\(record.initialPlaybackTime.toString(for: .minOrHour)) / \(record.totalDuration.toString(for: .minOrHour))")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 16)
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.white.opacity(0.5))
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(.white)
+                            .frame(width: innerWidth, height: 6)
+                            .padding(.horizontal, 3)
+                    }
+                    .frame(width: progressWidth, height: 10)
+                }
+                .padding(.vertical, 16)
+            }
+        }
+        .hoverEffect(.highlight)
+    }
+    #endif
 
     private var editToggleButton: some View {
         Button(isEditing ? "完成" : "编辑") {
@@ -351,8 +475,17 @@ struct PlaybackHistoryListView: View {
     }
 
     private func decodeImage(data: Data?) -> Image? {
+        guard let data else {
+            return nil
+        }
+
+        #if canImport(UIKit)
+        if let uiImage = UIImage(data: data) {
+            return Image(uiImage: uiImage)
+        }
+        #endif
+
         guard
-            let data,
             let source = CGImageSourceCreateWithData(data as CFData, nil),
             let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil)
         else {

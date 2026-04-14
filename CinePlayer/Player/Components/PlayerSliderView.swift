@@ -553,6 +553,8 @@ struct PlayerSliderView: View {
     #else
         var isHovering: Bool
         var isSeeking: Bool = false
+        var seekingPreviewTime: Int? = nil
+        var seekingTotalTime: Int? = nil
         @Environment(\.displayScale) private var displayScale
         @State private var previewImageData: Data? = nil
         @State private var isPreviewLoading = false
@@ -575,10 +577,12 @@ struct PlayerSliderView: View {
                 )
             #else
                 VStack(spacing: 0) {
+                    let displayCurrentTime = isSeeking ? (seekingPreviewTime ?? progress.currentTime) : progress.currentTime
+                    let displayTotalTime = isSeeking ? max(seekingTotalTime ?? progress.totalTime, 1) : progress.totalTime
                     GeometryReader { geo in
                         let width = geo.size.width
-                        let currentTime = CGFloat(progress.currentTime)
-                        let totalTime = CGFloat(progress.totalTime)
+                        let currentTime = CGFloat(displayCurrentTime)
+                        let totalTime = CGFloat(displayTotalTime)
                         let controller = coordinator.controller
                         // 按视频画面原始比例计算缩略图卡片尺寸，限制在最大宽高内
                         let maxCardSize = CGSize(width: 480, height: 270)
@@ -613,7 +617,7 @@ struct PlayerSliderView: View {
                                 return nil
                             }
                             return ScrubThumbnailRequestKey(
-                                second: progress.currentTime,
+                                second: displayCurrentTime,
                                 controllerID: ObjectIdentifier(controller)
                             )
                         }()
@@ -681,7 +685,7 @@ struct PlayerSliderView: View {
                                 ScrubThumbnailCardView(
                                     imageData: previewImageData,
                                     isLoading: isPreviewLoading,
-                                    timeText: progress.currentTime.toString(for: .minOrHour),
+                                    timeText: displayCurrentTime.toString(for: .minOrHour),
                                     videoAspectRatio: videoRatio
                                 )
                                 .frame(width: previewCardSize.width, height: previewCardSize.height)
@@ -725,9 +729,9 @@ struct PlayerSliderView: View {
                     .frame(height: 24)
 
                     HStack {
-                        Text(progress.currentTime.toString(for: .minOrHour))
+                        Text(displayCurrentTime.toString(for: .minOrHour))
                         Spacer()
-                        Text(progress.totalTime.toString(for: .minOrHour))
+                        Text(displayTotalTime.toString(for: .minOrHour))
                     }
                     .font(.system(size: 23, weight: .bold))
                     .frame(maxWidth: .infinity)

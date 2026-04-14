@@ -21,4 +21,20 @@ extension View {
     func f24r() -> some View { font(.system(size: 24, weight: .regular)) }
     func f30s() -> some View { font(.system(size: 30, weight: .semibold)) }
     func f31r() -> some View { font(.system(size: 31, weight: .regular)) }
+
+    func playerToastFont() -> some View {
+        #if os(tvOS)
+            font(.system(size: 42, weight: .bold))
+        #else
+            f17s()
+        #endif
+    }
+
+    func playerToastIconFont() -> some View {
+        #if os(tvOS)
+            font(.system(size: 36, weight: .bold))
+        #else
+            f17s()
+        #endif
+    }
 }

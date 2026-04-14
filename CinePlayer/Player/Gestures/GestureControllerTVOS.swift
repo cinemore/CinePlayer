@@ -14,6 +14,7 @@ struct GestureController: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var toastModel: PlayerToastModel
+    @EnvironmentObject private var tvOSPlaybackControlModel: TVOSPlaybackControlModel
 
     @State private var continuousSeekTask: Task<Void, Never>?
     @State private var continuousSeekDirection: UISwipeGestureRecognizer.Direction?
@@ -41,6 +42,10 @@ struct GestureController: View {
 
 private extension GestureController {
     func handleSwipe(_ direction: UISwipeGestureRecognizer.Direction) {
+        guard !playerMaskModel.isMaskShow else {
+            return
+        }
+
         switch direction {
         case .left:
             let seconds = Int(Double(config.skipBackwardSeconds) * config.tvOSSwipeSkipMultiplier)
@@ -60,6 +65,10 @@ private extension GestureController {
     }
 
     func handlePress(_ direction: UISwipeGestureRecognizer.Direction) {
+        guard !playerMaskModel.isMaskShow else {
+            return
+        }
+
         switch direction {
         case .up, .down:
             showControlPanelDelayed()
@@ -84,6 +93,10 @@ private extension GestureController {
     }
 
     func handleLongPress(_ event: TVRemoteLongPressEvent) {
+        guard !playerMaskModel.isMaskShow else {
+            return
+        }
+
         switch event {
         case let .began(direction):
             beginContinuousSeek(direction: direction)
@@ -97,14 +110,18 @@ private extension GestureController {
     }
 
     func handleSelect() {
-        playerMaskModel.disableAutoHide()
+        if playerMaskModel.isMaskShow {
+            return
+        }
         playerMaskModel.showMask()
     }
 
     func showControlPanelDelayed() {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(GestureConstants.showMaskDelay))
-            playerMaskModel.disableAutoHide()
+            guard !tvOSPlaybackControlModel.isSeeking else {
+                return
+            }
             playerMaskModel.showMask()
         }
     }

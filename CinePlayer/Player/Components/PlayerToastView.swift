@@ -2,6 +2,32 @@ import CinePlayerSDK
 import Combine
 import SwiftUI
 
+enum PlayerToastLayout {
+    #if os(tvOS)
+        static let topInset: CGFloat = 44
+        static let prominentSpacing: CGFloat = 18
+        static let compactSpacing: CGFloat = 14
+        static let brightnessTrackWidth: CGFloat = 220
+        static let brightnessTrackHeight: CGFloat = 6
+        static let horizontalPadding: CGFloat = 34
+        static let verticalPadding: CGFloat = 20
+        static let cornerRadius: CGFloat = 34
+        static let minimumHeight: CGFloat = 96
+        static let progressScale: CGFloat = 1.25
+    #else
+        static let topInset: CGFloat = 28
+        static let prominentSpacing: CGFloat = 10
+        static let compactSpacing: CGFloat = 12
+        static let brightnessTrackWidth: CGFloat = 120
+        static let brightnessTrackHeight: CGFloat = 3
+        static let horizontalPadding: CGFloat = 20
+        static let verticalPadding: CGFloat = 10
+        static let cornerRadius: CGFloat = 24
+        static let minimumHeight: CGFloat = 0
+        static let progressScale: CGFloat = 0.8
+    #endif
+}
+
 @MainActor
 final class PlayerToastModel: ObservableObject {
     @Published var presentedToast: PlayerToast?
@@ -87,103 +113,115 @@ struct PlayerToastView: View {
             switch toast {
             case .playbackRate:
                 let text = "\(playbackRate.playbackRateText)x"
-                HStack(spacing: 10) {
+                HStack(spacing: PlayerToastLayout.prominentSpacing) {
                     Text(text)
                     Image(systemName: "forward.fill")
                 }
-                .f17s()
+                .playerToastFont()
             case .playbackRateChanged(let num):
                 let text = "\(num.playbackRateText)x"
-                HStack(spacing: 10) {
+                HStack(spacing: PlayerToastLayout.prominentSpacing) {
                     Text("倍速")
                     Text(text)
                 }
-                .f17s()
+                .playerToastFont()
             case .skip(let seconds), .continuousSeek(let seconds):
-                HStack(spacing: 10) {
+                HStack(spacing: PlayerToastLayout.prominentSpacing) {
                     if seconds < 0 {
                         Image(systemName: "backward.fill")
+                            .playerToastIconFont()
                     }
                     Text("\(seconds) s")
                     if seconds > 0 {
                         Image(systemName: "forward.fill")
+                            .playerToastIconFont()
                     }
                 }
-                .f17s()
+                .playerToastFont()
             case .progressChanged:
-                HStack(spacing: 10) {
+                HStack(spacing: PlayerToastLayout.prominentSpacing) {
                     Text(progress.currentTime.toString(for: .minOrHour))
                     Text("/")
                     Text(progress.totalTime.toString(for: .minOrHour))
                 }
-                .f17s()
+                .playerToastFont()
             case .brightness(let value):
-                HStack(spacing: 12) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     ZStack {
                         Image(systemName: "sun.min")
+                            .playerToastIconFont()
                             .opacity(value < 0.33 ? 1 : 0)
                         Image(systemName: "sun.min.fill")
+                            .playerToastIconFont()
                             .opacity(value >= 0.33 && value < 0.66 ? 1 : 0)
                         Image(systemName: "sun.max.fill")
+                            .playerToastIconFont()
                             .opacity(value >= 0.66 ? 1 : 0)
                     }
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.white.opacity(0.3))
-                            .frame(height: 3)
+                            .frame(height: PlayerToastLayout.brightnessTrackHeight)
                         Capsule()
                             .fill(Color.white)
-                            .frame(width: 120 * value, height: 3)
+                            .frame(
+                                width: PlayerToastLayout.brightnessTrackWidth * value,
+                                height: PlayerToastLayout.brightnessTrackHeight
+                            )
                     }
-                    .frame(width: 120)
+                    .frame(width: PlayerToastLayout.brightnessTrackWidth)
                 }
-                .f17s()
+                .playerToastFont()
             case .networkConnecting:
-                HStack(spacing: 6) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     ProgressView()
-                        .scaleEffect(0.8)
+                        .scaleEffect(PlayerToastLayout.progressScale)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("正在连接...")
                 }
-                .f17s()
+                .playerToastFont()
             case .networkRetrying(let attempt, let total):
-                HStack(spacing: 6) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     ProgressView()
-                        .scaleEffect(0.8)
+                        .scaleEffect(PlayerToastLayout.progressScale)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("网络重试中 (\(attempt)/\(total))")
                 }
-                .f17s()
+                .playerToastFont()
             case .networkSwitchingURL(let currentIndex, let totalURLs):
-                HStack(spacing: 6) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     ProgressView()
-                        .scaleEffect(0.8)
+                        .scaleEffect(PlayerToastLayout.progressScale)
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     Text("切换备用源 (\(currentIndex)/\(totalURLs))")
                 }
-                .f17s()
+                .playerToastFont()
             case .networkError(let message):
-                HStack(spacing: 6) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     Image(systemName: "wifi.exclamationmark")
+                        .playerToastIconFont()
                         .foregroundStyle(.red)
                     Text(message)
                         .lineLimit(2)
+                        .multilineTextAlignment(.center)
                 }
-                .f17s()
+                .playerToastFont()
             case .networkStable:
-                HStack(spacing: 6) {
+                HStack(spacing: PlayerToastLayout.compactSpacing) {
                     Image(systemName: "wifi")
+                        .playerToastIconFont()
                         .foregroundStyle(.green)
                     Text("连接稳定")
                 }
-                .f17s()
+                .playerToastFont()
             }
         }
         .brightness(0.2)
         .foregroundStyle(.white)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .modifier(GlassEffectModifier(cornerRadius: 24))
+        .frame(minHeight: PlayerToastLayout.minimumHeight)
+        .padding(.horizontal, PlayerToastLayout.horizontalPadding)
+        .padding(.vertical, PlayerToastLayout.verticalPadding)
+        .modifier(GlassEffectModifier(cornerRadius: PlayerToastLayout.cornerRadius))
         #if os(macOS)
             .shadow(radius: 10)
         #endif

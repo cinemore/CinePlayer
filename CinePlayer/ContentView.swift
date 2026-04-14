@@ -16,6 +16,8 @@ struct ContentView: View {
                 Label("关于", systemImage: "info.circle")
             }
         }
+        #elseif os(tvOS)
+        TVOSPlayerHostView()
         #else
         PlayerRootView()
         #endif
@@ -41,6 +43,32 @@ private struct IOSPlayerTabHostView: View {
         PlayerOpenView()
             .fullScreenCover(isPresented: isPlayerPresented) {
                 PlayerRootView()
+            }
+    }
+}
+#endif
+
+#if os(tvOS)
+private struct TVOSPlayerHostView: View {
+    @EnvironmentObject private var sessionStore: PlayerSessionStore
+    @EnvironmentObject private var playerModel: VideoPlayerModel
+
+    private var isPlayerPresented: Binding<Bool> {
+        Binding(
+            get: { sessionStore.currentSource != nil },
+            set: { isPresented in
+                if !isPresented {
+                    playerModel.close()
+                    sessionStore.close()
+                }
+            }
+        )
+    }
+
+    var body: some View {
+        PlayerOpenView()
+            .fullScreenCover(isPresented: isPlayerPresented) {
+                PlayerControlView()
             }
     }
 }

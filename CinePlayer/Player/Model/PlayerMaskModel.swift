@@ -89,6 +89,21 @@ class PlayerMaskModel: ObservableObject {
         withAnimation {
             isMaskShow = true
         }
+        // 即便 isMaskShow 已经是 true（didSet 不会触发），
+        // 也要把倒计时重置，避免"显示后立刻倒计时已耗尽"的情况。
+        resetAutoHideTimer()
+    }
+
+    /// 把自动隐藏倒计时重置为平台默认值。
+    /// 用户每次交互（焦点切换、滑动、按键等）都应调用此方法，
+    /// 保证面板在停止操作后再过完整的 delay 才隐藏。
+    func resetAutoHideTimer() {
+        #if os(macOS)
+            delayHideTime = 2
+        #else
+            delayHideTime = 3
+        #endif
+        timer?.fireDate = .distantPast
     }
 
     func hideMask() {

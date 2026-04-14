@@ -372,6 +372,9 @@ struct PlayerOpenView: View {
     #endif
 
     private func openMedia(url: URL) {
+        #if os(tvOS)
+        isURLFieldFocused = false
+        #endif
         sessionStore.open(url: url)
     }
 
