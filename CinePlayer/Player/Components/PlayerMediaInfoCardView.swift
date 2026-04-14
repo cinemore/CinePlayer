@@ -21,119 +21,128 @@ struct PlayerMediaInfoCardView: View {
         #endif
     }
 
-    private var paddingTop: CGFloat {
+    private func usesPortraitLayout(in size: CGSize) -> Bool {
         #if os(iOS)
-        PlatformServices.isIOSPlayerPortraitLock() ? padding + 44 : padding
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return PlatformServices.isIOSPlayerPortraitLock()
+        }
+
+        return size.height >= size.width
         #else
-        padding
+        false
         #endif
     }
 
-    private var paddingRight: CGFloat {
-        #if os(iOS)
-        PlatformServices.isIOSPlayerPortraitLock() ? 24 : 64
-        #else
-        24
-        #endif
+    private func paddingTop(for size: CGSize) -> CGFloat {
+        usesPortraitLayout(in: size) ? padding + 44 : padding
+    }
+
+    private func paddingRight(for size: CGSize) -> CGFloat {
+        usesPortraitLayout(in: size) ? 24 : 64
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    // 视频轨道
-                    if !videoTracks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("视频轨道")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.leading, titleLeadingPadding)
+        GeometryReader { geometry in
+            let contentPaddingTop = paddingTop(for: geometry.size)
+            let contentPaddingRight = paddingRight(for: geometry.size)
 
-                            ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
-                                HStack(alignment: .top, spacing: 16) {
-                                    ForEach(videoTracks, id: \.streamIndex) { video in
-                                        videoSection(video: video)
+            ZStack(alignment: .topTrailing) {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // 视频轨道
+                        if !videoTracks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("视频轨道")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, contentPaddingRight)
+
+                                ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
+                                    HStack(alignment: .top, spacing: 16) {
+                                        ForEach(videoTracks, id: \.streamIndex) { video in
+                                            videoSection(video: video)
+                                        }
                                     }
+                                    .padding(.horizontal, contentPaddingRight)
                                 }
-                                .padding(.horizontal, titleLeadingPadding)
+                            }
+                        }
+
+                        // 音频轨道
+                        if !audioTracks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("音频轨道")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, contentPaddingRight)
+
+                                ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
+                                    HStack(alignment: .top, spacing: 16) {
+                                        ForEach(audioTracks, id: \.streamIndex) { audio in
+                                            audioSection(audio: audio)
+                                        }
+                                    }
+                                    .padding(.horizontal, contentPaddingRight)
+                                }
+                            }
+                        }
+
+                        // 封面轨道
+                        if !coverTracks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("封面轨道")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, contentPaddingRight)
+
+                                ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
+                                    HStack(alignment: .top, spacing: 16) {
+                                        ForEach(coverTracks, id: \.streamIndex) { cover in
+                                            coverSection(cover: cover)
+                                        }
+                                    }
+                                    .padding(.horizontal, contentPaddingRight)
+                                }
+                            }
+                        }
+
+                        // 字幕轨道
+                        if !subtitleTracks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("字幕轨道")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, contentPaddingRight)
+
+                                ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
+                                    HStack(alignment: .top, spacing: 16) {
+                                        ForEach(subtitleTracks, id: \.streamIndex) { subtitle in
+                                            subtitleSection(subtitle: subtitle)
+                                        }
+                                    }
+                                    .padding(.horizontal, contentPaddingRight)
+                                }
                             }
                         }
                     }
-
-                    // 音频轨道
-                    if !audioTracks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("音频轨道")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.leading, titleLeadingPadding)
-
-                            ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
-                                HStack(alignment: .top, spacing: 16) {
-                                    ForEach(audioTracks, id: \.streamIndex) { audio in
-                                        audioSection(audio: audio)
-                                    }
-                                }
-                                .padding(.horizontal, titleLeadingPadding)
-                            }
-                        }
-                    }
-
-                    // 封面轨道
-                    if !coverTracks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("封面轨道")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.leading, titleLeadingPadding)
-
-                            ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
-                                HStack(alignment: .top, spacing: 16) {
-                                    ForEach(coverTracks, id: \.streamIndex) { cover in
-                                        coverSection(cover: cover)
-                                    }
-                                }
-                                .padding(.horizontal, titleLeadingPadding)
-                            }
-                        }
-                    }
-
-                    // 字幕轨道
-                    if !subtitleTracks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("字幕轨道")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.leading, titleLeadingPadding)
-
-                            ScrollView(.horizontal, showsIndicators: showHorizontalIndicators) {
-                                HStack(alignment: .top, spacing: 16) {
-                                    ForEach(subtitleTracks, id: \.streamIndex) { subtitle in
-                                        subtitleSection(subtitle: subtitle)
-                                    }
-                                }
-                                .padding(.horizontal, titleLeadingPadding)
-                            }
-                        }
-                    }
+                    .padding(.vertical, contentPaddingTop)
                 }
-                .padding(.vertical, paddingTop)
-            }
 
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .brightness(0.2)
-                    .f16b()
-                    .foregroundColor(.white)
-                    .frame(width: 32, height: 32)
-                    .background(.ultraThickMaterial)
-                    .clipShape(Circle())
-                    .contentShape(Circle())
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .brightness(0.2)
+                        .f16b()
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(.ultraThickMaterial)
+                        .clipShape(Circle())
+                        .contentShape(Circle())
+                }
+                .accessibilityLabel("关闭")
+                .padding(.top, 24)
+                .padding(.trailing, contentPaddingRight)
+                .buttonStyle(.plain)
             }
-            .accessibilityLabel("关闭")
-            .padding(.top, 24)
-            .padding(.trailing, paddingRight)
-            .buttonStyle(.plain)
         }
         #if os(iOS) || os(visionOS)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -149,14 +158,6 @@ struct PlayerMediaInfoCardView: View {
                 clipsContent: true
             )
         )
-        #endif
-    }
-
-    private var titleLeadingPadding: CGFloat {
-        #if os(iOS) || os(visionOS)
-        paddingRight
-        #else
-        24
         #endif
     }
 
@@ -266,6 +267,14 @@ struct PlayerMediaInfoCardView: View {
 
                 if let formatName = video.formatName, !formatName.isEmpty {
                     infoRow(label: "像素格式", value: formatName)
+                }
+
+                if let scanType = interlacedScanTypeText(for: video.fieldOrder) {
+                    infoRow(label: "扫描类型", value: scanType)
+                }
+
+                if let scanOrder = scanOrderText(for: video.fieldOrder) {
+                    infoRow(label: "扫描顺序", value: scanOrder)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -435,6 +444,22 @@ struct PlayerMediaInfoCardView: View {
         }
     }
 
+    @ViewBuilder
+    private func infoRow(label: LocalizedStringKey, value: LocalizedStringKey) -> some View {
+        GridRow(alignment: .top) {
+            (Text(label) + Text(":"))
+                .foregroundColor(.gray)
+                .f14r()
+
+            Text(value)
+                .foregroundColor(.white)
+                .f14r()
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: 200, alignment: .leading)
+                .multilineTextAlignment(.leading)
+        }
+    }
+
     private func formatBitrate(_ bitrate: Int) -> String {
         if bitrate <= 0 {
             return "未知"
@@ -459,6 +484,39 @@ struct PlayerMediaInfoCardView: View {
             return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         } else {
             return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
+
+    private func interlacedScanTypeText(for fieldOrder: FFmpegFieldOrder) -> LocalizedStringKey? {
+        switch fieldOrder {
+        case .tt,
+             .bb,
+             .tb,
+             .bt:
+            "隔行扫描 (交错)"
+        case .unknown,
+             .progressive:
+            nil
+        @unknown default:
+            nil
+        }
+    }
+
+    private func scanOrderText(for fieldOrder: FFmpegFieldOrder) -> LocalizedStringKey? {
+        switch fieldOrder {
+        case .tt:
+            "顶场优先 (TFF)"
+        case .bb:
+            "底场优先 (BFF)"
+        case .tb:
+            "底场优先 (BFF，顶场先编码)"
+        case .bt:
+            "顶场优先 (TFF，底场先编码)"
+        case .unknown,
+             .progressive:
+            nil
+        @unknown default:
+            nil
         }
     }
 }

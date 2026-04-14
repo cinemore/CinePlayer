@@ -26,12 +26,44 @@ struct PlayerOpenView: View {
         !urlInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var homeContentSpacing: CGFloat {
+        #if os(tvOS) || os(visionOS)
+        56
+        #else
+        32
+        #endif
+    }
+
+    private var brandingSize: CGFloat {
+        #if os(tvOS) || os(visionOS)
+        128
+        #else
+        86
+        #endif
+    }
+
+    private var openControlsMaxWidth: CGFloat {
+        #if os(tvOS) || os(visionOS)
+        980
+        #else
+        640
+        #endif
+    }
+
+    private var urlRowSpacing: CGFloat {
+        #if os(tvOS) || os(visionOS)
+        12
+        #else
+        8
+        #endif
+    }
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
                 backgroundLayer
 
-                VStack(spacing: 32) {
+                VStack(spacing: homeContentSpacing) {
                     topBranding
                     openControls
                 }
@@ -134,13 +166,13 @@ struct PlayerOpenView: View {
         Image("CinePlayerIcon")
             .resizable()
             .scaledToFit()
-            .frame(width: 86, height: 86)
+            .frame(width: brandingSize, height: brandingSize)
             .shadow(color: Color.black.opacity(0.2), radius: 18, y: 8)
     }
 
     private var openControls: some View {
         VStack(spacing: 32) {
-            HStack {
+            HStack(spacing: urlRowSpacing) {
                 urlPlayContainer
 
                 if hasURLInput {
@@ -153,27 +185,19 @@ struct PlayerOpenView: View {
             openFileButton
             #endif
         }
-        .frame(maxWidth: 640)
+        .frame(maxWidth: openControlsMaxWidth)
     }
 
     private static let openControlCornerRadius: CGFloat = 16
 
     private var urlPlayContainer: some View {
+        #if os(tvOS) || os(visionOS)
+        urlTextField
+            .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        #else
         HStack(alignment: .center, spacing: 8) {
-            TextField("输入视频 URL", text: $urlInput)
-            #if os(tvOS)
-                .textFieldStyle(.automatic)
-            #else
+            urlTextField
                 .textFieldStyle(.plain)
-            #endif
-                .focused($isURLFieldFocused)
-                .submitLabel(.go)
-                .onSubmit {
-                    guard let url = resolveInputURL(urlInput) else {
-                        return
-                    }
-                    openMedia(url: url)
-                }
                 .font(.system(size: 15, weight: .regular))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 16)
@@ -197,9 +221,35 @@ struct PlayerOpenView: View {
             useCapsule: true,
             clipsContent: true
         ))
+        #endif
+    }
+
+    private var urlTextField: some View {
+        TextField("输入视频 URL", text: $urlInput)
+            .focused($isURLFieldFocused)
+            .submitLabel(.go)
+            .onSubmit {
+                guard let url = resolveInputURL(urlInput) else {
+                    return
+                }
+                openMedia(url: url)
+            }
     }
 
     private var playURLButton: some View {
+        #if os(tvOS) || os(visionOS)
+        Button(action: {
+            guard let url = resolveInputURL(urlInput) else { return }
+            openMedia(url: url)
+        }) {
+            Image(systemName: "play.fill")
+                .font(.system(size: 24, weight: .bold))
+                .frame(width: 56, height: 56)
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.circle)
+        .tint(Color(red: 0.08, green: 0.5, blue: 0.97))
+        #else
         Button(action: {
             guard let url = resolveInputURL(urlInput) else { return }
             openMedia(url: url)
@@ -218,6 +268,7 @@ struct PlayerOpenView: View {
             ))
         }
         .buttonStyle(.plain)
+        #endif
     }
 
     private var orDividerRow: some View {

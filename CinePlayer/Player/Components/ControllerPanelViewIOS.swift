@@ -33,7 +33,7 @@ struct ControllerPanelViewIOS: View {
         if UIDevice.current.userInterfaceIdiom == .phone {
             return PlatformServices.isIOSPlayerPortraitLock()
         }
-        return geometry.size.height > geometry.size.width
+        return geometry.size.height >= geometry.size.width
     }
 
     var body: some View {
