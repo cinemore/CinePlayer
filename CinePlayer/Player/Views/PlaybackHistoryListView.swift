@@ -167,7 +167,6 @@ struct PlaybackHistoryListView: View {
                 .padding(.bottom, hPad)
             }
         }
-        .navigationTitle("历史记录")
         .overlay {
             if records.isEmpty {
                 ContentUnavailableView(

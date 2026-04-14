@@ -32,11 +32,13 @@ private enum ControllerPanelLayoutConstants {
     static let sectionSpacing: CGFloat = 40
 }
 
+/// 播放按钮两侧的前进/后退按钮固定秒数，与设置中的手势秒数解耦。
+private let fixedSkipSeconds: Int = 10
+
 @MainActor
 struct ControllerPanelViewTvOS: View {
     var geometry: GeometryProxy
 
-    @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerModel: VideoPlayerModel
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
@@ -45,10 +47,6 @@ struct ControllerPanelViewTvOS: View {
     @EnvironmentObject private var playerControlModel: PlayerControlModel
 
     @FocusState private var focusedItem: TVOSControlFocusItem?
-
-    private var config: PlayerControlConfig {
-        sessionStore.controlConfig
-    }
 
     private var hasSubtitleMenu: Bool {
         let hasEmbedded = !(playerCoordinator.controller?.sortByLanguageTracks(mediaType: .subtitle).isEmpty ?? true)
@@ -179,10 +177,10 @@ struct ControllerPanelViewTvOS: View {
 
     private var rewindButton: some View {
         Button {
-            playerCoordinator.controller?.skip(interval: -config.skipBackwardSeconds)
-            toastModel.show(.skip(seconds: -config.skipBackwardSeconds))
+            playerCoordinator.controller?.skip(interval: -fixedSkipSeconds)
+            toastModel.show(.skip(seconds: -fixedSkipSeconds))
         } label: {
-            Image(systemName: "gobackward.\(config.skipBackwardSeconds)")
+            Image(systemName: "gobackward.\(fixedSkipSeconds)")
                 .font(.system(size: 29, weight: .semibold))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
@@ -214,10 +212,10 @@ struct ControllerPanelViewTvOS: View {
 
     private var forwardButton: some View {
         Button {
-            playerCoordinator.controller?.skip(interval: config.skipForwardSeconds)
-            toastModel.show(.skip(seconds: config.skipForwardSeconds))
+            playerCoordinator.controller?.skip(interval: fixedSkipSeconds)
+            toastModel.show(.skip(seconds: fixedSkipSeconds))
         } label: {
-            Image(systemName: "goforward.\(config.skipForwardSeconds)")
+            Image(systemName: "goforward.\(fixedSkipSeconds)")
                 .font(.system(size: 29, weight: .semibold))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())

@@ -6,7 +6,7 @@ struct PlaySettingPage: View {
     var hideBackground: Bool = false
 
     private var gestureSectionTitleKey: LocalizedStringKey {
-        #if os(iOS) || os(visionOS)
+        #if os(iOS) || os(visionOS) || os(tvOS)
             return "手势"
         #else
             return "按键"
@@ -22,6 +22,9 @@ struct PlaySettingPage: View {
                     Toggle(isOn: $adapter.longPressSpeedUpEnabled) {
                         Text("长按倍速播放")
                     }
+                #elseif os(tvOS)
+                    PlaySettingPicker("手势后退", selection: $adapter.skipBackwardSeconds)
+                    PlaySettingPicker("手势前进", selection: $adapter.skipForwardSeconds)
                 #else
                     PlaySettingPicker("左键后退", selection: $adapter.skipBackwardSeconds)
                     PlaySettingPicker("右键前进", selection: $adapter.skipForwardSeconds)

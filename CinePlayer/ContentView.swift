@@ -66,10 +66,29 @@ private struct TVOSPlayerHostView: View {
     }
 
     var body: some View {
-        PlayerOpenView()
-            .fullScreenCover(isPresented: isPlayerPresented) {
-                PlayerControlView()
+        TabView {
+            PlayerOpenView()
+                .tabItem {
+                    Label("播放", systemImage: "play.rectangle.fill")
+                }
+
+            NavigationStack {
+                PlaybackHistoryListView()
             }
+            .tabItem {
+                Label("历史", systemImage: "clock.arrow.circlepath")
+            }
+
+            NavigationStack {
+                TVOSSettingsView()
+            }
+            .tabItem {
+                Label("设置", systemImage: "gearshape")
+            }
+        }
+        .fullScreenCover(isPresented: isPlayerPresented) {
+            PlayerControlView()
+        }
     }
 }
 #endif

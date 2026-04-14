@@ -96,7 +96,7 @@ struct PlayerOpenView: View {
                     historyButton
                 }
             }
-            #else
+            #elseif !os(tvOS)
             .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         historyButton
