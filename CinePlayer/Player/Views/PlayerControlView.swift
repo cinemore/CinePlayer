@@ -728,7 +728,7 @@ struct PlayerControlView: View {
         }
     }
 
-    private var loadingOrErrorOverlayMessage: String {
+    private var loadingOrErrorOverlayMessage: LocalizedStringKey {
         guard let toast = toastModel.presentedToast else { return "初始化中..." }
         switch toast {
         case .networkConnecting:

@@ -60,6 +60,17 @@ struct ControllerPanelViewVision: View {
             PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
 
             Spacer()
+
+            actionButton(icon: "wand.and.rays") {
+                playerControlModel.hideContainer()
+                playerControlModel.showEnhancementContainer = true
+            }
+
+            actionButton(icon: "info.circle") {
+                playerMaskModel.hideMask()
+                playerControlModel.hideContainer()
+                playerControlModel.showMediaInfoCard.toggle()
+            }
         }
     }
 

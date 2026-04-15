@@ -15,8 +15,6 @@ struct PlayerOpenView: View {
 
     @EnvironmentObject var sessionStore: PlayerSessionStore
 
-    private let defaultHint = "拖动视频文件到窗口播放"
-
     @State private var navigationPath: [OpenRoute] = []
     @State private var showFileImporter = false
     @State private var urlInput = ""
@@ -319,7 +317,7 @@ struct PlayerOpenView: View {
     private var bottomHint: some View {
         VStack {
             Spacer()
-            Text(defaultHint)
+            Text("拖动视频文件到窗口播放")
                 .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

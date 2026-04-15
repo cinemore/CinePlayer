@@ -26,10 +26,6 @@ struct AboutPage: View {
         @Environment(\.openURL) private var openURL
     #endif
 
-    private var versionText: String {
-        "版本号: \(AboutAppInfo.version) (\(AboutAppInfo.build))"
-    }
-
     var body: some View {
         #if os(macOS)
             macBody
@@ -90,7 +86,7 @@ struct AboutPage: View {
             Text("CinePlayer")
                 .font(.system(size: 24, weight: .semibold))
 
-            Text(versionText)
+            Text("版本号: \(AboutAppInfo.version) (\(AboutAppInfo.build))")
                 .f13r()
                 .foregroundStyle(.secondary)
         }
@@ -151,7 +147,7 @@ struct AboutPage: View {
         }
     }
 
-    private func linkButton(title: String, url: String) -> some View {
+    private func linkButton(title: LocalizedStringKey, url: String) -> some View {
         Button {
             openExternal(url)
         } label: {
