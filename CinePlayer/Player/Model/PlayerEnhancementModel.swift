@@ -525,15 +525,15 @@ final class PlayerEnhancementModel: ObservableObject {
 
         switch strategy {
         case .anime4k where !anime4kSectionVisible:
-            .off
+            return .off
         case .systemML where !systemMLEnhancementSupported:
-            .off
+            return .off
         case .systemML where !systemMLCurrentVideoInRange:
-            .off
+            return .off
         case .opticalFlow where !opticalFlowSectionVisible:
-            .off
+            return .off
         default:
-            strategy
+            return strategy
         }
     }
 
