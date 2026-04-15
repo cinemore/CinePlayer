@@ -113,7 +113,9 @@ private extension GestureController {
         if playerMaskModel.isMaskShow {
             return
         }
-        playerMaskModel.showMask()
+        // 用户主动按下 Select 唤起面板，关闭自动隐藏，避免打断操作；
+        // 后续由 .onExitCommand 中的 enableAutoHide()+hideMask() 恢复默认行为。
+        playerMaskModel.disableAutoHide()
     }
 
     func showControlPanelDelayed() {
@@ -122,7 +124,8 @@ private extension GestureController {
             guard !tvOSPlaybackControlModel.isSeeking else {
                 return
             }
-            playerMaskModel.showMask()
+            // 用户主动通过上/下滑动或按键唤起面板，与 handleSelect 同样关闭自动隐藏。
+            playerMaskModel.disableAutoHide()
         }
     }
 

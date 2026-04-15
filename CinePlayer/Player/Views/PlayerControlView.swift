@@ -586,7 +586,9 @@ struct PlayerControlView: View {
                     Color.black.opacity(0.001)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            playerMaskModel.showMask()
+                            // 用户主动点击唤起面板，关闭自动隐藏避免打断操作；
+                            // 后续面板空白处点击会触发 hideMask() 并恢复自动隐藏。
+                            playerMaskModel.disableAutoHide()
                         }
                         .ignoresSafeArea()
                 }
