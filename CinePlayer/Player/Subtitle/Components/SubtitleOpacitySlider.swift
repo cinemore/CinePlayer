@@ -20,7 +20,7 @@ import SwiftUI
                         .f14r()
                         .foregroundColor(.white)
                     Spacer()
-                    Text("\(Int(value * 100))%")
+                    Text(value, format: .percent.precision(.fractionLength(0)))
                         .f14m()
                         .foregroundColor(.white.opacity(0.8))
                 }

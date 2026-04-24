@@ -83,41 +83,26 @@ struct SiderEnhancementView: View {
                     }
                 }
 
-                #if DEBUG
                 Section(
-                    header: Text("系统 VT 视频增强"),
-                    footer: Text("依赖系统 VideoToolbox 能力，仅部分设备与分辨率支持。")
+                    header: Text("MetalFX 超分"),
+                    footer: Text("使用系统 MetalFX Spatial Scaler 做单帧超分。输出将按视频原始比例等比放大到目标 2K 或 4K 边界内。")
                 ) {
-                    let isAvailable =
-                        enhancementModel.systemMLEnhancementSupported
-                            && enhancementModel.systemMLCurrentVideoInRange
+                    let isAvailable = enhancementModel.metalFXSectionVisible
 
                     Toggle(
                         "开启",
                         isOn: Binding(
                             get: {
-                                enhancementModel.videoEnhancementStrategy == .systemML
-                                    && (
-                                        enhancementModel.systemMLFrameInterpolationEnabled
-                                            || enhancementModel.systemMLSuperResolutionEnabled
-                                    )
+                                enhancementModel.videoEnhancementStrategy == .metalFX
+                                    && enhancementModel.metalFXSuperResolutionEnabled
                             },
                             set: { newValue in
                                 if newValue {
-                                    enhancementModel.videoEnhancementStrategy = .systemML
-                                    if enhancementModel.systemMLCurrentVideoSupportsSuperResolution {
-                                        enhancementModel.systemMLSuperResolutionEnabled = true
-                                        enhancementModel.systemMLFrameInterpolationEnabled = false
-                                    } else if enhancementModel
-                                        .systemMLCurrentVideoSupportsFrameInterpolation
-                                    {
-                                        enhancementModel.systemMLFrameInterpolationEnabled = true
-                                        enhancementModel.systemMLSuperResolutionEnabled = false
-                                    }
+                                    enhancementModel.videoEnhancementStrategy = .metalFX
+                                    enhancementModel.metalFXSuperResolutionEnabled = true
                                 } else {
-                                    enhancementModel.systemMLSuperResolutionEnabled = false
-                                    enhancementModel.systemMLFrameInterpolationEnabled = false
-                                    if enhancementModel.videoEnhancementStrategy == .systemML {
+                                    enhancementModel.metalFXSuperResolutionEnabled = false
+                                    if enhancementModel.videoEnhancementStrategy == .metalFX {
                                         enhancementModel.videoEnhancementStrategy = .off
                                     }
                                 }
@@ -127,59 +112,148 @@ struct SiderEnhancementView: View {
                     .disabled(!isAvailable)
 
                     if isAvailable {
-                        if enhancementModel.systemMLCurrentVideoSupportsFrameInterpolation {
-                            Toggle(
-                                "VT 插帧",
-                                isOn: $enhancementModel.systemMLFrameInterpolationEnabled
-                            )
-
-                            if enhancementModel.systemMLFrameInterpolationEnabled {
-                                Picker("Scale by", selection: $enhancementModel.systemMLScaleBy) {
-                                    Text("1").tag(1)
-                                    Text("2").tag(2)
-                                }
-                                Picker(
-                                    "Frames added",
-                                    selection: $enhancementModel.systemMLInterpolatedFrames
-                                ) {
-                                    Text("1").tag(1)
-                                    Text("2").tag(2)
-                                    Text("3").tag(3)
-                                }
+                        Picker(
+                            "目标输出",
+                            selection: $enhancementModel.metalFXOutputResolution
+                        ) {
+                            ForEach(
+                                enhancementModel.metalFXSupportedOutputResolutionsForCurrentVideo,
+                                id: \.self
+                            ) { resolution in
+                                Text(resolution.displayName).tag(resolution)
                             }
                         }
 
-                        if enhancementModel.systemMLCurrentVideoSupportsSuperResolution {
-                            Toggle(
-                                "VT 超分",
-                                isOn: $enhancementModel.systemMLSuperResolutionEnabled
-                            )
-
-                            if enhancementModel.systemMLSuperResolutionEnabled {
-                                Picker(
-                                    "超分倍率",
-                                    selection: $enhancementModel.systemMLSuperResolutionScale
-                                ) {
-                                    ForEach(
-                                        enhancementModel.systemMLSupportedScaleFactorsForPicker,
-                                        id: \.self
-                                    ) { scale in
-                                        Text("\(scale, specifier: "%.2f")x").tag(scale)
-                                    }
-                                }
-
-                                Toggle(
-                                    "A/B 对比（左原图，右超分）",
-                                    isOn: $enhancementModel.systemMLABCompare
-                                )
-                            }
+                        Toggle(isOn: $enhancementModel.metalFXABCompare) {
+                            Text("A/B 对比（左原图，右超分）")
                         }
-                    } else if enhancementModel.systemMLEnhancementSupported {
-                        Text("当前视频分辨率不支持系统 VT 增强")
+
+                        if let metalFXURL = URL(string: "https://developer.apple.com/documentation/metalfx") {
+                            Link("了解 MetalFX 详情", destination: metalFXURL)
+                        }
+                    } else if !enhancementModel.metalFXSuperResolutionSupported {
+                        Text("当前设备不支持 MetalFX 超分")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("当前设备不支持系统 VT 视频增强")
+                        Text("当前视频暂不支持 MetalFX 超分")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section(
+                    header: Text("VT 超分"),
+                    footer: Text("依赖系统 VideoToolbox 低延迟超分能力。与 VT 插帧互斥：开启一项会关闭另一项。")
+                ) {
+                    let srAvailable =
+                        enhancementModel.systemMLEnhancementSupported
+                            && enhancementModel.systemMLCurrentVideoSupportsSuperResolution
+
+                    Toggle(
+                        "开启 VT 超分",
+                        isOn: Binding(
+                            get: {
+                                enhancementModel.videoEnhancementStrategy == .systemML
+                                    && enhancementModel.systemMLSuperResolutionEnabled
+                            },
+                            set: { newValue in
+                                if newValue {
+                                    enhancementModel.videoEnhancementStrategy = .systemML
+                                    enhancementModel.systemMLSuperResolutionEnabled = true
+                                    enhancementModel.systemMLFrameInterpolationEnabled = false
+                                } else {
+                                    enhancementModel.systemMLSuperResolutionEnabled = false
+                                    if enhancementModel.videoEnhancementStrategy == .systemML,
+                                       !enhancementModel.systemMLFrameInterpolationEnabled
+                                    {
+                                        enhancementModel.videoEnhancementStrategy = .off
+                                    }
+                                }
+                            }
+                        )
+                    )
+                    .disabled(!srAvailable)
+
+                    if srAvailable {
+                        if enhancementModel.systemMLSuperResolutionEnabled {
+                            Picker(
+                                "超分倍率",
+                                selection: $enhancementModel.systemMLSuperResolutionScale
+                            ) {
+                                ForEach(
+                                    enhancementModel.systemMLSupportedScaleFactorsForPicker,
+                                    id: \.self
+                                ) { scale in
+                                    Text("\(scale, specifier: "%.2f")x").tag(scale)
+                                }
+                            }
+                            Toggle(
+                                "A/B 对比（左原图，右超分）",
+                                isOn: $enhancementModel.systemMLABCompare
+                            )
+                        }
+                    } else if !enhancementModel.systemMLEnhancementSupported {
+                        Text("当前设备不支持 VT 超分")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("当前视频分辨率不支持 VT 超分")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section(
+                    header: Text("VT 插帧"),
+                    footer: Text("依赖系统 VideoToolbox 低延迟插帧能力。")
+                ) {
+                    let fiAvailable =
+                        enhancementModel.systemMLEnhancementSupported
+                            && enhancementModel.systemMLCurrentVideoSupportsFrameInterpolation
+
+                    Toggle(
+                        "开启 VT 插帧",
+                        isOn: Binding(
+                            get: {
+                                enhancementModel.videoEnhancementStrategy == .systemML
+                                    && enhancementModel.systemMLFrameInterpolationEnabled
+                            },
+                            set: { newValue in
+                                if newValue {
+                                    enhancementModel.videoEnhancementStrategy = .systemML
+                                    enhancementModel.systemMLFrameInterpolationEnabled = true
+                                    enhancementModel.systemMLSuperResolutionEnabled = false
+                                } else {
+                                    enhancementModel.systemMLFrameInterpolationEnabled = false
+                                    if enhancementModel.videoEnhancementStrategy == .systemML,
+                                       !enhancementModel.systemMLSuperResolutionEnabled
+                                    {
+                                        enhancementModel.videoEnhancementStrategy = .off
+                                    }
+                                }
+                            }
+                        )
+                    )
+                    .disabled(!fiAvailable)
+
+                    if fiAvailable {
+                        if enhancementModel.systemMLFrameInterpolationEnabled {
+                            Picker(
+                                "Frames added",
+                                selection: $enhancementModel.systemMLInterpolatedFrames
+                            ) {
+                                Text("1").tag(1)
+                                Text("2").tag(2)
+                                Text("3").tag(3)
+                            }
+                        }
+                    } else if !enhancementModel.systemMLEnhancementSupported {
+                        Text("当前设备不支持 VT 插帧")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("当前视频分辨率不支持 VT 插帧")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -214,7 +288,6 @@ struct SiderEnhancementView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                #endif
             }
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)

@@ -121,30 +121,36 @@ struct AboutPage: View {
 
     private var footerLinks: some View {
         VStack(spacing: 6) {
-            Button {
-                openExternal(AboutLinks.filing)
-            } label: {
-                Text("Copyright © 2026 Youduohong. All rights reserved.")
-                    .f12r()
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
+            filingButton
 
             HStack(spacing: 26) {
                 linkButton(title: "第三方许可信息", url: AboutLinks.licenses)
                 linkButton(title: "隐私政策", url: AboutLinks.privacy)
                 linkButton(title: "使用条款(EULA)", url: AboutLinks.eula)
             }
-
-            //            Button {
-            //                openExternal(AboutLinks.filing)
-            //            } label: {
-            //                Text("粤ICP备2022030744号-5A")
-            //                    .f12r()
-            //                    .foregroundStyle(.blue)
-            //            }
-            //            .buttonStyle(.plain)
         }
+    }
+
+    @ViewBuilder
+    private var filingButton: some View {
+        Button {
+            openExternal(AboutLinks.filing)
+        } label: {
+            #if os(iOS)
+                VStack(alignment: .center, spacing: 6) {
+                    Text("Copyright © 2026 Youduohong. All rights reserved.")
+                        .f12r()
+                    Text("粤ICP备2022030744号-6A")
+                        .f12r()
+                        .foregroundStyle(.blue)
+                }
+            #else
+                Text("Copyright © 2026 Youduohong. All rights reserved.")
+                    .f12r()
+            #endif
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
     }
 
     private func linkButton(title: LocalizedStringKey, url: String) -> some View {

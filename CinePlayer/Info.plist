@@ -73,8 +73,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -83,10 +81,10 @@
 			<key>CFBundleURLIconFile</key>
 			<string></string>
 			<key>CFBundleURLName</key>
-			<string>cn.com.cinemore.app</string>
+			<string>cn.com.cinemore.cineplayer</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>cineplayerapp</string>
+				<string>cineplayer</string>
 			</array>
 		</dict>
 		<dict>
@@ -928,7 +926,5 @@
 			</dict>
 		</dict>
 	</array>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>

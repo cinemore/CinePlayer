@@ -1,7 +1,8 @@
 import Foundation
 
-enum CinemoreLogLevel {
+nonisolated enum CinemoreLogLevel {
     case debug
+    case warning
     case error
 }
 
@@ -10,6 +11,7 @@ nonisolated func cinemoreLog(level: CinemoreLogLevel, _ message: String) {
         let prefix: String
         switch level {
         case .debug: prefix = "[DEBUG]"
+        case .warning: prefix = "[WARN]"
         case .error: prefix = "[ERROR]"
         }
         print("\(prefix) \(message)")

@@ -9,7 +9,7 @@
     /// 系统 ML 视频增强适配层：封装低延迟超分（LLSRS）与低延迟插帧（LLFI），在帧回调线程同步调用。
     /// 所有访问经内部 queue 序列化，标记为 @unchecked Sendable 以在 @Sendable 闭包中安全持有。
     @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
-    final class SystemVideoEnhancementAdapter: @unchecked Sendable {
+    nonisolated final class SystemVideoEnhancementAdapter: @unchecked Sendable {
         static let shared = SystemVideoEnhancementAdapter()
 
         private let queue = DispatchQueue(
@@ -72,7 +72,7 @@
         private var cachedPreviousForTemporal: (snapshot: PreviousVideoFrameSnapshot, generation: Int64)?
 
         /// 结束会话并释放资源。
-        func endSession() {
+        nonisolated func endSession() {
             queue.sync {
                 clearTemporalPreviousCache()
                 resetSuperResolutionSessionOnQueue()
@@ -80,9 +80,23 @@
             }
         }
 
+        /// Warm up the LLFI session before the first temporal frame arrives.
+        nonisolated func warmup(dimensions: CMVideoDimensions, scalar: Int, numFrames: Int) async {
+            await Task.detached(priority: .userInitiated) { [weak self] in
+                self?.queue.sync {
+                    let effective = scalar == 2 ? 1 : min(3, max(1, numFrames))
+                    _ = self?.ensureLLFISessionIfNeeded(
+                        dimensions: dimensions,
+                        scalar: scalar,
+                        numFrames: effective
+                    )
+                }
+            }.value
+        }
+
         /// 单帧超分处理。仅应从非主线程调用（例如 asyncVideoQueue）。
         /// - Parameter abCompareEnabled: 为 true 时返回左原图、右超分的拼接 buffer，与 Anime4K A/B 对比一致。
-        func processSingleFrame(
+        nonisolated func processSingleFrame(
             context: VideoFrameContext,
             scale: Double,
             abCompareEnabled: Bool = false
@@ -157,7 +171,7 @@
 
         /// 时域插帧：根据 prev/curr 生成 [prevTs, currTs) 内的插值帧，供 temporal 模式 replaceMany 使用。
         /// previous 为 nil 时使用内部缓存；无缓存或 generation 变更时拷贝当前帧并 passthrough，下一帧即有缓存可插帧。
-        func processTemporalFrames(
+        nonisolated func processTemporalFrames(
             previous: PreviousVideoFrameSnapshot?,
             current: VideoFrameContext,
             scalar: Int,
@@ -652,16 +666,9 @@
             guard VTLowLatencyFrameInterpolationConfiguration.isSupported else {
                 return nil
             }
-            guard let minDim = VTLowLatencySuperResolutionScalerConfiguration.minimumDimensions,
-                  let maxDim = VTLowLatencySuperResolutionScalerConfiguration.maximumDimensions
-            else {
-                return nil
-            }
-            let w = Int32(width)
-            let h = Int32(height)
-            guard w >= minDim.width, h >= minDim.height, w <= maxDim.width, h <= maxDim.height else {
-                return nil
-            }
+            // LLFI does not expose the same public min/max dimension gates as super resolution.
+            // Match cinemore: only check device capability here and let VT decide whether a
+            // concrete frameWidth/frameHeight configuration can be created.
 
             if let existing = llfiInputDimensions,
                existing.width == dimensions.width,
@@ -1328,9 +1335,71 @@
         }
     }
 
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
+    nonisolated private final class SystemVideoEnhancementTemporalProcessor: VideoFrameProcessor,
+        @unchecked Sendable
+    {
+        private let adapter: SystemVideoEnhancementAdapter
+        private let scalar: Int
+        private let numFrames: Int
+        private let buffer = TemporalReorderBuffer()
+
+        init(
+            adapter: SystemVideoEnhancementAdapter,
+            scalar: Int,
+            numFrames: Int
+        ) {
+            self.adapter = adapter
+            self.scalar = scalar
+            self.numFrames = numFrames
+        }
+
+        func onFrame(_ ctx: VideoFrameContext) -> VideoFrameResult {
+            buffer.accept(ctx) { previous, current in
+                adapter.processTemporalFrames(
+                    previous: previous,
+                    current: current,
+                    scalar: scalar,
+                    numFrames: numFrames
+                )
+            }
+        }
+
+        func onInvalidate(newGeneration _: Int64) {
+            buffer.onInvalidate()
+        }
+
+        func drainPendingFrames() -> [GeneratedVideoFrame] {
+            buffer.drainPendingFrames()
+        }
+
+        func onDrain() {
+            buffer.onDrain()
+            adapter.endSession()
+        }
+
+        var hasPendingFrames: Bool {
+            buffer.hasPendingFrames
+        }
+    }
+
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
+    extension SystemVideoEnhancementAdapter {
+        nonisolated func makeTemporalProcessor(
+            scalar: Int,
+            numFrames: Int
+        ) -> any VideoFrameProcessor {
+            SystemVideoEnhancementTemporalProcessor(
+                adapter: self,
+                scalar: scalar,
+                numFrames: numFrames
+            )
+        }
+    }
+
     /// 按 VT process(parameters) 的 yield 顺序收集输出并逐帧拷贝，保证播放顺序与时间轴一致，避免「旧画面被后播」的来回抖动。
     @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
-    private final class LLFICollectorHolder: @unchecked Sendable {
+    nonisolated private final class LLFICollectorHolder: @unchecked Sendable {
         let processor: VTFrameProcessor
         let parameters: VTLowLatencyFrameInterpolationParameters
         let copyPool: CVPixelBufferPool
@@ -1385,7 +1454,43 @@
         }
     }
 
+    /// asyncSingle processor wrapper for System VT super resolution.
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
+    nonisolated final class SystemVideoEnhancementSuperResolutionProcessor: VideoFrameProcessor,
+        @unchecked Sendable
+    {
+        private let adapter: SystemVideoEnhancementAdapter
+        private let scale: Double
+        private let abCompareEnabled: Bool
+
+        init(adapter: SystemVideoEnhancementAdapter, scale: Double, abCompareEnabled: Bool) {
+            self.adapter = adapter
+            self.scale = scale
+            self.abCompareEnabled = abCompareEnabled
+        }
+
+        func onFrame(_ ctx: VideoFrameContext) -> VideoFrameResult {
+            guard let enhanced = adapter.processSingleFrame(
+                context: ctx,
+                scale: scale,
+                abCompareEnabled: abCompareEnabled
+            ) else {
+                return .passthrough
+            }
+            return .replace(pixelBuffer: enhanced)
+        }
+
+        func onInvalidate(newGeneration _: Int64) {}
+
+        func drainPendingFrames() -> [GeneratedVideoFrame] {
+            []
+        }
+
+        func onDrain() {}
+    }
+
 #elseif !os(tvOS)
+    import CoreMedia
     import CoreVideo
     import Foundation
     import CinePlayerSDK
@@ -1393,12 +1498,12 @@
     /// 模拟器不提供 VTLowLatency* 类型，保留同名适配器空实现用于通过编译。
     /// 真机/正式运行时由非 simulator 分支提供完整 System ML 能力。
     @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
-    final class SystemVideoEnhancementAdapter: @unchecked Sendable {
+    nonisolated final class SystemVideoEnhancementAdapter: @unchecked Sendable {
         static let shared = SystemVideoEnhancementAdapter()
 
-        func endSession() {}
+        nonisolated func endSession() {}
 
-        func processSingleFrame(
+        nonisolated func processSingleFrame(
             context _: VideoFrameContext,
             scale _: Double,
             abCompareEnabled _: Bool = false
@@ -1406,7 +1511,7 @@
             nil
         }
 
-        func processTemporalFrames(
+        nonisolated func processTemporalFrames(
             previous _: PreviousVideoFrameSnapshot?,
             current _: VideoFrameContext,
             scalar _: Int,
@@ -1414,5 +1519,50 @@
         ) -> VideoFrameResult {
             .passthrough
         }
+
+        nonisolated func warmup(dimensions _: CMVideoDimensions, scalar _: Int, numFrames _: Int) async {}
+
+        nonisolated func makeTemporalProcessor(
+            scalar _: Int,
+            numFrames _: Int
+        ) -> any VideoFrameProcessor {
+            SystemVideoEnhancementTemporalProcessor()
+        }
+    }
+
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
+    nonisolated private final class SystemVideoEnhancementTemporalProcessor: VideoFrameProcessor,
+        @unchecked Sendable
+    {
+        func onFrame(_: VideoFrameContext) -> VideoFrameResult {
+            .passthrough
+        }
+
+        func onInvalidate(newGeneration _: Int64) {}
+
+        func drainPendingFrames() -> [GeneratedVideoFrame] {
+            []
+        }
+
+        func onDrain() {}
+    }
+
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *)
+    nonisolated final class SystemVideoEnhancementSuperResolutionProcessor: VideoFrameProcessor,
+        @unchecked Sendable
+    {
+        init(adapter _: SystemVideoEnhancementAdapter, scale _: Double, abCompareEnabled _: Bool) {}
+
+        func onFrame(_: VideoFrameContext) -> VideoFrameResult {
+            .passthrough
+        }
+
+        func onInvalidate(newGeneration _: Int64) {}
+
+        func drainPendingFrames() -> [GeneratedVideoFrame] {
+            []
+        }
+
+        func onDrain() {}
     }
 #endif

@@ -3,15 +3,20 @@ import SwiftUI
 import Combine
 
 #if !os(tvOS)
+import Metal
+#if canImport(MetalFX)
+@preconcurrency import MetalFX
+#endif
 #if !targetEnvironment(simulator)
 @preconcurrency import VideoToolbox
 #endif
 
-enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
+nonisolated enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
     case off
     case anime4k
     case systemML
     case opticalFlow
+    case metalFX
 
     var id: String { rawValue }
 
@@ -21,11 +26,12 @@ enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
         case .anime4k: "Anime4K"
         case .systemML: "系统 VT"
         case .opticalFlow: "光流补帧"
+        case .metalFX: "MetalFX 超分"
         }
     }
 }
 
-enum Anime4KPreset: String, CaseIterable, Identifiable {
+nonisolated enum Anime4KPreset: String, CaseIterable, Identifiable {
     case modeAFast
     case modeBFast
     case modeCFast
@@ -67,7 +73,30 @@ enum Anime4KPreset: String, CaseIterable, Identifiable {
     }
 }
 
-enum Anime4KOutputResolution: String, CaseIterable, Identifiable {
+nonisolated enum Anime4KOutputResolution: String, CaseIterable, Identifiable {
+    case resolution2K = "2K"
+    case resolution4K = "4K"
+
+    var id: String { rawValue }
+
+    var displayName: String { rawValue }
+
+    var maxWidth: Int {
+        switch self {
+        case .resolution2K: 2560
+        case .resolution4K: 3840
+        }
+    }
+
+    var maxHeight: Int {
+        switch self {
+        case .resolution2K: 1440
+        case .resolution4K: 2160
+        }
+    }
+}
+
+nonisolated enum MetalFXOutputResolution: String, CaseIterable, Identifiable {
     case resolution2K = "2K"
     case resolution4K = "4K"
 
@@ -118,15 +147,17 @@ final class PlayerEnhancementModel: ObservableObject {
             forKey: StorageKey.systemMLInterpolatedFrames,
             defaultValue: 1
         )))
-        systemMLScaleBy = max(1, min(2, Self.loadInt(
-            forKey: StorageKey.systemMLScaleBy,
-            defaultValue: Self.loadBool(
-                forKey: StorageKey.systemMLSuperResolutionEnabled,
-                defaultValue: true
-            ) ? 2 : 1
-        )))
         systemMLABCompare = Self.loadBool(
             forKey: StorageKey.systemMLABCompare,
+            defaultValue: false
+        )
+        metalFXSuperResolutionEnabled = Self.loadBool(
+            forKey: StorageKey.metalFXSuperResolutionEnabled,
+            defaultValue: false
+        )
+        metalFXOutputResolution = Self.loadMetalFXOutputResolution()
+        metalFXABCompare = Self.loadBool(
+            forKey: StorageKey.metalFXABCompare,
             defaultValue: false
         )
         suppressRuntimeCallback = false
@@ -134,6 +165,7 @@ final class PlayerEnhancementModel: ObservableObject {
 
     @Published var anime4kSectionVisible: Bool = false
     @Published var opticalFlowSectionVisible: Bool = false
+    @Published var metalFXSectionVisible: Bool = false
     @Published var anime4kEnabled: Bool = false {
         didSet { notifyRuntimeConfigChanged(resetPipeline: false) }
     }
@@ -232,21 +264,45 @@ final class PlayerEnhancementModel: ObservableObject {
         }
     }
 
-    @Published var systemMLScaleBy: Int = 1 {
+    @Published var systemMLABCompare: Bool = false {
         didSet {
-            let clamped = max(1, min(2, systemMLScaleBy))
-            if clamped != systemMLScaleBy {
-                systemMLScaleBy = clamped
-                return
-            }
-            UserDefaults.standard.set(systemMLScaleBy, forKey: StorageKey.systemMLScaleBy)
+            UserDefaults.standard.set(systemMLABCompare, forKey: StorageKey.systemMLABCompare)
             notifyRuntimeConfigChanged(resetPipeline: false)
         }
     }
 
-    @Published var systemMLABCompare: Bool = false {
+    @Published var metalFXSuperResolutionEnabled: Bool = false {
         didSet {
-            UserDefaults.standard.set(systemMLABCompare, forKey: StorageKey.systemMLABCompare)
+            if metalFXSuperResolutionEnabled, !metalFXSuperResolutionSupported {
+                metalFXSuperResolutionEnabled = false
+                return
+            }
+            UserDefaults.standard.set(
+                metalFXSuperResolutionEnabled,
+                forKey: StorageKey.metalFXSuperResolutionEnabled
+            )
+            notifyRuntimeConfigChanged(resetPipeline: false)
+        }
+    }
+
+    @Published var metalFXOutputResolution: MetalFXOutputResolution = .resolution2K {
+        didSet {
+            let supported = metalFXSupportedOutputResolutionsForCurrentVideo
+            if supported.isEmpty || supported.contains(metalFXOutputResolution) {
+                UserDefaults.standard.set(
+                    metalFXOutputResolution.rawValue,
+                    forKey: StorageKey.metalFXOutputResolution
+                )
+                notifyRuntimeConfigChanged(resetPipeline: true)
+            } else if let fallback = supported.first {
+                metalFXOutputResolution = fallback
+            }
+        }
+    }
+
+    @Published var metalFXABCompare: Bool = false {
+        didSet {
+            UserDefaults.standard.set(metalFXABCompare, forKey: StorageKey.metalFXABCompare)
             notifyRuntimeConfigChanged(resetPipeline: false)
         }
     }
@@ -275,6 +331,20 @@ final class PlayerEnhancementModel: ObservableObject {
 
     var systemMLEnhancementSupported: Bool {
         systemMLFrameInterpolationSupported || systemMLSuperResolutionSupported
+    }
+
+    var metalFXSuperResolutionSupported: Bool {
+        #if canImport(MetalFX)
+        guard #available(iOS 16.0, macOS 13.0, *) else {
+            return false
+        }
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            return false
+        }
+        return MTLFXSpatialScalerDescriptor.supportsDevice(device)
+        #else
+        return false
+        #endif
     }
 
     @Published var systemMLCurrentVideoInRange: Bool = false
@@ -306,10 +376,18 @@ final class PlayerEnhancementModel: ObservableObject {
         )
     }
 
+    var metalFXSupportedOutputResolutionsForCurrentVideo: [MetalFXOutputResolution] {
+        Self.metalFXSupportedOutputResolutions(
+            forWidth: systemMLCurrentVideoWidth,
+            height: systemMLCurrentVideoHeight
+        )
+    }
+
     func updateAvailabilityForCurrentVideo(width: Int?, height: Int?) {
         guard let width, let height, width > 0, height > 0 else {
             anime4kSectionVisible = false
             opticalFlowSectionVisible = false
+            metalFXSectionVisible = false
             systemMLCurrentVideoInRange = false
             setSystemMLCurrentVideoDimensions(width: nil, height: nil)
             if videoEnhancementStrategy != .off {
@@ -322,6 +400,10 @@ final class PlayerEnhancementModel: ObservableObject {
         opticalFlowSectionVisible = Self.isVideoResolutionInOpticalFlowRange(width: width, height: height)
         systemMLCurrentVideoInRange = Self.isVideoResolutionInSystemMLRange(width: width, height: height)
         setSystemMLCurrentVideoDimensions(width: width, height: height)
+        metalFXSectionVisible =
+            metalFXSuperResolutionSupported
+            && Self.isVideoResolutionInMetalFXRange(width: width, height: height)
+        clampMetalFXOutputResolutionToCurrentVideoIfNeeded()
 
         let clamped = clampStrategyToAvailability(videoEnhancementStrategy)
         if clamped != videoEnhancementStrategy {
@@ -350,6 +432,7 @@ final class PlayerEnhancementModel: ObservableObject {
         anime4kSectionVisible = false
         systemMLCurrentVideoInRange = false
         opticalFlowSectionVisible = false
+        metalFXSectionVisible = false
         systemMLCurrentVideoWidth = nil
         systemMLCurrentVideoHeight = nil
 
@@ -359,6 +442,8 @@ final class PlayerEnhancementModel: ObservableObject {
 
         systemMLABCompare = false
         systemMLInterpolatedFrames = 1
+        metalFXOutputResolution = .resolution2K
+        metalFXABCompare = false
 
         videoEnhancementStrategy = .off
     }
@@ -377,6 +462,13 @@ final class PlayerEnhancementModel: ObservableObject {
             return false
         }
         return width <= 1920 && height <= 1080
+    }
+
+    static func isVideoResolutionInMetalFXRange(width: Int, height: Int) -> Bool {
+        guard width > 0, height > 0 else {
+            return false
+        }
+        return !metalFXSupportedOutputResolutions(forWidth: width, height: height).isEmpty
     }
 
     static func isVideoResolutionInSystemMLRange(width: Int, height: Int) -> Bool {
@@ -412,12 +504,60 @@ final class PlayerEnhancementModel: ObservableObject {
         guard VTLowLatencyFrameInterpolationConfiguration.isSupported else {
             return false
         }
-        return isVideoResolutionInVTSuperResolutionRange(width: width, height: height)
+        return width > 0 && height > 0
         #endif
     }
 
     static var systemMLSupportedScaleFactors: [Double] {
         systemMLSupportedScaleFactors(forWidth: nil, height: nil)
+    }
+
+    static func metalFXResolvedOutputSize(
+        width: Int,
+        height: Int,
+        targetResolution: MetalFXOutputResolution
+    ) -> (width: Int, height: Int) {
+        guard width > 0, height > 0 else {
+            return (0, 0)
+        }
+        let ratio = min(
+            Double(targetResolution.maxWidth) / Double(width),
+            Double(targetResolution.maxHeight) / Double(height)
+        )
+        guard ratio > 1.0 else {
+            return (width, height)
+        }
+        return (
+            width: Int((Double(width) * ratio).rounded(.down)),
+            height: Int((Double(height) * ratio).rounded(.down))
+        )
+    }
+
+    static func metalFXSupportedOutputResolutions(
+        forWidth width: Int?,
+        height: Int?
+    ) -> [MetalFXOutputResolution] {
+        guard let width, let height, width > 0, height > 0 else {
+            return MetalFXOutputResolution.allCases
+        }
+        return MetalFXOutputResolution.allCases.filter { resolution in
+            let output = metalFXResolvedOutputSize(
+                width: width,
+                height: height,
+                targetResolution: resolution
+            )
+            return output.width > width || output.height > height
+        }
+    }
+
+    func clampMetalFXOutputResolutionToCurrentVideoIfNeeded() {
+        let supported = metalFXSupportedOutputResolutionsForCurrentVideo
+        guard !supported.isEmpty else {
+            return
+        }
+        if !supported.contains(metalFXOutputResolution) {
+            metalFXOutputResolution = supported.first ?? .resolution2K
+        }
     }
 
     static func systemMLSupportedScaleFactors(forWidth width: Int?, height: Int?) -> [Double] {
@@ -472,23 +612,16 @@ final class PlayerEnhancementModel: ObservableObject {
         static let systemMLSuperResolutionScale = "systemMLSuperResolutionScale"
         static let systemMLFrameInterpolationEnabled = "systemMLFrameInterpolationEnabled"
         static let systemMLInterpolatedFrames = "systemMLInterpolatedFrames"
-        static let systemMLScaleBy = "systemMLScaleBy"
         static let systemMLABCompare = "systemMLABCompare"
+        static let metalFXSuperResolutionEnabled = "metalFXSuperResolutionEnabled"
+        static let metalFXOutputResolution = "metalFXOutputResolution"
+        static let metalFXABCompare = "metalFXABCompare"
     }
 
     private static func loadVideoEnhancementStrategy() -> VideoEnhancementStrategy {
         let raw = UserDefaults.standard.string(forKey: StorageKey.videoEnhancementStrategy)
         let loaded =
             VideoEnhancementStrategy(rawValue: raw ?? VideoEnhancementStrategy.off.rawValue) ?? .off
-        #if !DEBUG
-        if loaded == .systemML || loaded == .opticalFlow {
-            UserDefaults.standard.set(
-                VideoEnhancementStrategy.off.rawValue,
-                forKey: StorageKey.videoEnhancementStrategy
-            )
-            return .off
-        }
-        #endif
         return loaded
     }
 
@@ -514,15 +647,6 @@ final class PlayerEnhancementModel: ObservableObject {
     }
 
     private func clampStrategyToAvailability(_ strategy: VideoEnhancementStrategy) -> VideoEnhancementStrategy {
-        #if !DEBUG
-        switch strategy {
-        case .systemML, .opticalFlow:
-            return .off
-        default:
-            break
-        }
-        #endif
-
         switch strategy {
         case .anime4k where !anime4kSectionVisible:
             return .off
@@ -532,6 +656,8 @@ final class PlayerEnhancementModel: ObservableObject {
             return .off
         case .opticalFlow where !opticalFlowSectionVisible:
             return .off
+        case .metalFX where !metalFXSectionVisible:
+            return .off
         default:
             return strategy
         }
@@ -540,11 +666,13 @@ final class PlayerEnhancementModel: ObservableObject {
     private func applyMutualExclusion(for strategy: VideoEnhancementStrategy) {
         switch strategy {
         case .anime4k:
+            metalFXSuperResolutionEnabled = false
             systemMLSuperResolutionEnabled = false
             systemMLFrameInterpolationEnabled = false
             anime4kEnabled = true
         case .systemML:
             anime4kEnabled = false
+            metalFXSuperResolutionEnabled = false
             if !systemMLSuperResolutionEnabled, !systemMLFrameInterpolationEnabled {
                 if systemMLCurrentVideoSupportsFrameInterpolation {
                     systemMLFrameInterpolationEnabled = true
@@ -554,13 +682,27 @@ final class PlayerEnhancementModel: ObservableObject {
             }
         case .opticalFlow:
             anime4kEnabled = false
+            metalFXSuperResolutionEnabled = false
             systemMLSuperResolutionEnabled = false
             systemMLFrameInterpolationEnabled = false
-        case .off:
+        case .metalFX:
             anime4kEnabled = false
             systemMLSuperResolutionEnabled = false
             systemMLFrameInterpolationEnabled = false
+            metalFXSuperResolutionEnabled = true
+        case .off:
+            anime4kEnabled = false
+            metalFXSuperResolutionEnabled = false
+            systemMLSuperResolutionEnabled = false
+            systemMLFrameInterpolationEnabled = false
         }
+    }
+
+    private static func loadMetalFXOutputResolution() -> MetalFXOutputResolution {
+        let raw = UserDefaults.standard.string(forKey: StorageKey.metalFXOutputResolution)
+        return MetalFXOutputResolution(
+            rawValue: raw ?? MetalFXOutputResolution.resolution2K.rawValue
+        ) ?? .resolution2K
     }
 }
 #endif
