@@ -244,4 +244,44 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     }
 }
 
+nonisolated private final class RifeTemporalProcessor: VideoFrameProcessor, @unchecked Sendable {
+    private let adapter: RifeFrameInterpolationAdapter
+    private let tier: RifeQualityTier
+    private let buffer = TemporalReorderBuffer()
+
+    init(adapter: RifeFrameInterpolationAdapter, tier: RifeQualityTier) {
+        self.adapter = adapter
+        self.tier = tier
+    }
+
+    func onFrame(_ ctx: VideoFrameContext) -> VideoFrameResult {
+        buffer.accept(ctx) { previous, current in
+            adapter.processTemporal(previous: previous, current: current, tier: tier)
+        }
+    }
+
+    func onInvalidate(newGeneration _: Int64) {
+        buffer.onInvalidate()
+    }
+
+    func drainPendingFrames() -> [GeneratedVideoFrame] {
+        buffer.drainPendingFrames()
+    }
+
+    func onDrain() {
+        buffer.onDrain()
+        adapter.endSession()
+    }
+
+    var hasPendingFrames: Bool {
+        buffer.hasPendingFrames
+    }
+}
+
+extension RifeFrameInterpolationAdapter {
+    nonisolated func makeTemporalProcessor(tier: RifeQualityTier) -> any VideoFrameProcessor {
+        RifeTemporalProcessor(adapter: self, tier: tier)
+    }
+}
+
 #endif
