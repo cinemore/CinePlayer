@@ -153,12 +153,14 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
                 cinemoreLog(level: .debug, "[VFI-RIFE] pixelBufferAsBGRA failed")
                 return .passthrough
             }
+            let tAfterVT = DispatchTime.now().uptimeNanoseconds
 
             guard let outBuffer = ensureOutputPool(width: width, height: height) else {
                 cinemoreLog(level: .debug, "[VFI-RIFE] ensureOutputPool failed")
                 return .passthrough
             }
             current.pixelBuffer.copyPropagatedAttachments(to: outBuffer)
+            let tAfterPool = DispatchTime.now().uptimeNanoseconds
 
             do {
                 try interp.interpolate(previous: prevBGRA, current: currBGRA, output: outBuffer)
@@ -166,6 +168,7 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
                 cinemoreLog(level: .debug, "[VFI-RIFE] interpolate failed: \(error)")
                 return .passthrough
             }
+            let tAfterInfer = DispatchTime.now().uptimeNanoseconds
 
             // 两段 duration 严格相加 == segmentDur,否则时间轴错位。
             let firstDuration = segmentDur / 2
@@ -175,10 +178,20 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
                 GeneratedVideoFrame(pixelBuffer: outBuffer, timestamp: prevTs, duration: firstDuration),
                 GeneratedVideoFrame(pixelBuffer: current.pixelBuffer, timestamp: midTs, duration: secondDuration),
             ]
-            let totalMs = Double(DispatchTime.now().uptimeNanoseconds - totalStart) / 1_000_000
+            let tEnd = DispatchTime.now().uptimeNanoseconds
+            let totalMs = Double(tEnd - totalStart) / 1_000_000
+            let vtMs    = Double(tAfterVT - totalStart)   / 1_000_000
+            let poolMs  = Double(tAfterPool - tAfterVT)   / 1_000_000
+            let inferMs = Double(tAfterInfer - tAfterPool) / 1_000_000
+            let postMs  = Double(tEnd - tAfterInfer)       / 1_000_000
             cinemoreLog(
                 level: .debug,
-                "[VFI-RIFE] diag total=\(String(format: "%.1f", totalMs))ms tier=\(activeTier.rawValue) \(width)x\(height)"
+                "[VFI-RIFE] diag total=\(String(format: "%.1f", totalMs))ms" +
+                " (vt=\(String(format: "%.1f", vtMs))" +
+                " pool=\(String(format: "%.1f", poolMs))" +
+                " infer=\(String(format: "%.1f", inferMs))" +
+                " post=\(String(format: "%.1f", postMs)))" +
+                " tier=\(activeTier.rawValue) \(width)x\(height)"
             )
 
             adaptTierIfNeededOnQueue(elapsedMs: totalMs, fps: current.fps, currentTier: activeTier)
