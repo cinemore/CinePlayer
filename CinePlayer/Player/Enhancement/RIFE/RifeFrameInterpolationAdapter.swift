@@ -37,9 +37,25 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     private var lastDims: (Int, Int)?
     private var perfSamplesMs: [Double] = []
     private var framesSinceLastSwitch: Int = 0
+    private var adaptiveDowngradeEnabled: Bool = true
     private static let perfWindowSize = 30
     private static let switchCooldownFrames = 60
     private static let downgradeBudgetRatio = 0.9 // p90 > 0.9 × budget triggers downgrade
+
+    /// Enable / disable runtime auto-downgrade. Disabled when the user picks an
+    /// explicit tier — their choice is honored even if the device can't keep up.
+    /// Disabling clears any prior auto-downgrade state so the next frame takes
+    /// the caller-provided tier.
+    nonisolated func setAdaptiveDowngradeEnabled(_ enabled: Bool) {
+        queue.sync {
+            adaptiveDowngradeEnabled = enabled
+            if !enabled {
+                effectiveTier = nil
+                perfSamplesMs.removeAll(keepingCapacity: true)
+                framesSinceLastSwitch = 0
+            }
+        }
+    }
 
     /// Called on the queue when the adapter auto-switches tiers. Consumer
     /// (VideoPlayerModel) wires this up to update `PlayerEnhancementModel.currentRifeTier`
@@ -175,6 +191,7 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     /// each tier change costs a ~200 ms graph rebuild stall, so flapping must be
     /// avoided. Once at fast, no further action.
     private func adaptTierIfNeededOnQueue(elapsedMs: Double, fps: Float, currentTier: RifeQualityTier) {
+        guard adaptiveDowngradeEnabled else { return }
         framesSinceLastSwitch += 1
         perfSamplesMs.append(elapsedMs)
         if perfSamplesMs.count > Self.perfWindowSize {

@@ -350,15 +350,17 @@ final class VideoPlayerModel: ObservableObject {
                     }
 
                     let adapter = RifeFrameInterpolationAdapter.shared
-                    let tier = enhancementModel.rifeAutoTier
+                    let tier = enhancementModel.resolvedRifeTier
+                    let adaptive = enhancementModel.rifeAdaptiveEnabled
                     enhancementModel.currentRifeTier = tier
+                    adapter.setAdaptiveDowngradeEnabled(adaptive)
                     adapter.onTierChanged = { newTier in
                         Task { @MainActor in
                             PlayerEnhancementModel.shared.currentRifeTier = newTier
                         }
                     }
                     logFrameCallbackConfigurationOnce(
-                        "RIFE frame callback enabled mode=temporal tier=\(tier.rawValue)")
+                        "RIFE frame callback enabled mode=temporal tier=\(tier.rawValue) adaptive=\(adaptive)")
                     policy = FrameCallbackPolicy(
                         enabled: true,
                         mode: .temporal(

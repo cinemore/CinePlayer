@@ -318,9 +318,16 @@ struct SiderEnhancementView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else if enhancementModel.videoEnhancementStrategy == .rife {
-                        Text("自动选档：\(enhancementModel.rifeAutoTierDisplayName)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Picker("档位", selection: $enhancementModel.rifeTierPreference) {
+                            ForEach(RifeTierPreference.allCases) { tier in
+                                Text(tier.displayName).tag(tier)
+                            }
+                        }
+                        if enhancementModel.rifeTierPreference == .auto {
+                            Text("当前档位：\(enhancementModel.rifeAutoTierDisplayName)（按设备性能自适应降档）")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 #endif

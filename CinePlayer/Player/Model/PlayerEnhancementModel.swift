@@ -78,6 +78,24 @@ nonisolated enum Anime4KPreset: String, CaseIterable, Identifiable {
     }
 }
 
+nonisolated enum RifeTierPreference: String, CaseIterable, Identifiable {
+    case auto
+    case hq
+    case balanced
+    case fast
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .auto: "自动"
+        case .hq: "HQ"
+        case .balanced: "Balanced"
+        case .fast: "Fast"
+        }
+    }
+}
+
 nonisolated enum Anime4KOutputResolution: String, CaseIterable, Identifiable {
     case resolution2K = "2K"
     case resolution4K = "4K"
@@ -165,6 +183,7 @@ final class PlayerEnhancementModel: ObservableObject {
             forKey: StorageKey.metalFXABCompare,
             defaultValue: false
         )
+        rifeTierPreference = Self.loadRifeTierPreference()
         suppressRuntimeCallback = false
     }
 
@@ -172,6 +191,16 @@ final class PlayerEnhancementModel: ObservableObject {
     @Published var opticalFlowSectionVisible: Bool = false
     @Published var metalFXSectionVisible: Bool = false
     @Published var rifeSectionVisible: Bool = false
+    @Published var rifeTierPreference: RifeTierPreference = .auto {
+        didSet {
+            UserDefaults.standard.set(
+                rifeTierPreference.rawValue,
+                forKey: StorageKey.rifeTierPreference
+            )
+            // Tier change requires graph rebuild; resetPipeline: true triggers that.
+            notifyRuntimeConfigChanged(resetPipeline: true)
+        }
+    }
     @Published var anime4kEnabled: Bool = false {
         didSet { notifyRuntimeConfigChanged(resetPipeline: false) }
     }
@@ -634,6 +663,12 @@ final class PlayerEnhancementModel: ObservableObject {
         static let metalFXSuperResolutionEnabled = "metalFXSuperResolutionEnabled"
         static let metalFXOutputResolution = "metalFXOutputResolution"
         static let metalFXABCompare = "metalFXABCompare"
+        static let rifeTierPreference = "rifeTierPreference"
+    }
+
+    private static func loadRifeTierPreference() -> RifeTierPreference {
+        let raw = UserDefaults.standard.string(forKey: StorageKey.rifeTierPreference)
+        return RifeTierPreference(rawValue: raw ?? RifeTierPreference.auto.rawValue) ?? .auto
     }
 
     private static func loadVideoEnhancementStrategy() -> VideoEnhancementStrategy {
@@ -749,13 +784,32 @@ final class PlayerEnhancementModel: ObservableObject {
         else { return .fast }
     }
 
-    /// Tier currently in use by the adapter. Mirrors `rifeAutoTier` until the
-    /// adapter auto-downgrades on perf overshoot. `nil` until the first frame is
-    /// processed (footer falls back to the static `rifeAutoTier`).
+    /// Tier currently in use by the adapter. In `.auto` preference mode this
+    /// mirrors the (possibly auto-downgraded) tier the adapter actually picked.
+    /// In manual modes this just echoes the user's choice. `nil` until the first
+    /// frame is processed.
     @Published var currentRifeTier: RifeQualityTier?
 
+    /// Tier the adapter should start with. In `.auto` mode this is the
+    /// resolution-derived `rifeAutoTier`; otherwise it's the user's explicit pick.
+    var resolvedRifeTier: RifeQualityTier {
+        switch rifeTierPreference {
+        case .auto: return rifeAutoTier
+        case .hq: return .hq
+        case .balanced: return .balanced
+        case .fast: return .fast
+        }
+    }
+
+    /// Whether runtime auto-downgrade is allowed. Only enabled when user picks
+    /// `.auto` — explicit picks are honored as-is, even if the device can't
+    /// keep up.
+    var rifeAdaptiveEnabled: Bool {
+        rifeTierPreference == .auto
+    }
+
     var rifeAutoTierDisplayName: String {
-        let tier = currentRifeTier ?? rifeAutoTier
+        let tier = currentRifeTier ?? resolvedRifeTier
         switch tier {
         case .hq: return "HQ"
         case .balanced: return "Balanced"
