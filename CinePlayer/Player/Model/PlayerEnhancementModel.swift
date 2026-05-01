@@ -389,7 +389,7 @@ final class PlayerEnhancementModel: ObservableObject {
         )
     }
 
-    func updateAvailabilityForCurrentVideo(width: Int?, height: Int?) {
+    func updateAvailabilityForCurrentVideo(width: Int?, height: Int?, isHDR: Bool = false) {
         guard let width, let height, width > 0, height > 0 else {
             anime4kSectionVisible = false
             opticalFlowSectionVisible = false
@@ -410,7 +410,10 @@ final class PlayerEnhancementModel: ObservableObject {
         metalFXSectionVisible =
             metalFXSuperResolutionSupported
             && Self.isVideoResolutionInMetalFXRange(width: width, height: height)
-        rifeSectionVisible = Self.isVideoResolutionInRifeRange(width: width, height: height)
+        // RIFE pipeline is BGRA8 end-to-end; HDR sources would be tonemapped to SDR
+        // and lose their dynamic range. Block the toggle entirely on HDR videos
+        // rather than silently downgrading.
+        rifeSectionVisible = !isHDR && Self.isVideoResolutionInRifeRange(width: width, height: height)
         clampMetalFXOutputResolutionToCurrentVideoIfNeeded()
 
         let clamped = clampStrategyToAvailability(videoEnhancementStrategy)

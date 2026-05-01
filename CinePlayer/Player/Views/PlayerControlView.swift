@@ -453,11 +453,13 @@ struct PlayerControlView: View {
                                     let size = track.naturalSize
                                     let width = Int(size.width)
                                     let height = Int(size.height)
+                                    let isHDR = track.dynamicRange != .sdr
                                     if width > 0, height > 0 {
                                         PlayerEnhancementModel.shared
                                             .updateAvailabilityForCurrentVideo(
                                                 width: width,
-                                                height: height
+                                                height: height,
+                                                isHDR: isHDR
                                             )
                                     } else {
                                         PlayerEnhancementModel.shared
