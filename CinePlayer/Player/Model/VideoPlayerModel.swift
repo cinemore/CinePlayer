@@ -314,6 +314,11 @@ final class VideoPlayerModel: ObservableObject {
                 let onEvent = makeFrameCallbackEventLogger(tag: "VFI")
                 return (policy, onEvent)
 
+            case .rife:
+                // Real handler (RifeFrameInterpolationAdapter wiring) lands in
+                // Task 8 once the adapter exists. Stub keeps the switch exhaustive.
+                return (policy, nil)
+
             case .metalFX:
                 Anime4KHostEngine.shared.reset()
                 #if !targetEnvironment(simulator)

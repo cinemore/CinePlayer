@@ -4,6 +4,9 @@ import Combine
 
 #if !os(tvOS)
 import Metal
+#if os(macOS)
+import RifeMetal
+#endif
 #if canImport(MetalFX)
 @preconcurrency import MetalFX
 #endif
@@ -16,6 +19,7 @@ nonisolated enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
     case anime4k
     case systemML
     case opticalFlow
+    case rife
     case metalFX
 
     var id: String { rawValue }
@@ -26,6 +30,7 @@ nonisolated enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
         case .anime4k: "Anime4K"
         case .systemML: "系统 VT"
         case .opticalFlow: "光流补帧"
+        case .rife: "RIFE 补帧"
         case .metalFX: "MetalFX 超分"
         }
     }
@@ -166,6 +171,7 @@ final class PlayerEnhancementModel: ObservableObject {
     @Published var anime4kSectionVisible: Bool = false
     @Published var opticalFlowSectionVisible: Bool = false
     @Published var metalFXSectionVisible: Bool = false
+    @Published var rifeSectionVisible: Bool = false
     @Published var anime4kEnabled: Bool = false {
         didSet { notifyRuntimeConfigChanged(resetPipeline: false) }
     }
@@ -388,6 +394,7 @@ final class PlayerEnhancementModel: ObservableObject {
             anime4kSectionVisible = false
             opticalFlowSectionVisible = false
             metalFXSectionVisible = false
+            rifeSectionVisible = false
             systemMLCurrentVideoInRange = false
             setSystemMLCurrentVideoDimensions(width: nil, height: nil)
             if videoEnhancementStrategy != .off {
@@ -403,6 +410,7 @@ final class PlayerEnhancementModel: ObservableObject {
         metalFXSectionVisible =
             metalFXSuperResolutionSupported
             && Self.isVideoResolutionInMetalFXRange(width: width, height: height)
+        rifeSectionVisible = Self.isVideoResolutionInRifeRange(width: width, height: height)
         clampMetalFXOutputResolutionToCurrentVideoIfNeeded()
 
         let clamped = clampStrategyToAvailability(videoEnhancementStrategy)
@@ -433,6 +441,7 @@ final class PlayerEnhancementModel: ObservableObject {
         systemMLCurrentVideoInRange = false
         opticalFlowSectionVisible = false
         metalFXSectionVisible = false
+        rifeSectionVisible = false
         systemMLCurrentVideoWidth = nil
         systemMLCurrentVideoHeight = nil
 
@@ -462,6 +471,12 @@ final class PlayerEnhancementModel: ObservableObject {
             return false
         }
         return width <= 1920 && height <= 1080
+    }
+
+    static func isVideoResolutionInRifeRange(width: Int, height: Int) -> Bool {
+        guard width > 0, height > 0 else { return false }
+        let pixels = width * height
+        return pixels >= 1280 * 720 && pixels <= 3840 * 2160
     }
 
     static func isVideoResolutionInMetalFXRange(width: Int, height: Int) -> Bool {
@@ -656,6 +671,8 @@ final class PlayerEnhancementModel: ObservableObject {
             return .off
         case .opticalFlow where !opticalFlowSectionVisible:
             return .off
+        case .rife where !rifeSectionVisible:
+            return .off
         case .metalFX where !metalFXSectionVisible:
             return .off
         default:
@@ -685,6 +702,11 @@ final class PlayerEnhancementModel: ObservableObject {
             metalFXSuperResolutionEnabled = false
             systemMLSuperResolutionEnabled = false
             systemMLFrameInterpolationEnabled = false
+        case .rife:
+            anime4kEnabled = false
+            metalFXSuperResolutionEnabled = false
+            systemMLSuperResolutionEnabled = false
+            systemMLFrameInterpolationEnabled = false
         case .metalFX:
             anime4kEnabled = false
             systemMLSuperResolutionEnabled = false
@@ -704,5 +726,26 @@ final class PlayerEnhancementModel: ObservableObject {
             rawValue: raw ?? MetalFXOutputResolution.resolution2K.rawValue
         ) ?? .resolution2K
     }
+
+    #if os(macOS)
+    var rifeAutoTier: RifeQualityTier {
+        guard let w = systemMLCurrentVideoWidth,
+              let h = systemMLCurrentVideoHeight else {
+            return .balanced
+        }
+        let pixels = w * h
+        if pixels <= 1920 * 1080 { return .hq }
+        else if pixels <= 2560 * 1440 { return .balanced }
+        else { return .fast }
+    }
+
+    var rifeAutoTierDisplayName: String {
+        switch rifeAutoTier {
+        case .hq: return "HQ"
+        case .balanced: return "Balanced"
+        case .fast: return "Fast"
+        }
+    }
+    #endif
 }
 #endif
