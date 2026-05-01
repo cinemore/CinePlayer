@@ -2,6 +2,9 @@ import CinePlayerSDK
 import Combine
 import Foundation
 import SwiftUI
+#if os(macOS)
+import RifeMetal
+#endif
 
 @MainActor
 final class VideoPlayerModel: ObservableObject {
@@ -64,6 +67,9 @@ final class VideoPlayerModel: ObservableObject {
             #endif
             MetalFXSuperResolutionAdapter.shared.endSession()
             OpticalFlowFrameInterpolationAdapter.shared.endSession()
+            #if os(macOS)
+                RifeFrameInterpolationAdapter.shared.endSession()
+            #endif
             PlayerEnhancementModel.shared.resetVideoEnhancementForNewVideoSession()
         #endif
 
@@ -153,6 +159,9 @@ final class VideoPlayerModel: ObservableObject {
                 #endif
                 MetalFXSuperResolutionAdapter.shared.endSession()
                 OpticalFlowFrameInterpolationAdapter.shared.endSession()
+                #if os(macOS)
+                    RifeFrameInterpolationAdapter.shared.endSession()
+                #endif
                 return (policy, nil)
 
             case .anime4k:
@@ -163,6 +172,9 @@ final class VideoPlayerModel: ObservableObject {
                 #endif
                 MetalFXSuperResolutionAdapter.shared.endSession()
                 OpticalFlowFrameInterpolationAdapter.shared.endSession()
+                #if os(macOS)
+                    RifeFrameInterpolationAdapter.shared.endSession()
+                #endif
 
                 let anime4kEnabled = enhancementModel.anime4kEnabled
                 let preset = enhancementModel.anime4kPreset
@@ -219,6 +231,9 @@ final class VideoPlayerModel: ObservableObject {
                     }
                     MetalFXSuperResolutionAdapter.shared.endSession()
                     OpticalFlowFrameInterpolationAdapter.shared.endSession()
+                    #if os(macOS)
+                        RifeFrameInterpolationAdapter.shared.endSession()
+                    #endif
 
                     let adapter = SystemVideoEnhancementAdapter.shared
                     let frameInterpolationEnabled =
@@ -289,6 +304,9 @@ final class VideoPlayerModel: ObservableObject {
 
             case .opticalFlow:
                 MetalFXSuperResolutionAdapter.shared.endSession()
+                #if os(macOS)
+                    RifeFrameInterpolationAdapter.shared.endSession()
+                #endif
                 guard enhancementModel.opticalFlowSectionVisible else {
                     logFrameCallbackConfigurationOnce(
                         "Optical flow not available: video not 1080p or below"
@@ -315,9 +333,40 @@ final class VideoPlayerModel: ObservableObject {
                 return (policy, onEvent)
 
             case .rife:
-                // Real handler (RifeFrameInterpolationAdapter wiring) lands in
-                // Task 8 once the adapter exists. Stub keeps the switch exhaustive.
-                return (policy, nil)
+                #if os(macOS)
+                    Anime4KHostEngine.shared.reset()
+                    #if !targetEnvironment(simulator)
+                        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *) {
+                            SystemVideoEnhancementAdapter.shared.endSession()
+                        }
+                    #endif
+                    MetalFXSuperResolutionAdapter.shared.endSession()
+                    OpticalFlowFrameInterpolationAdapter.shared.endSession()
+
+                    guard enhancementModel.rifeSectionVisible else {
+                        logFrameCallbackConfigurationOnce(
+                            "RIFE not available: video out of supported range")
+                        return (policy, nil)
+                    }
+
+                    let adapter = RifeFrameInterpolationAdapter.shared
+                    let tier = enhancementModel.rifeAutoTier
+                    logFrameCallbackConfigurationOnce(
+                        "RIFE frame callback enabled mode=temporal tier=\(tier.rawValue)")
+                    policy = FrameCallbackPolicy(
+                        enabled: true,
+                        mode: .temporal(
+                            .init(
+                                processorFactory: { adapter.makeTemporalProcessor(tier: tier) },
+                                warmup: { dims in await adapter.warmup(dimensions: dims, tier: tier) }
+                            )
+                        )
+                    )
+                    let onEvent = makeFrameCallbackEventLogger(tag: "VFI-RIFE")
+                    return (policy, onEvent)
+                #else
+                    return (policy, nil)
+                #endif
 
             case .metalFX:
                 Anime4KHostEngine.shared.reset()
@@ -327,6 +376,9 @@ final class VideoPlayerModel: ObservableObject {
                     }
                 #endif
                 OpticalFlowFrameInterpolationAdapter.shared.endSession()
+                #if os(macOS)
+                    RifeFrameInterpolationAdapter.shared.endSession()
+                #endif
                 guard enhancementModel.metalFXSectionVisible else {
                     logFrameCallbackConfigurationOnce(
                         "MetalFX super resolution unavailable for current video"
