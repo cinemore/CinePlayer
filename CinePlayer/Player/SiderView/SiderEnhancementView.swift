@@ -292,7 +292,7 @@ struct SiderEnhancementView: View {
                 #if os(macOS)
                 Section(
                     header: Text("RIFE 补帧"),
-                    footer: Text("Apple 原生 ML 补帧，720p–4K 自动选档。与光流补帧互斥，不同场景各有所长。")
+                    footer: Text("Apple 原生 ML 补帧，按分辨率自动选档（4K 以内）。与光流补帧互斥，不同场景各有所长。")
                 ) {
                     let isAvailable = enhancementModel.rifeSectionVisible
 
@@ -314,7 +314,7 @@ struct SiderEnhancementView: View {
                     .disabled(!isAvailable)
 
                     if !isAvailable {
-                        Text("当前视频分辨率不在 RIFE 支持范围内（720p–4K）")
+                        Text("当前视频分辨率超出 RIFE 支持范围（最大 4K）")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else if enhancementModel.videoEnhancementStrategy == .rife {

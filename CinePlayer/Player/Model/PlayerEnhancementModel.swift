@@ -475,8 +475,7 @@ final class PlayerEnhancementModel: ObservableObject {
 
     static func isVideoResolutionInRifeRange(width: Int, height: Int) -> Bool {
         guard width > 0, height > 0 else { return false }
-        let pixels = width * height
-        return pixels >= 1280 * 720 && pixels <= 3840 * 2160
+        return width * height <= 3840 * 2160
     }
 
     static func isVideoResolutionInMetalFXRange(width: Int, height: Int) -> Bool {
