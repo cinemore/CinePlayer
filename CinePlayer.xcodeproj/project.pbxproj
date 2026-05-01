@@ -43,6 +43,7 @@
 		DA31E35C2F4F7182008767DD /* libdav1d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3432F4F7182008767DD /* libdav1d.xcframework */; };
 		DA31E35D2F4F7182008767DD /* libavcodec.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33E2F4F7182008767DD /* libavcodec.xcframework */; };
 		DA31E35E2F4F7182008767DD /* libfribidi.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3462F4F7182008767DD /* libfribidi.xcframework */; };
+		DA88E0E92FA45A710028FD87 /* RifeMetal in Frameworks */ = {isa = PBXBuildFile; productRef = DA88E0E82FA45A710028FD87 /* RifeMetal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -140,6 +141,7 @@
 				DA31E3532F4F7182008767DD /* libharfbuzz.xcframework in Frameworks */,
 				DA31E3542F4F7182008767DD /* libfreetype.xcframework in Frameworks */,
 				DA31E3552F4F7182008767DD /* libdovi.xcframework in Frameworks */,
+				DA88E0E92FA45A710028FD87 /* RifeMetal in Frameworks */,
 				DA31E3562F4F7182008767DD /* libavfilter.xcframework in Frameworks */,
 				DA31E3572F4F7182008767DD /* libswscale.xcframework in Frameworks */,
 				DA31E3582F4F7182008767DD /* libuavs3d.xcframework in Frameworks */,
@@ -247,6 +249,7 @@
 			);
 			name = CinePlayer;
 			packageProductDependencies = (
+				DA88E0E82FA45A710028FD87 /* RifeMetal */,
 			);
 			productName = CinePlayer;
 			productReference = DA31DD5C2F4F4375008767DD /* CinePlayer.app */;
@@ -303,6 +306,9 @@
 			);
 			mainGroup = DA31DD532F4F4375008767DD;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DA88E0E72FA45A710028FD87 /* XCLocalSwiftPackageReference "../../../rife-metal" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DA31DD5D2F4F4375008767DD /* Products */;
 			projectDirPath = "";
@@ -628,6 +634,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		DA88E0E72FA45A710028FD87 /* XCLocalSwiftPackageReference "../../../rife-metal" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../rife-metal";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DA88E0E82FA45A710028FD87 /* RifeMetal */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RifeMetal;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DA31DD542F4F4375008767DD /* Project object */;
 }
