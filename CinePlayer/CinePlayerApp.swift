@@ -9,7 +9,7 @@ import AppKit
 
 @main
 struct CinePlayerApp: App {
-    @StateObject private var sessionStore = PlayerSessionStore()
+    @StateObject private var sessionStore = PlayerSessionStore.shared
     @StateObject private var playerModel = VideoPlayerModel()
 
     #if os(iOS)
@@ -60,23 +60,6 @@ struct CinePlayerApp: App {
             .modelContainer(for: [PlaybackHistoryRecord.self])
             #if os(macOS)
                 .environmentObject(windowController)
-                .onReceive(NotificationCenter.default.publisher(for: .cinePlayerOpenFileEvent)) { notification in
-                    if let url = notification.userInfo?["url"] as? URL {
-                        sessionStore.open(url: url)
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .cinePlayerURLEvent)) { notification in
-                    guard
-                        let url = notification.userInfo?["url"] as? URL,
-                        let scheme = url.scheme?.lowercased(),
-                        scheme == "http" || scheme == "https"
-                    else {
-                        return
-                    }
-
-                    cinemoreLog(level: .debug, "[OpenFlow] rootContentView open network URL: \(url.absoluteString)")
-                    sessionStore.open(url: url)
-                }
             #else
                 .onOpenURL { url in
                     if url.isFileURL {

@@ -482,6 +482,11 @@ struct PlayerControlView: View {
                     }
                 }
                 .onTimeChanged { progress in
+                    // SDK 在 in-place 换源时未必会再发 .ready/.playing 事件去复位 toast；
+                    // 用 time 推进作兜底信号 — 时间在动就肯定不是 initializing 了。
+                    if isPlayerInitializing {
+                        isPlayerInitializing = false
+                    }
                     handleHistoryRecordCreationIfNeeded(
                         currentTime: TimeInterval(progress.currentTime)
                     )
@@ -711,7 +716,7 @@ struct PlayerControlView: View {
                             .padding(.horizontal, 24)
                     }
                     .padding(32)
-                    .modifier(GlassEffectModifier(cornerRadius: 16, useCapsule: false))
+                    .modifier(LoadingOverlayBackground(cornerRadius: 16))
                 } else if showLoading {
                     VStack(spacing: 10) {
                         ProgressView()
@@ -723,7 +728,7 @@ struct PlayerControlView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 16)
-                    .modifier(GlassEffectModifier(cornerRadius: 22, useCapsule: false))
+                    .modifier(LoadingOverlayBackground(cornerRadius: 22))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

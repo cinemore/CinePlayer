@@ -4,6 +4,8 @@ import Combine
 
 @MainActor
 final class PlayerSessionStore: ObservableObject {
+    static let shared = PlayerSessionStore()
+
     @Published var currentSource: PlayerSource?
     @Published var controlConfig: PlayerControlConfig
 
