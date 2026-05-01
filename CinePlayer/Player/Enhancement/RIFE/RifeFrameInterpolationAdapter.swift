@@ -235,13 +235,9 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
            existingKey == key {
             return existing
         }
-        guard let modelURL = Bundle.main.url(forResource: "rife-v4.6", withExtension: "rmw") else {
-            cinemoreLog(level: .debug, "[VFI-RIFE] rife-v4.6.rmw not found in bundle")
-            return nil
-        }
         do {
             let interp = try RifeInterpolator(
-                configuration: .init(modelURL: modelURL, qualityTier: tier))
+                configuration: .bundled(qualityTier: tier))
             interpolator = interp
             interpolatorKey = key
             return interp
