@@ -288,6 +288,42 @@ struct SiderEnhancementView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                #if os(macOS)
+                Section(
+                    header: Text("RIFE 补帧"),
+                    footer: Text("Apple 原生 ML 补帧，720p–4K 自动选档。与光流补帧互斥，不同场景各有所长。")
+                ) {
+                    let isAvailable = enhancementModel.rifeSectionVisible
+
+                    Toggle(
+                        "开启",
+                        isOn: Binding(
+                            get: {
+                                enhancementModel.videoEnhancementStrategy == .rife
+                            },
+                            set: { newValue in
+                                if newValue {
+                                    enhancementModel.videoEnhancementStrategy = .rife
+                                } else if enhancementModel.videoEnhancementStrategy == .rife {
+                                    enhancementModel.videoEnhancementStrategy = .off
+                                }
+                            }
+                        )
+                    )
+                    .disabled(!isAvailable)
+
+                    if !isAvailable {
+                        Text("当前视频分辨率不在 RIFE 支持范围内（720p–4K）")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else if enhancementModel.videoEnhancementStrategy == .rife {
+                        Text("自动选档：\(enhancementModel.rifeAutoTierDisplayName)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                #endif
             }
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)
