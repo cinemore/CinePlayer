@@ -736,7 +736,14 @@ final class PlayerEnhancementModel: ObservableObject {
             return .balanced
         }
         let pixels = w * h
-        if pixels <= 1920 * 1080 { return .hq }
+        // Thresholds calibrated for 30 fps real-time on M-series Mac. Inference
+        // time scales roughly linearly with pixel count; budget per inference is
+        // ~33 ms (one inference per source frame pair, source inter-frame at 30 fps).
+        //   hq:       8 ms @ 720p,  55 ms @ 1080p
+        //   balanced: 4 ms @ 720p,  17 ms @ 1080p, 30 ms @ 1440p
+        //   fast:     2 ms @ 720p,   8 ms @ 1080p, 14 ms @ 1440p, 31 ms @ 4K
+        // Using hq above 720p risks overshoot on 30 fps content (visible jitter).
+        if pixels <= 1280 * 720 { return .hq }
         else if pixels <= 2560 * 1440 { return .balanced }
         else { return .fast }
     }
