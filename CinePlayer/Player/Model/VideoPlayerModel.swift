@@ -46,6 +46,14 @@ final class VideoPlayerModel: ObservableObject {
         newConfig.autoPlay = true
         configureSubtitleTranslate(for: newConfig, mode: controlConfig.subtitleTranslateMode)
         configureFrameCallback(for: newConfig)
+
+        // SDK 是 imperative 模型：CinePlayer.updateView 不监听 config 变化，
+        // 已有 controller 时必须显式调 replace 才能切源并触发 .ready 状态流。
+        // 首次播放（controller 为 nil）由 SwiftUI 的 makeView 创建 controller。
+        if let controller = playerCoordinator.controller {
+            newConfig.subtitleStyle = config.subtitleStyle
+            controller.replace(config: newConfig)
+        }
         config = newConfig
     }
 

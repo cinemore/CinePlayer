@@ -117,8 +117,6 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// 单一入口：把 URL 直接交给 sessionStore 触发 replace 语义，并保证主窗口可见。
-    /// 不再走 NotificationCenter — 通知在 SwiftUI Window Scene 切换的窗口期可能丢失。
     @MainActor
     private func routeOpen(url: URL) {
         guard Self.isSupportedScheme(url) else {
@@ -129,13 +127,13 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         cinemoreLog(level: .debug, "[OpenFlow] application:open dispatched url=\(url)")
 
         guard NSApp.isActive else {
-            // Cold launch / 后台被唤起：SwiftUI 自己会建窗口，rescue 无意义且会
-            // 触发 AppKit 在初始化窗口上的 constraint loop crash。
+            // 冷启动期间触碰仍在初始化的 SwiftUI 窗口会触发 AppKit constraint loop crash；
+            // 此时 SwiftUI 会自己建窗口，无需救援。
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        // app 已在运行收到新 open：SwiftUI 会把现有窗口 orderOut，这里推迟一次 orderFront
-        // 把它救回来。避开同步调用，留给 SwiftUI 完成自己的 close 流程。
+        // SwiftUI Window Scene 收到 open 事件会把现有窗口 orderOut，等它做完自己的
+        // close 流程后再 orderFront 回来，避免用户看到窗口消失。
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             guard let window = Self.findMainSceneWindow(), !window.isVisible else { return }
             window.makeKeyAndOrderFront(nil)

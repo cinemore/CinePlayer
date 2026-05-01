@@ -114,9 +114,9 @@ struct GlassEffectModifier: ViewModifier {
     }
 }
 
-/// 经典磨砂材质背景，与 `GlassEffectModifier` 同形但强制走 `.regularMaterial`。
-/// 给浮在视频帧之上的 toast 用 —— macOS 26 的 `.glassEffect(in: .rect)` 折射会把
-/// 上方 Text 在透过 AVSampleBufferDisplayLayer 时映射成镜像；`.capsule` 不会。
+/// 浮在视频帧之上的 toast 必须用 `.regularMaterial` 而非 `.glassEffect(in: .rect)`：
+/// macOS 26 的矩形玻璃折射会把上方 Text 在透过 AVSampleBufferDisplayLayer 时
+/// 映射成镜像（`.capsule` 形状不会出现该伪影）。
 struct LoadingOverlayBackground: ViewModifier {
     let cornerRadius: CGFloat
 

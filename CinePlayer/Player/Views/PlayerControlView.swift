@@ -482,11 +482,6 @@ struct PlayerControlView: View {
                     }
                 }
                 .onTimeChanged { progress in
-                    // SDK 在 in-place 换源时未必会再发 .ready/.playing 事件去复位 toast；
-                    // 用 time 推进作兜底信号 — 时间在动就肯定不是 initializing 了。
-                    if isPlayerInitializing {
-                        isPlayerInitializing = false
-                    }
                     handleHistoryRecordCreationIfNeeded(
                         currentTime: TimeInterval(progress.currentTime)
                     )
