@@ -445,6 +445,7 @@ final class PlayerEnhancementModel: ObservableObject {
         opticalFlowSectionVisible = false
         metalFXSectionVisible = false
         rifeSectionVisible = false
+        currentRifeTier = nil
         systemMLCurrentVideoWidth = nil
         systemMLCurrentVideoHeight = nil
 
@@ -730,26 +731,32 @@ final class PlayerEnhancementModel: ObservableObject {
     }
 
     #if os(macOS)
+    /// Initial tier picked from current video resolution. The adapter may downgrade
+    /// at runtime if measured inference time exceeds the source-fps budget; the
+    /// active tier is reflected in `currentRifeTier` (published by the adapter
+    /// callback).
     var rifeAutoTier: RifeQualityTier {
         guard let w = systemMLCurrentVideoWidth,
               let h = systemMLCurrentVideoHeight else {
             return .balanced
         }
         let pixels = w * h
-        // Thresholds calibrated for 30 fps real-time on M-series Mac. Inference
-        // time scales roughly linearly with pixel count; budget per inference is
-        // ~33 ms (one inference per source frame pair, source inter-frame at 30 fps).
-        //   hq:       8 ms @ 720p,  55 ms @ 1080p
-        //   balanced: 4 ms @ 720p,  17 ms @ 1080p, 30 ms @ 1440p
-        //   fast:     2 ms @ 720p,   8 ms @ 1080p, 14 ms @ 1440p, 31 ms @ 4K
-        // Using hq above 720p risks overshoot on 30 fps content (visible jitter).
+        // Conservative initial picks calibrated for 30 fps real-time on M-series
+        // Mac. The adapter's runtime downgrade catches devices/content where these
+        // are still too aggressive (e.g., M1 base, 60 fps source).
         if pixels <= 1280 * 720 { return .hq }
         else if pixels <= 2560 * 1440 { return .balanced }
         else { return .fast }
     }
 
+    /// Tier currently in use by the adapter. Mirrors `rifeAutoTier` until the
+    /// adapter auto-downgrades on perf overshoot. `nil` until the first frame is
+    /// processed (footer falls back to the static `rifeAutoTier`).
+    @Published var currentRifeTier: RifeQualityTier?
+
     var rifeAutoTierDisplayName: String {
-        switch rifeAutoTier {
+        let tier = currentRifeTier ?? rifeAutoTier
+        switch tier {
         case .hq: return "HQ"
         case .balanced: return "Balanced"
         case .fast: return "Fast"

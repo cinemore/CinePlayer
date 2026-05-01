@@ -29,6 +29,23 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     private var bgraConversionPoolKey: (Int, Int)?
     private var pixelTransferSession: VTPixelTransferSession?
 
+    // Adaptive tier downgrade. Caller passes a preferred tier from static
+    // resolution-based logic; if measured inference time consistently exceeds
+    // the source-fps budget, we downgrade (hq → balanced → fast). Never
+    // upgrades — avoids tier-flapping (each switch costs a ~200ms graph rebuild).
+    private var effectiveTier: RifeQualityTier?
+    private var lastDims: (Int, Int)?
+    private var perfSamplesMs: [Double] = []
+    private var framesSinceLastSwitch: Int = 0
+    private static let perfWindowSize = 30
+    private static let switchCooldownFrames = 60
+    private static let downgradeBudgetRatio = 0.9 // p90 > 0.9 × budget triggers downgrade
+
+    /// Called on the queue when the adapter auto-switches tiers. Consumer
+    /// (VideoPlayerModel) wires this up to update `PlayerEnhancementModel.currentRifeTier`
+    /// for the UI footer.
+    var onTierChanged: (@Sendable (RifeQualityTier) -> Void)?
+
     /// 结束会话并释放资源。
     nonisolated func endSession() {
         queue.sync {
@@ -42,6 +59,10 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
                 VTPixelTransferSessionInvalidate(session)
             }
             pixelTransferSession = nil
+            effectiveTier = nil
+            lastDims = nil
+            perfSamplesMs.removeAll(keepingCapacity: true)
+            framesSinceLastSwitch = 0
         }
     }
 
@@ -97,7 +118,17 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
             let height = CVPixelBufferGetHeight(current.pixelBuffer)
             guard width > 0, height > 0 else { return .passthrough }
 
-            guard let interp = ensureInterpolatorOnQueue(width: width, height: height, tier: tier) else {
+            // Reset adaptive state on dimension change (different perf characteristics).
+            let dims = (width, height)
+            if lastDims.map({ $0 != dims }) ?? true {
+                effectiveTier = tier
+                perfSamplesMs.removeAll(keepingCapacity: true)
+                framesSinceLastSwitch = 0
+                lastDims = dims
+            }
+            let activeTier = effectiveTier ?? tier
+
+            guard let interp = ensureInterpolatorOnQueue(width: width, height: height, tier: activeTier) else {
                 return .passthrough
             }
 
@@ -131,10 +162,47 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
             let totalMs = Double(DispatchTime.now().uptimeNanoseconds - totalStart) / 1_000_000
             cinemoreLog(
                 level: .debug,
-                "[VFI-RIFE] diag total=\(String(format: "%.1f", totalMs))ms tier=\(tier.rawValue) \(width)x\(height)"
+                "[VFI-RIFE] diag total=\(String(format: "%.1f", totalMs))ms tier=\(activeTier.rawValue) \(width)x\(height)"
             )
+
+            adaptTierIfNeededOnQueue(elapsedMs: totalMs, fps: current.fps, currentTier: activeTier)
             return .replaceMany(generated)
         }
+    }
+
+    /// Single-direction adaptive tier control: downgrade hq → balanced → fast when
+    /// measured p90 inference time exceeds the source-fps budget. Never upgrades —
+    /// each tier change costs a ~200 ms graph rebuild stall, so flapping must be
+    /// avoided. Once at fast, no further action.
+    private func adaptTierIfNeededOnQueue(elapsedMs: Double, fps: Float, currentTier: RifeQualityTier) {
+        framesSinceLastSwitch += 1
+        perfSamplesMs.append(elapsedMs)
+        if perfSamplesMs.count > Self.perfWindowSize {
+            perfSamplesMs.removeFirst()
+        }
+
+        guard let next = currentTier.downgraded() else { return }
+        guard perfSamplesMs.count >= Self.perfWindowSize,
+              framesSinceLastSwitch >= Self.switchCooldownFrames,
+              fps > 0.5 else { return }
+
+        let budgetMs = 1000.0 / Double(fps)
+        let sorted = perfSamplesMs.sorted()
+        let p90 = sorted[Int(Double(sorted.count) * 0.9)]
+        guard p90 > budgetMs * Self.downgradeBudgetRatio else { return }
+
+        cinemoreLog(
+            level: .warning,
+            "[VFI-RIFE] auto-downgrade \(currentTier.rawValue) → \(next.rawValue) (p90=\(String(format: "%.1f", p90))ms budget=\(String(format: "%.1f", budgetMs))ms fps=\(fps))"
+        )
+        effectiveTier = next
+        framesSinceLastSwitch = 0
+        perfSamplesMs.removeAll(keepingCapacity: true)
+        // Force RifeInterpolator rebuild on next frame with the new tier.
+        interpolator = nil
+        interpolatorKey = nil
+        let cb = onTierChanged
+        cb?(next)
     }
 
     // MARK: - Private (queue-confined)
@@ -281,6 +349,16 @@ nonisolated private final class RifeTemporalProcessor: VideoFrameProcessor, @unc
 extension RifeFrameInterpolationAdapter {
     nonisolated func makeTemporalProcessor(tier: RifeQualityTier) -> any VideoFrameProcessor {
         RifeTemporalProcessor(adapter: self, tier: tier)
+    }
+}
+
+private extension RifeQualityTier {
+    nonisolated func downgraded() -> RifeQualityTier? {
+        switch self {
+        case .hq: return .balanced
+        case .balanced: return .fast
+        case .fast: return nil
+        }
     }
 }
 
