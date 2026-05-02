@@ -20,7 +20,8 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
 
     // RIFE state — rebuilt when (width, height, tier) changes.
     private var interpolator: RifeInterpolator?
-    private var interpolatorKey: (Int, Int, RifeQualityTier)?
+    private var stream: RifeStream?
+    private var streamKey: (Int, Int, RifeQualityTier)?
 
     // Per-resolution pixel buffer pools.
     private var outputPool: CVPixelBufferPool?
@@ -65,8 +66,9 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     /// 结束会话并释放资源。
     nonisolated func endSession() {
         queue.sync {
+            stream = nil
+            streamKey = nil
             interpolator = nil
-            interpolatorKey = nil
             outputPool = nil
             outputPoolKey = nil
             bgraConversionPool = nil
@@ -87,7 +89,7 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     nonisolated func warmup(dimensions: CMVideoDimensions, tier: RifeQualityTier) async {
         await Task.detached(priority: .userInitiated) { [weak self] in
             self?.queue.sync {
-                _ = self?.ensureInterpolatorOnQueue(
+                _ = self?.ensureStreamOnQueue(
                     width: Int(dimensions.width),
                     height: Int(dimensions.height),
                     tier: tier
@@ -144,12 +146,12 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
             }
             let activeTier = effectiveTier ?? tier
 
-            guard let interp = ensureInterpolatorOnQueue(width: width, height: height, tier: activeTier) else {
+            guard let stream = ensureStreamOnQueue(width: width, height: height, tier: activeTier) else {
                 return .passthrough
             }
 
-            guard let prevBGRA = pixelBufferAsBGRAOnQueue(previous.pixelBuffer, width: width, height: height),
-                  let currBGRA = pixelBufferAsBGRAOnQueue(current.pixelBuffer,  width: width, height: height) else {
+            // Stream caches the prev frame internally; we only need curr.
+            guard let currBGRA = pixelBufferAsBGRAOnQueue(current.pixelBuffer, width: width, height: height) else {
                 cinemoreLog(level: .debug, "[VFI-RIFE] pixelBufferAsBGRA failed")
                 return .passthrough
             }
@@ -162,13 +164,25 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
             current.pixelBuffer.copyPropagatedAttachments(to: outBuffer)
             let tAfterPool = DispatchTime.now().uptimeNanoseconds
 
+            let didWriteMidframe: Bool
             do {
-                try interp.interpolate(previous: prevBGRA, current: currBGRA, output: outBuffer)
+                didWriteMidframe = try stream.push(currBGRA, into: outBuffer)
             } catch {
-                cinemoreLog(level: .debug, "[VFI-RIFE] interpolate failed: \(error)")
+                cinemoreLog(level: .debug, "[VFI-RIFE] stream.push failed: \(error)")
                 return .passthrough
             }
             let tAfterInfer = DispatchTime.now().uptimeNanoseconds
+
+            if !didWriteMidframe {
+                // First push of this stream session: nothing to interpolate yet.
+                // Emit the current frame as a single-frame anchor (matches the
+                // segmentDur < 2 fallback below).
+                return .replaceMany([
+                    GeneratedVideoFrame(pixelBuffer: current.pixelBuffer,
+                                         timestamp: prevTs,
+                                         duration: segmentDur)
+                ])
+            }
 
             // 两段 duration 严格相加 == segmentDur,否则时间轴错位。
             let firstDuration = segmentDur / 2
@@ -196,6 +210,15 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
 
             adaptTierIfNeededOnQueue(elapsedMs: totalMs, fps: current.fps, currentTier: activeTier)
             return .replaceMany(generated)
+        }
+    }
+
+    /// Drop the stream's cached previous-frame state. Called on seek /
+    /// generation change so the next push goes through the first-frame path
+    /// instead of interpolating across a discontinuity.
+    nonisolated func resetStream() {
+        queue.sync {
+            stream?.reset()
         }
     }
 
@@ -228,34 +251,37 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
         effectiveTier = next
         framesSinceLastSwitch = 0
         perfSamplesMs.removeAll(keepingCapacity: true)
-        // Force RifeInterpolator rebuild on next frame with the new tier.
+        // Force RifeStream rebuild on next frame with the new tier.
+        stream = nil
+        streamKey = nil
         interpolator = nil
-        interpolatorKey = nil
         let cb = onTierChanged
         cb?(next)
     }
 
     // MARK: - Private (queue-confined)
 
-    private func ensureInterpolatorOnQueue(
+    private func ensureStreamOnQueue(
         width: Int,
         height: Int,
         tier: RifeQualityTier
-    ) -> RifeInterpolator? {
+    ) -> RifeStream? {
         let key = (width, height, tier)
-        if let existing = interpolator,
-           let existingKey = interpolatorKey,
+        if let existing = stream,
+           let existingKey = streamKey,
            existingKey == key {
             return existing
         }
         do {
             let interp = try RifeInterpolator(
                 configuration: .bundled(qualityTier: tier))
+            let s = try interp.makeStream(width: width, height: height)
             interpolator = interp
-            interpolatorKey = key
-            return interp
+            stream = s
+            streamKey = key
+            return s
         } catch {
-            cinemoreLog(level: .debug, "[VFI-RIFE] RifeInterpolator init failed: \(error)")
+            cinemoreLog(level: .debug, "[VFI-RIFE] makeStream init failed: \(error)")
             return nil
         }
     }
@@ -355,6 +381,7 @@ nonisolated private final class RifeTemporalProcessor: VideoFrameProcessor, @unc
     }
 
     func onInvalidate(newGeneration _: Int64) {
+        adapter.resetStream()
         buffer.onInvalidate()
     }
 
