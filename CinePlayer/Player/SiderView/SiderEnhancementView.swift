@@ -13,6 +13,54 @@ struct SiderEnhancementView: View {
                 .padding()
 
             Form {
+                #if os(macOS)
+                Section(
+                    header: Text("RIFE 补帧"),
+                    footer: Text("Apple 原生 ML 补帧，按分辨率自动选档（4K 以内，仅 SDR）。与光流补帧互斥，不同场景各有所长。")
+                ) {
+                    let isAvailable = enhancementModel.rifeSectionVisible
+
+                    Toggle(
+                        "开启",
+                        isOn: Binding(
+                            get: {
+                                enhancementModel.videoEnhancementStrategy == .rife
+                            },
+                            set: { newValue in
+                                if newValue {
+                                    enhancementModel.videoEnhancementStrategy = .rife
+                                } else if enhancementModel.videoEnhancementStrategy == .rife {
+                                    enhancementModel.videoEnhancementStrategy = .off
+                                }
+                            }
+                        )
+                    )
+                    .disabled(!isAvailable)
+
+                    if !isAvailable {
+                        Text("当前视频不在 RIFE 支持范围（最大 4K，仅 SDR）")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        if enhancementModel.videoEnhancementStrategy == .rife {
+                            Picker("档位", selection: $enhancementModel.rifeTierPreference) {
+                                ForEach(RifeTierPreference.allCases) { tier in
+                                    Text(tier.displayName).tag(tier)
+                                }
+                            }
+                            if enhancementModel.rifeTierPreference == .auto {
+                                Text("当前档位：\(enhancementModel.rifeAutoTierDisplayName)（按设备性能自适应降档）")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        if let rifeURL = URL(string: "https://github.com/hzwer/Practical-RIFE") {
+                            Link("了解 RIFE 详情", destination: rifeURL)
+                        }
+                    }
+                }
+                #endif
+
                 Section(
                     header: Text("Anime4K 超分"),
                     footer: Text("仅对低像素的视频开启，为实验功能，会增加耗电与发热。")
@@ -288,49 +336,6 @@ struct SiderEnhancementView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-
-                #if os(macOS)
-                Section(
-                    header: Text("RIFE 补帧"),
-                    footer: Text("Apple 原生 ML 补帧，按分辨率自动选档（4K 以内，仅 SDR）。与光流补帧互斥，不同场景各有所长。")
-                ) {
-                    let isAvailable = enhancementModel.rifeSectionVisible
-
-                    Toggle(
-                        "开启",
-                        isOn: Binding(
-                            get: {
-                                enhancementModel.videoEnhancementStrategy == .rife
-                            },
-                            set: { newValue in
-                                if newValue {
-                                    enhancementModel.videoEnhancementStrategy = .rife
-                                } else if enhancementModel.videoEnhancementStrategy == .rife {
-                                    enhancementModel.videoEnhancementStrategy = .off
-                                }
-                            }
-                        )
-                    )
-                    .disabled(!isAvailable)
-
-                    if !isAvailable {
-                        Text("当前视频不在 RIFE 支持范围（最大 4K，仅 SDR）")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else if enhancementModel.videoEnhancementStrategy == .rife {
-                        Picker("档位", selection: $enhancementModel.rifeTierPreference) {
-                            ForEach(RifeTierPreference.allCases) { tier in
-                                Text(tier.displayName).tag(tier)
-                            }
-                        }
-                        if enhancementModel.rifeTierPreference == .auto {
-                            Text("当前档位：\(enhancementModel.rifeAutoTierDisplayName)（按设备性能自适应降档）")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                #endif
             }
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)
