@@ -140,9 +140,9 @@ struct AboutPage: View {
                 VStack(alignment: .center, spacing: 6) {
                     Text("Copyright © 2026 Youduohong. All rights reserved.")
                         .f12r()
-                    Text("粤ICP备2022030744号-6A")
-                        .f12r()
-                        .foregroundStyle(.blue)
+//                    Text("粤ICP备2022030744号-6A")
+//                        .f12r()
+//                        .foregroundStyle(.blue)
                 }
             #else
                 Text("Copyright © 2026 Youduohong. All rights reserved.")
