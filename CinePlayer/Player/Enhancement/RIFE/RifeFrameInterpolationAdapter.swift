@@ -19,7 +19,8 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
     )
 
     // RIFE state — rebuilt when (width, height, tier) changes.
-    private var interpolator: RifeInterpolator?
+    // Note: stream holds a strong ref to its parent RifeInterpolator internally,
+    // so we don't need a separate field here.
     private var stream: RifeStream?
     private var streamKey: (Int, Int, RifeQualityTier)?
 
@@ -68,7 +69,6 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
         queue.sync {
             stream = nil
             streamKey = nil
-            interpolator = nil
             outputPool = nil
             outputPoolKey = nil
             bgraConversionPool = nil
@@ -254,7 +254,6 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
         // Force RifeStream rebuild on next frame with the new tier.
         stream = nil
         streamKey = nil
-        interpolator = nil
         let cb = onTierChanged
         cb?(next)
     }
@@ -276,7 +275,6 @@ nonisolated final class RifeFrameInterpolationAdapter: @unchecked Sendable {
             let interp = try RifeInterpolator(
                 configuration: .bundled(qualityTier: tier))
             let s = try interp.makeStream(width: width, height: height)
-            interpolator = interp
             stream = s
             streamKey = key
             return s
