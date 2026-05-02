@@ -11,7 +11,9 @@ enum PlaybackHistoryRepository {
         totalDuration: TimeInterval,
         in context: ModelContext
     ) {
-        if findRecord(for: source, in: context) != nil {
+        if let existing = findRecord(for: source, in: context) {
+            existing.playedAt = Date()
+            save(context)
             return
         }
 
