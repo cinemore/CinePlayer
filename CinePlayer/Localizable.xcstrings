@@ -825,6 +825,12 @@
             "value": "Frames hinzugefügt"
           }
         },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frames added"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -1112,6 +1118,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "MetalFX Super Resolution"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MetalFX 超分"
           }
         }
       }
@@ -3345,6 +3357,12 @@
             "value": "VT के साथ कम विलंबता सुपर-रिज़ॉल्यूशन। VT के साथ एक ही समय में उपयोग नहीं किया जा सकता।"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oslanja se na VideoToolbox sustavnu mogućnost superrezolucije s niskom latencijom. Međusobno isključivo s VT umetanjem sličica: uključivanjem jednog isključuje se drugo."
+          }
+        },
         "hu": {
           "stringUnit": {
             "state": "translated",
@@ -3405,6 +3423,12 @@
             "value": "Зависит на VideoToolbox, низкая задержка, сверхразрешение. Конфликтует с VT-интерлейсингом: включение одной функции отключает другую"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "อาศัยความสามารถ Super Resolution หน่วงต่ำของ VideoToolbox ในระบบ ใช้ร่วมกับการแทรกเฟรม VT ไม่ได้: เปิดอย่างหนึ่งจะปิดอีกอย่าง"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -3415,6 +3439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Залежить на VideoToolbox, низька затримка, суперрозділення. Виключно з VT: увімкнення однієї функції виключає іншу"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phụ thuộc vào khả năng siêu phân giải độ trễ thấp của VideoToolbox hệ thống. Loại trừ với chèn khung VT: bật một tùy chọn sẽ tắt tùy chọn kia."
           }
         },
         "zh-Hant": {
@@ -8675,6 +8705,12 @@
             "value": "Sottotitoli"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字幕"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -8733,6 +8769,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chương trình"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字幕"
           }
         }
       }
@@ -12457,6 +12499,12 @@
             "value": "वर्तमान वीडियो रिज़ॉल्यूशन, प्रकाश प्रवाह सुधार में समर्थित नहीं है।"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trenutna rezolucija videa nije u rasponu koji podržava interpolacija optičkog toka"
+          }
+        },
         "hu": {
           "stringUnit": {
             "state": "translated",
@@ -12467,6 +12515,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resolusi video saat ini tidak didukung oleh fitur *light frame interpolation*"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'attuale risoluzione video non rientra nell'intervallo supportato dall'interpolazione optical flow"
           }
         },
         "ja": {
@@ -12521,6 +12575,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Şu video çözünürlüğü, hareket izleme tamamlama desteği kapsamındayok"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поточна роздільна здатність відео поза діапазоном підтримки оптичного потоку"
           }
         },
         "vi": {
@@ -12605,6 +12665,12 @@
             "value": "वर्तमान वीडियो रिज़ॉल्यूशन VT फ्रेम का समर्थन नहीं करता।"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trenutna rezolucija videa ne podržava VT umetanje sličica"
+          }
+        },
         "hu": {
           "stringUnit": {
             "state": "translated",
@@ -12665,6 +12731,12 @@
             "value": "Текущее разрешение видео не поддерживает VT-интерлейсинг"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ความละเอียดวิดีโอปัจจุบันไม่รองรับการแทรกเฟรมแบบ VT"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -12675,6 +12747,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поточна роздільна здатність відео не підтримує VT"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Độ phân giải video hiện tại không hỗ trợ chèn khung VT"
           }
         },
         "zh-Hant": {
@@ -13251,10 +13329,22 @@
             "value": "वर्तमान डिवाइस VT फ्रेम का समर्थन नहीं करता।"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trenutni uređaj ne podržava VT umetanje sličica"
+          }
+        },
         "hu": {
           "stringUnit": {
             "state": "translated",
             "value": "Jelen eszköz nem támogatja a VT-es képalkotást"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perangkat saat ini tidak mendukung penyisipan frame VT"
           }
         },
         "it": {
@@ -13305,6 +13395,12 @@
             "value": "Текущее устройство не поддерживает VT-интеграцию"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "อุปกรณ์ปัจจุบันไม่รองรับการแทรกเฟรมแบบ VT"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -13315,6 +13411,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поточний пристрій не підтримує VT"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thiết bị hiện tại không hỗ trợ chèn khung VT"
           }
         },
         "zh-Hant": {
@@ -15805,6 +15907,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chơi"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "播放"
           }
         }
       }
