@@ -8,7 +8,7 @@
     <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
   </p>
   <p>
-    <a href="https://apps.apple.com/us/app/cineplayer/id6759988668">
+    <a href="https://apps.apple.com/cn/app/cineplayer/id6759988668">
       <img src="assets/download-app-store.svg" alt="Download on the App Store" width="160">
     </a>
   </p>
