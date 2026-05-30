@@ -1,6 +1,15 @@
 {
-  "originHash" : "4cec0c3f5b7e10413f3147ba6fb1b9c72bf1fdda118e38c0914599f8a5236b6a",
+  "originHash" : "d1860bb3f719c0f81c1cbb18c64367b8664a30836a02795f2844ec85b56d8d9c",
   "pins" : [
+    {
+      "identity" : "rife-metal",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:cinemore/rife-metal.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "728d28e9c0ac963dabda2f5b20210167a63ec06b"
+      }
+    },
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",

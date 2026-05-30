@@ -7,6 +7,11 @@
   <p>
     <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
   </p>
+  <p>
+    <a href="https://apps.apple.com/us/app/cineplayer/id6759988668">
+      <img src="assets/download-app-store.svg" alt="Download on the App Store" width="160">
+    </a>
+  </p>
 </div>
 
 CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlayerSDK` 作为 **[Cinemore](https://cinemore.com.cn)** 的播放核心得到了广泛的验证，现在我们将成果进行拓展。它展示了如何利用高性能内核实现极致的音视频播放体验，同时保持了应用层的灵活性和可扩展性。
@@ -35,6 +40,14 @@ CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlaye
 ### 核心播放内核 (Closed Source)
 
 * **CinePlayerSDK:** 本项目的核心播放引擎。它是一个闭源的商业组件，仅以二进制形式提供。
+* **Frameworks:** 预编译 SDK 与第三方 framework 二进制体积较大，不直接存放在 git 仓库中。构建前请从 GitHub Release 页面下载 `Frameworks.zip`，并解压到仓库根目录：
+
+```bash
+curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/latest/download/Frameworks.zip
+unzip Frameworks.zip
+```
+
+解压后，仓库中应包含 `Frameworks/CinePlayerSDK.xcframework`、`Frameworks/CineFFmpeg.xcframework` 等路径。
 
 ## 📚 第三方库列表 (Third-party Libraries)
 
@@ -67,6 +80,8 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 在 iOS 真机上运行时，请在 Xcode 中打开 `CinePlayer` iOS Target 的 **Signing & Capabilities**，选择你自己的 **Team**。其他设置保持默认即可用于本地开发。
 
+构建前请先按「项目架构与依赖」中的说明下载并解压预编译 `Frameworks.zip`。
+
 ## ⚖️ 授权协议 (License)
 
 本项目采用混合授权模式：
@@ -82,7 +97,7 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 ### 2. 闭源组件与商业授权
 
-**CinePlayerSDK**（即仓库中的预编译二进制）为专有软件，**正式条款**以 SDK 内 License 文件为准。禁止对 SDK 二进制进行逆向工程、反编译或反汇编。
+**CinePlayerSDK**（通过 GitHub Releases 分发的预编译二进制）为专有软件，**正式条款**以 SDK 内 License 文件为准。禁止对 SDK 二进制进行逆向工程、反编译或反汇编。
 
 **仅针对本仓库**，授权方允许：
 

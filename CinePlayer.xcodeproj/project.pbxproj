@@ -307,7 +307,7 @@
 			mainGroup = DA31DD532F4F4375008767DD;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				DA88E0E72FA45A710028FD87 /* XCLocalSwiftPackageReference "../../../rife-metal" */,
+				DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DA31DD5D2F4F4375008767DD /* Products */;
@@ -635,16 +635,21 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		DA88E0E72FA45A710028FD87 /* XCLocalSwiftPackageReference "../../../rife-metal" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../rife-metal";
+/* Begin XCRemoteSwiftPackageReference section */
+		DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:cinemore/rife-metal.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		DA88E0E82FA45A710028FD87 /* RifeMetal */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */;
 			productName = RifeMetal;
 		};
 /* End XCSwiftPackageProductDependency section */

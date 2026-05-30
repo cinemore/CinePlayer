@@ -7,6 +7,11 @@
   <p>
     <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
   </p>
+  <p>
+    <a href="https://apps.apple.com/us/app/cineplayer/id6759988668">
+      <img src="assets/download-app-store.svg" alt="Download on the App Store" width="160">
+    </a>
+  </p>
 </div>
 
 CinePlayer is an open-source player application built on top of `CinePlayerSDK`.  
@@ -38,6 +43,14 @@ This repository demonstrates how to use a high-performance playback core to deli
 
 - **CinePlayerSDK**: The core playback engine of this project.  
   It is a proprietary commercial component distributed in binary form only.
+- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. Download `Frameworks.zip` from the GitHub Release page and extract it into the repository root before building:
+
+```bash
+curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/latest/download/Frameworks.zip
+unzip Frameworks.zip
+```
+
+After extraction, the repository should contain paths such as `Frameworks/CinePlayerSDK.xcframework` and `Frameworks/CineFFmpeg.xcframework`.
 
 ## 📚 Third-party Libraries
 
@@ -70,6 +83,8 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 
 To run on a real iOS device, open the `CinePlayer` iOS target in Xcode, go to **Signing & Capabilities**, and select your own **Team**. Other settings can generally stay as-is for local development.
 
+Before building, download and extract the prebuilt `Frameworks.zip` package as described in **Architecture & Dependencies**.
+
 ## ⚖️ License
 
 This project uses a **hybrid licensing model**:
@@ -87,7 +102,7 @@ You are free to study, modify, and build your own applications based on this cod
 
 ### 2. Proprietary SDK and commercial licensing
 
-**CinePlayerSDK** (the prebuilt binary libraries in this repository) is proprietary software. The **definitive terms** are in the License file inside the SDK (see path above). You may not reverse engineer, decompile, or disassemble the SDK binaries.
+**CinePlayerSDK** (distributed as prebuilt binary libraries through GitHub Releases) is proprietary software. The **definitive terms** are in the License file inside the SDK (see path above). You may not reverse engineer, decompile, or disassemble the SDK binaries.
 
 For **this repository only**, the licensor permits:
 
@@ -97,4 +112,3 @@ For **this repository only**, the licensor permits:
   **Strictly prohibited** for any third-party company without prior written permission.
 - **Commercial license**:  
   Contact `cinemore@cinemore.com.cn` for commercial use or redistribution rights.
-
