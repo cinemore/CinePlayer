@@ -61,3 +61,5 @@ build
 .agents
 .cursor/skills
 .cursor/plans
+docs/superpowers/
+.worktrees/
