@@ -1,3 +1,4 @@
+import Anime4KMetal
 import CinePlayerSDK
 import Combine
 import Foundation
@@ -67,7 +68,7 @@ final class VideoPlayerModel: ObservableObject {
         }
 
         #if !os(tvOS)
-            Anime4KHostEngine.shared.reset()
+            Anime4KHostBridge.reset()
             #if !targetEnvironment(simulator)
                 if #available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *) {
                     SystemVideoEnhancementAdapter.shared.endSession()
@@ -159,7 +160,7 @@ final class VideoPlayerModel: ObservableObject {
             switch strategy {
             case .off:
                 logFrameCallbackConfigurationOnce("Video enhancement disabled")
-                Anime4KHostEngine.shared.reset()
+                Anime4KHostBridge.reset()
                 #if !targetEnvironment(simulator)
                     if #available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *) {
                         SystemVideoEnhancementAdapter.shared.endSession()
@@ -190,20 +191,37 @@ final class VideoPlayerModel: ObservableObject {
                 let resolution = enhancementModel.anime4kOutputResolution
                 guard anime4kEnabled else {
                     logFrameCallbackConfigurationOnce("Anime4K frame callback disabled")
-                    Anime4KHostEngine.shared.reset()
+                    Anime4KHostBridge.reset()
                     return (policy, nil)
                 }
 
-                let engine = Anime4KHostEngine.shared
                 let maxOutputWidth = resolution.maxWidth
                 let maxOutputHeight = resolution.maxHeight
+                let interpolator: Anime4KInterpolator
+                do {
+                    let engine = try Anime4KHostBridge.makeEngine()
+                    interpolator = try Anime4KInterpolator(
+                        configuration: .init(
+                            preset: preset,
+                            maxOutputWidth: maxOutputWidth,
+                            maxOutputHeight: maxOutputHeight,
+                            abCompareEnabled: abCompareEnabled
+                        ),
+                        engine: engine
+                    )
+                } catch {
+                    logFrameCallbackConfigurationOnce(
+                        "Anime4K unavailable: \(error.localizedDescription)"
+                    )
+                    return (policy, nil)
+                }
                 policy = FrameCallbackPolicy(
                     enabled: true,
                     mode: .asyncSingle(
                         .init(
                             processorFactory: {
                                 Anime4KSingleFrameProcessor(
-                                    engine: engine,
+                                    interpolator: interpolator,
                                     preset: preset,
                                     abCompareEnabled: abCompareEnabled,
                                     maxOutputWidth: maxOutputWidth,
@@ -342,7 +360,7 @@ final class VideoPlayerModel: ObservableObject {
 
             case .rife:
                 #if os(macOS)
-                    Anime4KHostEngine.shared.reset()
+                    Anime4KHostBridge.reset()
                     #if !targetEnvironment(simulator)
                         if #available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *) {
                             SystemVideoEnhancementAdapter.shared.endSession()
@@ -385,7 +403,7 @@ final class VideoPlayerModel: ObservableObject {
                 #endif
 
             case .metalFX:
-                Anime4KHostEngine.shared.reset()
+                Anime4KHostBridge.reset()
                 #if !targetEnvironment(simulator)
                     if #available(iOS 26.0, macOS 26.0, tvOS 26.0, visionOS 26.0, *) {
                         SystemVideoEnhancementAdapter.shared.endSession()

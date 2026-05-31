@@ -1,3 +1,4 @@
+import Anime4KMetal
 import Foundation
 import SwiftUI
 import Combine
@@ -32,48 +33,6 @@ nonisolated enum VideoEnhancementStrategy: String, CaseIterable, Identifiable {
         case .opticalFlow: "光流补帧"
         case .rife: "RIFE 补帧"
         case .metalFX: "MetalFX 超分"
-        }
-    }
-}
-
-nonisolated enum Anime4KPreset: String, CaseIterable, Identifiable {
-    case modeAFast
-    case modeBFast
-    case modeCFast
-    case modeAAFast
-    case modeBBFast
-    case modeCAFast
-    case modeAHQ
-    case modeBHQ
-    case modeCHQ
-    case modeAAHQ
-    case modeBBHQ
-    case modeCAHQ
-
-    var id: String { rawValue }
-
-    static var availablePresets: [Anime4KPreset] {
-        #if os(iOS)
-        return [.modeAFast, .modeBFast, .modeCFast, .modeAAFast, .modeBBFast, .modeCAFast]
-        #else
-        return Anime4KPreset.allCases
-        #endif
-    }
-
-    var displayName: String {
-        switch self {
-        case .modeAFast: "Mode A (Fast)"
-        case .modeBFast: "Mode B (Fast)"
-        case .modeCFast: "Mode C (Fast)"
-        case .modeAAFast: "Mode A+A (Fast)"
-        case .modeBBFast: "Mode B+B (Fast)"
-        case .modeCAFast: "Mode C+A (Fast)"
-        case .modeAHQ: "Mode A (HQ)"
-        case .modeBHQ: "Mode B (HQ)"
-        case .modeCHQ: "Mode C (HQ)"
-        case .modeAAHQ: "Mode A+A (HQ)"
-        case .modeBBHQ: "Mode B+B (HQ)"
-        case .modeCAHQ: "Mode C+A (HQ)"
         }
     }
 }

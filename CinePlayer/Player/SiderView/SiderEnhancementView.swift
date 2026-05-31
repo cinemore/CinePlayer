@@ -1,3 +1,4 @@
+import Anime4KMetal
 import SwiftUI
 
 #if !os(tvOS)

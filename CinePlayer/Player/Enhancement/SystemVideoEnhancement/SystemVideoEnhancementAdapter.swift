@@ -1026,7 +1026,7 @@
             ciContext.render(enhScaled, to: out, bounds: rightRect, colorSpace: colorSpace)
 
             // 中线红线与 Anime4K 一致（同半宽公式）。
-            let lineHalfWidth = Anime4KHostEngine.abCompareRedLineHalfWidth(outputWidth: w)
+            let lineHalfWidth = Anime4KHostBridge.abCompareRedLineHalfWidth(outputWidth: w)
             let lineMinX = max(0, splitX - lineHalfWidth)
             let lineMaxX = min(w - 1, splitX + lineHalfWidth)
             if lineMinX <= lineMaxX {
@@ -1052,7 +1052,7 @@
             let enhH = CVPixelBufferGetHeight(enhanced)
             if let origBGRA = pixelBufferAsBGRA(original, width: origW, height: origH),
                let enhBGRA = pixelBufferAsBGRA(enhanced, width: enhW, height: enhH),
-               let ab = Anime4KHostEngine.shared.makeABComparePixelBuffer(
+               let ab = Anime4KHostBridge.makeABComparePixelBuffer(
                    original: origBGRA,
                    enhanced: enhBGRA
                )
