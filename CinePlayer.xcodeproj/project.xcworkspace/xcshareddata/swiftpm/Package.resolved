@@ -1,6 +1,15 @@
 {
-  "originHash" : "d1860bb3f719c0f81c1cbb18c64367b8664a30836a02795f2844ec85b56d8d9c",
+  "originHash" : "a8df0c532bb66e0ba71e82df66c1cf95218f39071449f9ae4517981974465db0",
   "pins" : [
+    {
+      "identity" : "anime4k-metal",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:cinemore/anime4k-metal.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "3dbffcfdd329f0882fc39300a95791f9d2285aae"
+      }
+    },
     {
       "identity" : "rife-metal",
       "kind" : "remoteSourceControl",

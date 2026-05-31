@@ -311,7 +311,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */,
-				DAA4A0022FCB000100000001 /* XCLocalSwiftPackageReference "anime4k-metal" */,
+				DAA4A0022FCB000100000001 /* XCRemoteSwiftPackageReference "anime4k-metal" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DA31DD5D2F4F4375008767DD /* Products */;
@@ -639,17 +639,18 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		DAA4A0022FCB000100000001 /* XCLocalSwiftPackageReference "anime4k-metal" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../anime4k-metal;
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "git@github.com:cinemore/rife-metal.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		DAA4A0022FCB000100000001 /* XCRemoteSwiftPackageReference "anime4k-metal" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:cinemore/anime4k-metal.git";
 			requirement = {
 				branch = main;
 				kind = branch;
@@ -665,7 +666,7 @@
 		};
 		DAA4A0032FCB000100000001 /* Anime4KMetal */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DAA4A0022FCB000100000001 /* XCLocalSwiftPackageReference "anime4k-metal" */;
+			package = DAA4A0022FCB000100000001 /* XCRemoteSwiftPackageReference "anime4k-metal" */;
 			productName = Anime4KMetal;
 		};
 /* End XCSwiftPackageProductDependency section */
