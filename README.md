@@ -24,6 +24,15 @@ This repository demonstrates how to use a high-performance playback core to deli
   <img src="assets/player.png" alt="CinePlayer playback interface" width="720">
 </p>
 
+## Anime4K Enhancement
+
+<p align="center">
+  <img src="assets/anime4k-compare.png" alt="Anime4K enhancement comparison in CinePlayer" width="720">
+</p>
+
+CinePlayer uses [anime4k-metal](https://github.com/cinemore/anime4k-metal) for
+Anime4K-style anime super-resolution and A/B comparison.
+
 ## ✨ Features
 
 - **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
