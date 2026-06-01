@@ -248,6 +248,12 @@ struct PlayerMediaInfoCardView: View {
                 }
 
                 infoRow(label: "比特率", value: formatBitrate(Int(video.bitRate)))
+                if let averageBandwidth = video.hlsAverageBandwidth {
+                    infoRow(label: "HLS平均带宽", value: formatBitrate(Int(averageBandwidth)))
+                }
+                if let bandwidth = video.hlsBandwidth {
+                    infoRow(label: "HLS带宽", value: formatBitrate(Int(bandwidth)))
+                }
 
                 infoRow(label: "动态范围", value: video.dynamicRange.description)
 
