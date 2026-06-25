@@ -131,7 +131,7 @@ jobs:
           RUBY
 
           cd "$tap_dir"
-          if git diff --quiet -- Casks/cineplayer.rb; then
+          if [ -z "$(git status --porcelain -- Casks/cineplayer.rb)" ]; then
             echo "Shared tap cask already points at $tag"
             exit 0
           fi
