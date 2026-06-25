@@ -35,19 +35,35 @@ CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlaye
 
 **杜比视界及杜比全景声由 Apple AVFoundation 的 [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/) 负责处理。**
 
+## 安装
+
+### Homebrew Cask（macOS）
+
+```bash
+brew install --cask cinemore/tap/cineplayer
+```
+
+GitHub Release 中的 macOS 构建目前尚未签名和公证。首次启动时，macOS Gatekeeper 可能会显示警告。如果你信任该版本，可以在 Finder 中按住 Control 点击应用，然后选择**打开**。
+
+### App Store
+
+iPhone、iPad、Apple TV、Apple Vision Pro，以及已签名的 App Store macOS 版本，请使用上方 App Store 链接安装。
+
 ## 🏗 项目架构与依赖
 
 ### 核心播放内核 (Closed Source)
 
 * **CinePlayerSDK:** 本项目的核心播放引擎。它是一个闭源的商业组件，仅以二进制形式提供。
-* **Frameworks:** 预编译 SDK 与第三方 framework 二进制体积较大，不直接存放在 git 仓库中。构建前请从 GitHub Release 页面下载 `Frameworks.zip`，并解压到仓库根目录：
+* **Frameworks:** 预编译 SDK 与第三方 framework 二进制体积较大，不直接存放在 git 仓库中。如果要从源码构建，请从 `v1.0.0` Release 下载 framework bundle，并解压到仓库根目录：
 
 ```bash
-curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/latest/download/Frameworks.zip
+curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/download/v1.0.0/Frameworks.zip
 unzip Frameworks.zip
 ```
 
 解压后，仓库中应包含 `Frameworks/CinePlayerSDK.xcframework`、`Frameworks/CineFFmpeg.xcframework` 等路径。
+
+> 注意：较新的 GitHub Releases 可能只包含打包好的 macOS 应用和校验文件。`Frameworks.zip` 目前发布在 `v1.0.0`，仍是源码构建和 CI release 构建使用的 framework bundle。
 
 ## 📚 第三方库列表 (Third-party Libraries)
 

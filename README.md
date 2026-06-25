@@ -33,6 +33,23 @@ This repository demonstrates how to use a high-performance playback core to deli
 CinePlayer uses [anime4k-metal](https://github.com/cinemore/anime4k-metal) for
 Anime4K-style anime super-resolution and A/B comparison.
 
+## Installation
+
+### Homebrew Cask (macOS)
+
+```bash
+brew install --cask cinemore/tap/cineplayer
+```
+
+The GitHub Release build is currently unsigned and not notarized. On first
+launch, macOS Gatekeeper may show a warning. If you trust this release, open it
+from Finder by Control-clicking the app and choosing **Open**.
+
+### App Store
+
+For iPhone, iPad, Apple TV, Apple Vision Pro, and the signed App Store macOS
+build, use the App Store link above.
+
 ## ✨ Features
 
 - **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
@@ -52,14 +69,18 @@ Anime4K-style anime super-resolution and A/B comparison.
 
 - **CinePlayerSDK**: The core playback engine of this project.  
   It is a proprietary commercial component distributed in binary form only.
-- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. Download `Frameworks.zip` from the GitHub Release page and extract it into the repository root before building:
+- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. To build from source, download the framework bundle from the `v1.0.0` release and extract it into the repository root:
 
 ```bash
-curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/latest/download/Frameworks.zip
+curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/download/v1.0.0/Frameworks.zip
 unzip Frameworks.zip
 ```
 
 After extraction, the repository should contain paths such as `Frameworks/CinePlayerSDK.xcframework` and `Frameworks/CineFFmpeg.xcframework`.
+
+> Note: newer GitHub Releases may only contain the packaged macOS app and its
+> checksum. `Frameworks.zip` is currently published from `v1.0.0` and remains
+> the framework bundle used for source builds and CI release builds.
 
 ## 📚 Third-party Libraries
 
