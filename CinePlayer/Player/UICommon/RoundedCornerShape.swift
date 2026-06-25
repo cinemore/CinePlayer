@@ -19,7 +19,7 @@ struct RoundedCornerShape: Shape {
     var corners: Int = 0
     var radius: CGFloat
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         Path(roundedRect: rect, cornerRadius: radius, style: .continuous)
     }
 }
