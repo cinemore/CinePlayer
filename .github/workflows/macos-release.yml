@@ -23,6 +23,17 @@ jobs:
       - name: Use HTTPS for GitHub Swift packages
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
+      - name: Download prebuilt frameworks
+        run: |
+          set -euo pipefail
+
+          curl -L \
+            -o Frameworks.zip \
+            "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/latest/download/Frameworks.zip"
+          unzip -q Frameworks.zip
+          test -d Frameworks/CinePlayerSDK.xcframework
+          test -d Frameworks/CineFFmpeg.xcframework
+
       - name: Build Release for macOS
         run: |
           set -euo pipefail
