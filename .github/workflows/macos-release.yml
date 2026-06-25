@@ -129,4 +129,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/cineplayer.rb
           git commit -m "chore: update cineplayer cask for ${tag}"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "Tap push failed on attempt ${attempt}; rebasing onto origin/main and retrying."
+            git pull --rebase origin main
+          done
+
           git push origin HEAD:main
