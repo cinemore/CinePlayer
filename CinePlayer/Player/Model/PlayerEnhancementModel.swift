@@ -433,7 +433,9 @@ final class PlayerEnhancementModel: ObservableObject {
         opticalFlowSectionVisible = false
         metalFXSectionVisible = false
         rifeSectionVisible = false
+        #if os(macOS)
         currentRifeTier = nil
+        #endif
         systemMLCurrentVideoWidth = nil
         systemMLCurrentVideoHeight = nil
 

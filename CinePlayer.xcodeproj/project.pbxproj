@@ -26,7 +26,7 @@
 		DA31DF342F4F633B008767DD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF102F4F633B008767DD /* libbz2.tbd */; };
 		DA31DF352F4F633B008767DD /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF112F4F633B008767DD /* libiconv.tbd */; };
 		DA31E34D2F4F7182008767DD /* CinePlayerSDK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33C2F4F7182008767DD /* CinePlayerSDK.xcframework */; };
-		DA31E34E2F4F7182008767DD /* libbluray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3422F4F7182008767DD /* libbluray.xcframework */; platformFilters = (ios, macos, xros, ); };
+		DA31E34E2F4F7182008767DD /* libbluray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3422F4F7182008767DD /* libbluray.xcframework */; };
 		DA31E34F2F4F7182008767DD /* libunibreak.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34C2F4F7182008767DD /* libunibreak.xcframework */; };
 		DA31E3502F4F7182008767DD /* libass.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33D2F4F7182008767DD /* libass.xcframework */; };
 		DA31E3512F4F7182008767DD /* libavformat.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3402F4F7182008767DD /* libavformat.xcframework */; };
@@ -38,7 +38,7 @@
 		DA31E3572F4F7182008767DD /* libswscale.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3492F4F7182008767DD /* libswscale.xcframework */; };
 		DA31E3582F4F7182008767DD /* libuavs3d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34A2F4F7182008767DD /* libuavs3d.xcframework */; };
 		DA31E3592F4F7182008767DD /* libswresample.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3482F4F7182008767DD /* libswresample.xcframework */; };
-		DA31E35A2F4F7182008767DD /* libudfread.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34B2F4F7182008767DD /* libudfread.xcframework */; platformFilters = (ios, macos, xros, ); };
+		DA31E35A2F4F7182008767DD /* libudfread.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E34B2F4F7182008767DD /* libudfread.xcframework */; };
 		DA31E35B2F4F7182008767DD /* libavutil.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3412F4F7182008767DD /* libavutil.xcframework */; };
 		DA31E35C2F4F7182008767DD /* libdav1d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3432F4F7182008767DD /* libdav1d.xcframework */; };
 		DA31E35D2F4F7182008767DD /* libavcodec.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33E2F4F7182008767DD /* libavcodec.xcframework */; };
@@ -351,7 +351,7 @@
 				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvos*]" = "App Icon & Top Shelf Image";
 				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvsimulator*]" = "App Icon & Top Shelf Image";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 5AJ2RL8W58;
 				ENABLE_APP_SANDBOX = YES;
@@ -393,7 +393,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -425,7 +425,7 @@
 				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvos*]" = "App Icon & Top Shelf Image";
 				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvsimulator*]" = "App Icon & Top Shelf Image";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 5AJ2RL8W58;
 				ENABLE_APP_SANDBOX = YES;
@@ -467,7 +467,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
