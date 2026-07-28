@@ -113,7 +113,8 @@ struct SiderPlaybackSpeedView: View {
         .modifier(GlassEffectModifier(
             cornerRadius: 24,
             material: .regularMaterial,
-            useCapsule: false
+            useCapsule: false,
+            isInteractive: false
         ))
         .background {
             RoundedRectangle(cornerRadius: 24)

@@ -8,6 +8,7 @@ struct GlassEffectModifier: ViewModifier {
     let material: Material
     let useCapsule: Bool
     let clipsContent: Bool
+    let isInteractive: Bool
 
     init(
         topLeading: CGFloat = 0,
@@ -17,7 +18,8 @@ struct GlassEffectModifier: ViewModifier {
         cornerRadius: CGFloat? = nil,
         material: Material = .ultraThinMaterial,
         useCapsule: Bool = true,
-        clipsContent: Bool = false
+        clipsContent: Bool = false,
+        isInteractive: Bool = true
     ) {
         if let cornerRadius {
             self.topLeading = cornerRadius
@@ -33,6 +35,7 @@ struct GlassEffectModifier: ViewModifier {
         self.material = material
         self.useCapsule = useCapsule
         self.clipsContent = clipsContent
+        self.isInteractive = isInteractive
     }
 
     func body(content: Content) -> some View {
@@ -66,13 +69,14 @@ struct GlassEffectModifier: ViewModifier {
     private func applyEffect(to content: some View, allSame: Bool) -> some View {
         #if !os(visionOS)
             if #available(iOS 26.0, macOS 26.0, tvOS 26.0, *) {
+                let glass: Glass = isInteractive ? .regular.interactive() : .regular
                 if useCapsule {
-                    content.glassEffect(.regular.interactive(), in: .capsule)
+                    content.glassEffect(glass, in: .capsule)
                 } else if allSame {
-                    content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: topLeading))
+                    content.glassEffect(glass, in: .rect(cornerRadius: topLeading))
                 } else {
                     content.glassEffect(
-                        .regular.interactive(),
+                        glass,
                         in: .rect(
                             topLeadingRadius: topLeading,
                             bottomLeadingRadius: bottomLeading,

@@ -92,7 +92,8 @@ struct SiderContanierView<Content: View>: View {
                             bottomTrailing: cornerRadius,
                             material: .regularMaterial,
                             useCapsule: false,
-                            clipsContent: true
+                            clipsContent: true,
+                            isInteractive: false
                         ))
                     } else {
                         // 从底部弹出，下面两个角使用屏幕圆角
@@ -103,7 +104,8 @@ struct SiderContanierView<Content: View>: View {
                             bottomTrailing: cornerRadius,
                             material: .regularMaterial,
                             useCapsule: false,
-                            clipsContent: true
+                            clipsContent: true,
+                            isInteractive: false
                         ))
                     }
                 }
