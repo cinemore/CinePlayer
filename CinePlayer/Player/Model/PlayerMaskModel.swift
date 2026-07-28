@@ -38,7 +38,7 @@ class PlayerMaskModel: ObservableObject {
             }
             if isMaskShow {
                 #if os(macOS)
-                    NSCursor.unhide()
+                    NSCursor.setHiddenUntilMouseMoves(false)
                 #endif
                 #if os(macOS)
                     delayHideTime = 2
@@ -60,7 +60,7 @@ class PlayerMaskModel: ObservableObject {
         timer?.invalidate()
         timer = nil
         #if os(macOS)
-            NSCursor.unhide()
+            NSCursor.setHiddenUntilMouseMoves(false)
         #endif
     }
 
