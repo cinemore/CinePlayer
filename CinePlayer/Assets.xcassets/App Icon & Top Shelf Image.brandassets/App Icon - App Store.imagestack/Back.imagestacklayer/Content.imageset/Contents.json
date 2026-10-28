@@ -2,12 +2,12 @@
   "images" : [
     {
       "filename" : "back.png",
-      "idiom" : "tv-marketing",
+      "idiom" : "tv",
       "scale" : "1x"
     },
     {
       "filename" : "back@2x.png",
-      "idiom" : "tv-marketing",
+      "idiom" : "tv",
       "scale" : "2x"
     }
   ],

@@ -1,14 +1,8 @@
 {
   "assets" : [
     {
-      "filename" : "App Icon - App Store 1.imagestack",
-      "idiom" : "tv",
-      "role" : "primary-app-icon",
-      "size" : "1280x768"
-    },
-    {
       "filename" : "App Icon - App Store.imagestack",
-      "idiom" : "tv-marketing",
+      "idiom" : "tv",
       "role" : "primary-app-icon",
       "size" : "1280x768"
     },

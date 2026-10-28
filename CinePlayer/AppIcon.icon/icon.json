@@ -1,195 +1,53 @@
 {
-  "fill": "automatic",
-  "groups": [
+  "fill-specializations": [
     {
-      "blend-mode-specializations": [
-        {
-          "appearance": "dark",
-          "value": "normal"
-        },
-        {
-          "appearance": "tinted",
-          "value": "normal"
-        }
-      ],
-      "blur-material-specializations": [
-        {
-          "value": 0.5
-        },
-        {
-          "appearance": "dark",
-          "value": null
-        },
-        {
-          "appearance": "tinted",
-          "value": 0.5
-        }
-      ],
-      "hidden": false,
-      "layers": [
-        {
-          "blend-mode-specializations": [
-            {
-              "appearance": "dark",
-              "value": "normal"
-            }
-          ],
-          "glass": true,
-          "hidden": false,
-          "image-name": "cl.png",
-          "name": "cl",
-          "opacity-specializations": [
-            {
-              "appearance": "dark",
-              "value": 1
-            }
-          ],
-          "position": {
-            "scale": 1.9,
-            "translation-in-points": [
-              0,
-              0
-            ]
-          }
-        },
-        {
-          "glass": true,
-          "hidden": false,
-          "image-name": "pl.png",
-          "name": "pl",
-          "position": {
-            "scale": 1,
-            "translation-in-points": [
-              70,
-              0
-            ]
-          }
-        },
-        {
-          "image-name": "bg-white.png",
-          "name": "bg-white",
-          "hidden": false,
-          "position": {
-            "scale": 1,
-            "translation-in-points": [
-              0,
-              0
-            ]
-          }
-        }
-      ],
-      "lighting-specializations": [
-        {
-          "value": "combined"
-        },
-        {
-          "appearance": "dark",
-          "value": "combined"
-        },
-        {
-          "appearance": "tinted",
-          "value": "combined"
-        }
-      ],
-      "opacity-specializations": [
-        {
-          "value": 1
-        },
-        {
-          "appearance": "dark",
-          "value": 0
-        },
-        {
-          "appearance": "tinted",
-          "value": 1
-        }
-      ],
-      "shadow-specializations": [
-        {
-          "value": {
-            "kind": "none",
-            "opacity": 0
-          }
-        },
-        {
-          "appearance": "tinted",
-          "value": {
-            "kind": "layer-color",
-            "opacity": 0.5
-          }
-        }
-      ],
-      "specular-specializations": [
-        {
-          "value": true
-        },
-        {
-          "appearance": "dark",
-          "value": false
-        },
-        {
-          "appearance": "tinted",
-          "value": true
-        }
-      ],
-      "translucency-specializations": [
-        {
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        },
-        {
-          "appearance": "dark",
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        },
-        {
-          "appearance": "tinted",
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        }
-      ]
+      "value": {
+        "linear-gradient": [
+          "srgb:0.02745,0.23137,1.00000,1.00000",
+          "srgb:0.00000,0.58431,1.00000,1.00000"
+        ]
+      }
     },
     {
-      "blur-material-specializations": [
-        {
-          "appearance": "dark",
-          "value": 0.5
-        }
-      ],
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "srgb:0.02353,0.14902,0.70980,1.00000",
+          "srgb:0.00000,0.40000,0.74118,1.00000"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "blend-mode": "normal",
+      "blur-material": 0.5,
       "hidden": false,
       "layers": [
         {
-          "image-name": "cb 2.png",
-          "name": "cb 2",
-          "position": {
-            "scale": 1.9,
-            "translation-in-points": [
-              0,
-              0
-            ]
-          }
-        },
-        {
-          "image-name": "pb 2.png",
-          "name": "pb 2",
-          "position": {
-            "scale": 1,
-            "translation-in-points": [
-              70,
-              0
-            ]
-          }
-        },
-        {
-          "image-name": "bg-white.png",
-          "name": "bg-white",
-          "hidden": false,
+          "fill-specializations": [
+            {
+              "value": {
+                "linear-gradient": [
+                  "srgb:1.00000,1.00000,1.00000,1.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.72000"
+                ]
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "linear-gradient": [
+                  "srgb:1.00000,1.00000,1.00000,1.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.72000"
+                ]
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "02-c-ring.svg",
+          "name": "C Ring",
+          "opacity": 1,
           "position": {
             "scale": 1,
             "translation-in-points": [
@@ -199,69 +57,72 @@
           }
         }
       ],
-      "lighting-specializations": [
+      "lighting": "individual",
+      "name": "C · White Glass",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.3
+      }
+    },
+    {
+      "blend-mode": "normal",
+      "blur-material": 0.5,
+      "hidden": false,
+      "layers": [
         {
-          "appearance": "dark",
-          "value": "combined"
-        }
-      ],
-      "opacity-specializations": [
-        {
-          "value": 0
-        },
-        {
-          "appearance": "dark",
-          "value": 1
-        },
-        {
-          "appearance": "tinted",
-          "value": 0
-        }
-      ],
-      "shadow-specializations": [
-        {
-          "appearance": "dark",
-          "value": {
-            "kind": "layer-color",
-            "opacity": 0.5
+          "fill-specializations": [
+            {
+              "value": {
+                "linear-gradient": [
+                  "srgb:1.00000,1.00000,1.00000,1.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.72000"
+                ]
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "linear-gradient": [
+                  "srgb:1.00000,1.00000,1.00000,1.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.72000"
+                ]
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "03-play-triangle.svg",
+          "name": "Play Triangle",
+          "opacity": 1,
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
           }
         }
       ],
-      "specular-specializations": [
-        {
-          "value": false
-        },
-        {
-          "appearance": "dark",
-          "value": true
-        },
-        {
-          "appearance": "tinted",
-          "value": false
-        }
-      ],
-      "translucency-specializations": [
-        {
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        },
-        {
-          "appearance": "dark",
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        },
-        {
-          "appearance": "tinted",
-          "value": {
-            "enabled": false,
-            "value": 0.5
-          }
-        }
-      ]
+      "lighting": "combined",
+      "name": "Play · White Glass",
+      "refractivity": {
+        "depth": 0,
+        "enabled": false,
+        "strength": 0.5
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.3
+      }
     }
   ],
   "supported-platforms": {
