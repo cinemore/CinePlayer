@@ -1,3 +1,4 @@
+import CinePlayerSDK
 //
 //  VideoTrackRowView.swift
 //  Cinemore
@@ -6,7 +7,6 @@
 //
 
 import SwiftUI
-import CinePlayerSDK
 
 struct VideoTrackRowView: View {
     let isSelected: Bool
@@ -21,6 +21,22 @@ struct VideoTrackRowView: View {
 
     var onClick: () -> Void
     private let selectionAnimation = Animation.easeOut(duration: 0.12)
+    private var titleColor: Color {
+        #if os(visionOS)
+            .primary
+        #else
+            isSelected ? .white : .white.opacity(0.4)
+        #endif
+    }
+
+    private var detailColor: Color {
+        #if os(visionOS)
+            .secondary
+        #else
+            .white.opacity(isSelected ? 0.68 : 0.4)
+        #endif
+    }
+
     var body: some View {
         Button {
             onClick()
@@ -29,30 +45,38 @@ struct VideoTrackRowView: View {
                 if let profileName, !profileName.isEmpty {
                     HStack {
                         Text("\(profileName)")
-                            .f12r()
-                            .foregroundColor(isSelected ? Color.white : Color.white.opacity(0.4))
+                            .playerTrackDetailFont(fallback: .caption)
+                            .foregroundColor(titleColor)
                             .padding(.horizontal, 12)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
 
-                    Rectangle()
-                        .fill(isSelected ? Color.white : Color.white.opacity(0.5))
-                        .frame(height: 0.5)
+                    #if os(visionOS)
+                        Divider()
+                    #else
+                        Rectangle()
+                            .fill(isSelected ? Color.white : Color.white.opacity(0.5))
+                            .frame(height: 0.5)
+                    #endif
                 }
 
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .center, spacing: 0) {
                         if let language, !language.isEmpty {
                             Text(language)
-                                .f14m()
-                                .foregroundColor(isSelected ? Color.white : Color.white
-                                    .opacity(0.4))
+                                .playerSemanticFont(.body.weight(.medium), fallback: .body.weight(.medium))
+                                .foregroundColor(titleColor)
                         }
                         Spacer()
                         Text("\(codecName.uppercased())")
-                            .f13m()
-                            .foregroundColor(isSelected ? Color.white : Color.white.opacity(0.4))
+                            .playerSemanticFont(.callout.weight(.medium), fallback: .footnote.weight(.medium))
+                            .foregroundColor(titleColor)
+                        #if os(visionOS)
+                            CheckMarkView(checked: isSelected)
+                                .padding(.leading, 8)
+                                .accessibilityHidden(true)
+                        #endif
                     }
                     .padding(.horizontal, 12)
                     .padding(.bottom, 2)
@@ -85,31 +109,63 @@ struct VideoTrackRowView: View {
                             }
                         }
                     }
-                    .f13r()
-                    .foregroundColor(isSelected ? Color.white.opacity(0.68) : Color.white.opacity(0.4))
+                    .playerTrackDetailFont(fallback: .footnote)
+                    .foregroundColor(detailColor)
                     .padding(.horizontal, 12)
                 }
                 .padding(.vertical, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white.opacity(isSelected ? 0.08 : 0.02))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isSelected ? Color.white : Color.white.opacity(0.2),
-                        lineWidth: 1
-                    )
-            )
-            .roundedCorner(10)
-            .animation(selectionAnimation, value: isSelected)
-            .contentShape(Rectangle())
+            #if !os(visionOS)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(isSelected ? 0.08 : 0.02))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            isSelected ? Color.white : Color.white.opacity(0.2),
+                            lineWidth: 1
+                        )
+                )
+                .roundedCorner(10)
+            #endif
+                .animation(selectionAnimation, value: isSelected)
+            #if !os(visionOS)
+                .contentShape(Rectangle())
+            #endif
         }
+        #if !os(visionOS)
         .buttonStyle(.plain)
+        #endif
+        #if os(visionOS)
+        .visionPlayerSelectionStyle(isSelected: isSelected)
+        .buttonBorderShape(.roundedRectangle(radius: 10))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        #endif
         .id(streamIndex) // 添加稳定的ID
     }
+
+    #if !os(tvOS)
+        /// 动态范围与码率同时展示，不因另一字段存在而省略。
+        var nativeSelectionRow: some View {
+            let titleParts = ["\(Int(resolution.width))×\(Int(resolution.height))", dynamicRange]
+                .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            return PlayerTrackSelectionRow(
+                isSelected: isSelected,
+                title: titleParts.joined(separator: " · "),
+                profileName: profileName,
+                details: [
+                    language,
+                    codecName.uppercased(),
+                    frameRate > 0 ? String(format: "%.2f fps", frameRate) : nil,
+                    bitRate.flatMap { formatBitrate(Int($0)) }
+                ].compactMap(\.self),
+                onSelect: onClick
+            )
+        }
+    #endif
 
     /// 格式化比特率显示
     private func formatBitrate(_ bitrate: Int) -> String? {

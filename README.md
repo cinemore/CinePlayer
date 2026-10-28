@@ -54,12 +54,13 @@ build, use the App Store link above.
 
 - **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
 - **Gestures & shortcuts**: iOS — single tap show/hide controls, double-tap left/right skip or center play/pause, long-press temporary speed (configurable skip seconds and long-press speed in playback settings); tvOS — remote swipe/press skip, long-press continuous seek; macOS — Space play/pause, arrow keys skip/speed, Esc fullscreen, mouse to show controls.
-- **Subtitles**: Embedded and external subtitles; full ASS-style customization; HDR subtitle support; translation (e.g. Apple).
+- **Subtitles**: Embedded and local external subtitles; text or bitmap adjustments according to the parsed format; HDR subtitle brightness; Apple Translation on iOS/macOS with target language and bilingual ordering.
 - **Tracks & media info**: Detailed video/audio/subtitle track list with quick switching; media info card.
-- **Enhancement**: Anime4K-style anime super-resolution (multiple presets, optional A/B compare).
+- **Enhancement**: Anime4K, MetalFX, FSR and ArtCNN super-resolution; VideoToolbox, MetalFX and RIFE interpolation; Dolby Vision P7 FEL decoding preference. Availability follows the system, device and video. FSR/ArtCNN require SDR, at most 1080p pixels and 30 fps; RIFE is excluded on tvOS. Super-resolution supports A/B comparison, with original frames displayed during preparation.
 - **Playback UX**: Progress scrub with thumbnail preview; portrait/landscape (iOS orientation lock), picture fill, PiP, fullscreen, variable playback speed; macOS window floating (always on top); Now Playing / lock screen & Control Center control.
 - **Blu-ray**: ISO and BDMV.
 - **Platforms**: iOS, macOS, tvOS, visionOS.
+- **Native controls**: tvOS remote menus and subtitle adjustments; a dedicated visionOS playback window, Ornament panels and immersive environment; separate video and console regions on supported iOS 27.1 devices.
 
 **Dolby Vision and Dolby Atmos playback are handled by Apple AVFoundation’s [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/).**
 
@@ -69,18 +70,19 @@ build, use the App Store link above.
 
 - **CinePlayerSDK**: The core playback engine of this project.  
   It is a proprietary commercial component distributed in binary form only.
-- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. To build from source, download the framework bundle from the `v1.0.0` release and extract it into the repository root:
+- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. This branch requires the updated SDK bundle. Use the versioned download URL supplied by the maintainer and extract it into the repository root:
 
 ```bash
-curl -L -o Frameworks.zip https://github.com/cinemore/CinePlayer/releases/download/v1.0.0/Frameworks.zip
+curl --fail --location -o Frameworks.zip "$CINEPLAYER_FRAMEWORKS_URL"
 unzip Frameworks.zip
+bun scripts/verify-frameworks.ts
 ```
 
 After extraction, the repository should contain paths such as `Frameworks/CinePlayerSDK.xcframework` and `Frameworks/CineFFmpeg.xcframework`.
 
-> Note: newer GitHub Releases may only contain the packaged macOS app and its
-> checksum. `Frameworks.zip` is currently published from `v1.0.0` and remains
-> the framework bundle used for source builds and CI release builds.
+The original `v1.0.0` bundle lacks the APIs required by this branch. The verifier checks device and simulator slices for all four platforms, shutdown, subtitle translation/loading and frame callback interfaces. Release CI requires repository variables `CINEPLAYER_FRAMEWORKS_URL` and `CINEPLAYER_FRAMEWORKS_SHA256`, rather than inferring a bundle from the latest release.
+
+The app remains a standalone file/URL player with history, controls, tracks, subtitles and enhancement. Cinemore accounts, libraries, cloud storage, episodes, source switching and casting services are outside its scope.
 
 ## 📚 Third-party Libraries
 
@@ -95,6 +97,12 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 - **[dav1d](https://github.com/videolan/dav1d)** (libdav1d)
 - **[dovi_tool](https://github.com/quietvoid/dovi_tool)** (libdovi)
 - **[uavs3d](https://github.com/uavs3/uavs3d)** (libuavs3d)
+- **[Anime4KMetal](https://github.com/cinemore/anime4k-metal)** 0.1.4
+- **[RifeMetal](https://github.com/cinemore/rife-metal)** 0.1.8 (iOS/macOS/visionOS)
+- **[FSRMetal](https://github.com/cinemore/fsr-metal)** 0.1.0
+- **[ArtCNNMetal](https://github.com/cinemore/artcnn-metal)** 0.1.0
+
+Enhancement licenses ship with the app and are accessible in About → Video Enhancement Licenses.
 
 ### Subtitle rendering
 
@@ -113,7 +121,9 @@ CinePlayer’s capabilities are built on top of the following excellent open-sou
 
 To run on a real iOS device, open the `CinePlayer` iOS target in Xcode, go to **Signing & Capabilities**, and select your own **Team**. Other settings can generally stay as-is for local development.
 
-Before building, download and extract the prebuilt `Frameworks.zip` package as described in **Architecture & Dependencies**.
+Prepare the matching `Frameworks.zip` as described in **Architecture & Dependencies**. The current SDK was compiled with Swift 6.4; validation uses Xcode 27. Swift packages are pinned in `Package.resolved`.
+
+The cross-platform `CinePlayerTests` scheme covers real media playback, paused seeks, tracks, subtitle failures, replacement/shutdown, thumbnails and enhancement cleanup, with additional FSR/ArtCNN GPU tests on macOS. The test scheme uses an in-memory history store.
 
 ## ⚖️ License
 

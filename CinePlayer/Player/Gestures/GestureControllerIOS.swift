@@ -11,6 +11,10 @@ struct GestureController: View {
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @EnvironmentObject private var toastModel: PlayerToastModel
+    @Environment(\.hasSeparatedPlayerControls) private var hasSeparatedPlayerControls
+    @State private var scrubPlayback = PlayerScrubPlaybackSession()
+    @State private var rateBeforeLongPress: Float?
+    @State private var rateMediaIdentifier: UUID?
 
     @Binding var brightness: CGFloat
     var geometry: GeometryProxy
@@ -24,11 +28,11 @@ struct GestureController: View {
             progress: playerCoordinator.progress,
             safeAreaInsets: geometry.safeAreaInsets,
             onProgressChanged: { _ in
-                playerCoordinator.controller?.pause()
+                scrubPlayback.begin(controller: playerCoordinator.controller)
                 toastModel.show(.progressChanged, duration: .infinity)
             },
             onProgressEnded: { _ in
-                playerCoordinator.controller?.seek(time: TimeInterval(playerCoordinator.progress.currentTime))
+                scrubPlayback.commit(time: TimeInterval(playerCoordinator.progress.currentTime), controller: playerCoordinator.controller)
                 toastModel.hide()
             },
             onBrightnessChanged: { brightnessValue in
@@ -58,29 +62,50 @@ struct GestureController: View {
                     }
                 case .centerDoubleTap:
                     playerMaskModel.showMask()
-                    playerCoordinator.controller?.switchPlayPause()
+                    playerCoordinator.controller?.togglePlaybackFromControls()
                 case .singleTap:
                     playerControlModel.hideContainer()
                     playerMaskModel.toggleMask()
                 case .longPressBegan:
-                    guard config.longPressSpeedUpEnabled else {
+                    guard config.longPressSpeedUpEnabled, rateBeforeLongPress == nil,
+                          let controller = playerCoordinator.controller else {
                         return
                     }
+                    rateBeforeLongPress = playerCoordinator.playbackRate
+                    rateMediaIdentifier = controller.mediaIdentifier
                     playerCoordinator.playbackRate = config.longPressPlaybackRate
                     toastModel.show(.playbackRate, duration: .infinity)
                     let generator = UIImpactFeedbackGenerator(style: .light)
                     generator.impactOccurred()
                 case .longPressEnded:
-                    guard config.longPressSpeedUpEnabled else {
-                        return
-                    }
-                    playerCoordinator.playbackRate = 1.0
+                    restoreLongPressRate()
                     toastModel.hide()
                     let generator = UIImpactFeedbackGenerator(style: .light)
                     generator.impactOccurred()
                 }
             }
         )
+        .id(playerCoordinator.controller?.mediaIdentifier)
+        .allowsHitTesting(!hasSeparatedPlayerControls)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("显示播放控制")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { playerMaskModel.disableAutoHide() }
+        .accessibilityAction(named: Text("播放或暂停")) { playerCoordinator.controller?.togglePlaybackFromControls() }
+        .onDisappear { restoreLongPressRate(); scrubPlayback.reset() }
+        .onChange(of: playerCoordinator.controller?.mediaIdentifier) { _, _ in
+            rateBeforeLongPress = nil
+            rateMediaIdentifier = nil
+            scrubPlayback.reset()
+        }
+    }
+
+    private func restoreLongPressRate() {
+        if let rateBeforeLongPress, playerCoordinator.controller?.mediaIdentifier == rateMediaIdentifier {
+            playerCoordinator.playbackRate = rateBeforeLongPress
+        }
+        rateBeforeLongPress = nil
+        rateMediaIdentifier = nil
     }
 }
 #endif

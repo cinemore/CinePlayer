@@ -7,6 +7,12 @@ import QuartzCore
 
 @MainActor
 final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate {
+    private(set) weak var playbackWindow: NSWindow?
+
+    func attach(to window: NSWindow) {
+        playbackWindow = window
+        if window.delegate !== self { window.delegate = self }
+    }
     @Published var isFloating: Bool = false
     /// 是否处于播放界面（有 currentSource）
     @Published var isPlaybackActive: Bool = false
@@ -167,6 +173,7 @@ final class PlayerWindowController: NSObject, ObservableObject, NSWindowDelegate
     }
 
     private var currentWindow: NSWindow? {
+        if isPlaybackActive, let playbackWindow { return playbackWindow }
         if let keyWindow = NSApplication.shared.keyWindow {
             return keyWindow
         }

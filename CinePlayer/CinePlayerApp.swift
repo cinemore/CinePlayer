@@ -9,8 +9,23 @@ import AppKit
 
 @main
 struct CinePlayerApp: App {
+    private let historyContainer: ModelContainer = {
+        #if DEBUG
+        let inMemory = ProcessInfo.processInfo.environment["CINEPLAYER_TEST_STORAGE"] == "memory"
+        #else
+        let inMemory = false
+        #endif
+        do {
+            return try ModelContainer(for: PlaybackHistoryRecord.self,
+                                      configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory))
+        } catch { fatalError("无法打开播放历史：\(error)") }
+    }()
     @StateObject private var sessionStore = PlayerSessionStore.shared
     @StateObject private var playerModel = VideoPlayerModel()
+    #if os(visionOS)
+    @StateObject private var immersiveCoordinator = VisionImmersivePlaybackCoordinator()
+    @StateObject private var visionSettings = VisionSettings.shared
+    #endif
 
     #if os(iOS)
     @UIApplicationDelegateAdaptor(CinePlayerIOSAppDelegate.self) var iosAppDelegate
@@ -45,6 +60,37 @@ struct CinePlayerApp: App {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             }
         }
+        #elseif os(visionOS)
+        Window("CinePlayer", id: "main-window") {
+            rootContentView
+                // 外部文件交给已有主窗口，避免系统为单实例 Window 再创建场景。
+                .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+        }
+        .defaultSize(width: 1280, height: 720)
+
+        Window("播放", id: VisionPlayerWindowView.windowID) {
+            VisionPlayerWindowView()
+                .environmentObject(sessionStore)
+                .environmentObject(playerModel)
+                .environmentObject(immersiveCoordinator)
+                .environmentObject(visionSettings)
+                .modelContainer(historyContainer)
+        }
+        .defaultSize(width: 1920, height: 1080)
+        .restorationBehavior(.disabled)
+        .defaultLaunchBehavior(.suppressed)
+        ImmersiveSpace(id: VisionImmersiveSpaceView.spaceID) {
+            VisionImmersiveSpaceView()
+                .environmentObject(sessionStore)
+                .environmentObject(playerModel)
+                .environmentObject(immersiveCoordinator)
+                .environmentObject(visionSettings)
+        }
+        .immersionStyle(
+            selection: visionSettings.immersionStyleBinding.styleErased,
+            in: ProgressiveImmersionStyle(), MixedImmersionStyle(), FullImmersionStyle()
+        )
+        .immersiveContentBrightness(.dim)
         #else
         WindowGroup {
             rootContentView
@@ -57,7 +103,11 @@ struct CinePlayerApp: App {
         ContentView()
             .environmentObject(sessionStore)
             .environmentObject(playerModel)
-            .modelContainer(for: [PlaybackHistoryRecord.self])
+            .modelContainer(historyContainer)
+            #if os(visionOS)
+                .environmentObject(immersiveCoordinator)
+                .environmentObject(visionSettings)
+            #endif
             #if os(macOS)
                 .environmentObject(windowController)
             #else

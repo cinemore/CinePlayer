@@ -47,12 +47,8 @@ enum PlatformServices {
     }
 
     /// 根据视频原始尺寸更新播放器窗口的大小、比例和最小/最大限制
-    static func configureMacPlayerWindowForVideo(naturalSize: CGSize) {
+    static func configureMacPlayerWindowForVideo(naturalSize: CGSize, window: NSWindow) {
         guard naturalSize.width > 0, naturalSize.height > 0 else {
-            return
-        }
-
-        guard let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first else {
             return
         }
 

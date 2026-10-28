@@ -47,6 +47,17 @@ struct ControllerPanelViewTvOS: View {
     @EnvironmentObject private var playerControlModel: PlayerControlModel
 
     @FocusState private var focusedItem: TVOSControlFocusItem?
+    @State private var didSetInitialFocus = false
+    @State private var lastFocusedItem: TVOSControlFocusItem?
+
+    private var availableFocusItems: Set<TVOSControlFocusItem> {
+        var items: Set<TVOSControlFocusItem> = [.progressSlider, .rewindButton, .playPauseButton,
+            .forwardButton, .playbackRateMenu, .mediaInfoMenu, .enhancementMenu, .scaleButton]
+        if hasSubtitleMenu { items.insert(.subtitleMenu) }
+        if hasAudioMenu { items.insert(.audioMenu) }
+        if hasVideoMenu { items.insert(.videoMenu) }
+        return items
+    }
 
     private var hasSubtitleMenu: Bool {
         let hasEmbedded = !(playerCoordinator.controller?.sortByLanguageTracks(mediaType: .subtitle).isEmpty ?? true)
@@ -68,15 +79,14 @@ struct ControllerPanelViewTvOS: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            focusedItem = .progressSlider
+            if !didSetInitialFocus { didSetInitialFocus = true; focusedItem = .progressSlider }
         }
         .onChange(of: focusedItem) { oldValue, newValue in
-            // 焦点切换视为用户操作：重置 3 秒倒计时而不是禁用自动隐藏，
-            // 这样既保证用户在面板里导航时不会被中途收起，
-            // 又能在停止操作后正常自动隐藏。
-            if oldValue != newValue, playerMaskModel.isMaskShow {
-                playerMaskModel.resetAutoHideTimer()
+            // 用户进入控制栏后保留面板，返回键再交还自动隐藏。
+            if oldValue != nil, newValue != nil, playerMaskModel.isMaskShow {
+                playerMaskModel.disableAutoHide()
             }
+            if let newValue { lastFocusedItem = newValue }
 
             if oldValue == .progressSlider,
                newValue != .progressSlider,
@@ -86,6 +96,11 @@ struct ControllerPanelViewTvOS: View {
                     playerCoordinator.controller?.play()
                 }
             }
+        }
+        .onChange(of: availableFocusItems) { _, items in
+            guard playerMaskModel.isMaskShow, let current = focusedItem ?? lastFocusedItem,
+                  !items.contains(current) else { return }
+            focusedItem = .progressSlider
         }
         .ignoresSafeArea()
     }
@@ -113,6 +128,11 @@ struct ControllerPanelViewTvOS: View {
 
     private var progressSection: some View {
         VStack(alignment: .trailing, spacing: ControllerPanelLayoutConstants.sectionSpacing) {
+            HStack {
+                PlayerTitleView(title: playerModel.sourceURL?.lastPathComponent ?? "")
+                Spacer()
+                if let controller = playerCoordinator.controller { PlayerNetworkSpeed(controller: controller) }
+            }
             playbackControlButtons
             progressSlider
         }
@@ -167,6 +187,23 @@ struct ControllerPanelViewTvOS: View {
                     .focused($focusedItem, equals: .playbackRateMenu)
                     .tvOS26GlassButtonStyle()
 
+                TVOSVideoEnhancementMenu()
+                    .focused($focusedItem, equals: .enhancementMenu)
+                    .tvOS26GlassButtonStyle()
+
+                Menu {
+                    Button("媒体信息", systemImage: "info.circle") { playerControlModel.showMediaInfoCard = true }
+                    Toggle("固定播放信息", isOn: $playerModel.isPlaybackInfoPinned)
+                    if PlayerController.isPictureInPictureSupported(), let controller = playerCoordinator.controller {
+                        Button("画中画") { controller.togglePictureInPicture() }
+                            .disabled(!controller.canStartPictureInPicture && !controller.isPictureInPictureRunning)
+                    }
+                } label: { Image(systemName: "info.circle") }
+                .frame(width: 68, height: 68)
+                .buttonBorderShape(.circle)
+                .focused($focusedItem, equals: .mediaInfoMenu)
+                .tvOS26GlassButtonStyle()
+
                 AspectFillButton()
                     .focused($focusedItem, equals: .scaleButton)
                     .tvOS26GlassButtonStyle()
@@ -193,7 +230,7 @@ struct ControllerPanelViewTvOS: View {
 
     private var playPauseButton: some View {
         Button {
-            playerCoordinator.controller?.switchPlayPause()
+            playerCoordinator.controller?.togglePlaybackFromControls()
         } label: {
             Image(
                 systemName: playerCoordinator.playbackState == .playing

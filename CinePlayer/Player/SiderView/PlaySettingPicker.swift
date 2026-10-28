@@ -17,32 +17,11 @@ struct PlaySettingPicker: View {
     }
 
     var body: some View {
-        #if os(tvOS)
-        HStack {
-            Text(title)
-                .f31r()
-            Spacer()
-            picker
-        }
-        #else
-        picker
-        #endif
-    }
-
-    private var picker: some View {
-        Picker(selection: $selection) {
+        PlayerPanelPicker(title, selection: $selection) {
             ForEach(seconds, id: \.self) { second in
                 Text("\(second)s")
                     .tag(second)
-                    #if os(tvOS)
-                        .f31r()
-                        .frame(width: 150)
-                    #else
-                        .f14r()
-                    #endif
             }
-        } label: {
-            Text(title)
         }
         .labelStyle(.titleAndIcon)
         .pickerStyle(.menu)

@@ -1,4 +1,5 @@
 import Foundation
+import CinePlayerSDK
 import SwiftUI
 import Combine
 
@@ -15,16 +16,35 @@ final class PlayerSessionStore: ObservableObject {
     private enum StorageKey {
         static let skipForwardSeconds = "player.control.skipForwardSeconds"
         static let skipBackwardSeconds = "player.control.skipBackwardSeconds"
+        static let longPressSpeedUpEnabled = "player.control.longPressSpeedUpEnabled"
+        static let longPressPlaybackRate = "player.control.longPressPlaybackRate"
+        static let subtitleTranslateMode = "player.control.subtitleTranslateMode"
+        static let subtitleTranslationTargetLanguage = "player.control.subtitleTranslationTargetLanguage"
+        static let subtitleTranslationOnTop = "player.control.subtitleTranslationOnTop"
     }
 
-    init() {
+    init(defaults: UserDefaults = .standard) {
         var config = PlayerControlConfig.default
-        let defaults = UserDefaults.standard
         if defaults.object(forKey: StorageKey.skipForwardSeconds) != nil {
             config.skipForwardSeconds = defaults.integer(forKey: StorageKey.skipForwardSeconds)
         }
         if defaults.object(forKey: StorageKey.skipBackwardSeconds) != nil {
             config.skipBackwardSeconds = defaults.integer(forKey: StorageKey.skipBackwardSeconds)
+        }
+        if defaults.object(forKey: StorageKey.longPressSpeedUpEnabled) != nil {
+            config.longPressSpeedUpEnabled = defaults.bool(forKey: StorageKey.longPressSpeedUpEnabled)
+        }
+        if defaults.object(forKey: StorageKey.longPressPlaybackRate) != nil {
+            config.longPressPlaybackRate = min(4, max(1.5, defaults.float(forKey: StorageKey.longPressPlaybackRate)))
+        }
+        if SubtitleTranslationRouter.isAvailable,
+           let value = defaults.string(forKey: StorageKey.subtitleTranslateMode),
+           let mode = SubtitleTranslateMode(rawValue: value) {
+            config.subtitleTranslateMode = mode
+        }
+        config.subtitleTranslationTargetLanguage = defaults.string(forKey: StorageKey.subtitleTranslationTargetLanguage) ?? ""
+        if defaults.object(forKey: StorageKey.subtitleTranslationOnTop) != nil {
+            config.subtitleTranslationOnTop = defaults.bool(forKey: StorageKey.subtitleTranslationOnTop)
         }
         self.controlConfig = config
 
@@ -32,9 +52,14 @@ final class PlayerSessionStore: ObservableObject {
             .removeDuplicates()
             .dropFirst()
             .sink { cfg in
-                let d = UserDefaults.standard
+                let d = defaults
                 d.set(cfg.skipForwardSeconds, forKey: StorageKey.skipForwardSeconds)
                 d.set(cfg.skipBackwardSeconds, forKey: StorageKey.skipBackwardSeconds)
+                d.set(cfg.longPressSpeedUpEnabled, forKey: StorageKey.longPressSpeedUpEnabled)
+                d.set(cfg.longPressPlaybackRate, forKey: StorageKey.longPressPlaybackRate)
+                d.set(cfg.subtitleTranslateMode.rawValue, forKey: StorageKey.subtitleTranslateMode)
+                d.set(cfg.subtitleTranslationTargetLanguage, forKey: StorageKey.subtitleTranslationTargetLanguage)
+                d.set(cfg.subtitleTranslationOnTop, forKey: StorageKey.subtitleTranslationOnTop)
             }
             .store(in: &cancellables)
     }

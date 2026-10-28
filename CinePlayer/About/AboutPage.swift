@@ -22,12 +22,14 @@ private enum AboutLinks {
 }
 
 struct AboutPage: View {
+    @State private var showsEnhancementLicenses = false
     #if !os(macOS)
         @Environment(\.openURL) private var openURL
     #endif
 
     var body: some View {
-        #if os(macOS)
+        Group {
+            #if os(macOS)
             macBody
                 .navigationTitle("关于")
         #else
@@ -36,7 +38,36 @@ struct AboutPage: View {
             #if os(iOS)
                 .navigationBarTitleDisplayMode(.large)
             #endif
-        #endif
+            #endif
+        }
+        .sheet(isPresented: $showsEnhancementLicenses) {
+            NavigationStack {
+                ScrollView {
+                    Text(enhancementLicenses)
+                        .font(.system(.footnote, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        #if !os(tvOS)
+                        .textSelection(.enabled)
+                        #endif
+                }
+                .navigationTitle("视频增强许可")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("完成") { showsEnhancementLicenses = false }
+                    }
+                }
+            }
+            #if os(macOS) || os(visionOS)
+            .frame(width: 640, height: 520)
+            #endif
+        }
+    }
+
+    private var enhancementLicenses: String {
+        guard let url = Bundle.main.url(forResource: "VideoEnhancementLicenses", withExtension: "txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return "" }
+        return text
     }
 
     #if os(macOS)
@@ -84,10 +115,10 @@ struct AboutPage: View {
                 .padding(.bottom, 8)
 
             Text("CinePlayer")
-                .font(.system(size: 24, weight: .semibold))
+                .font(.title.weight(.semibold))
 
             Text("版本号: \(AboutAppInfo.version) (\(AboutAppInfo.build))")
-                .f13r()
+                .font(.footnote)
                 .foregroundStyle(.secondary)
         }
     }
@@ -100,9 +131,9 @@ struct AboutPage: View {
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("联系我们")
-                        .f13r()
+                        .font(.footnote)
                     Text("cinemore@cinemore.com.cn")
-                        .f12r()
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -128,6 +159,10 @@ struct AboutPage: View {
                 linkButton(title: "隐私政策", url: AboutLinks.privacy)
                 linkButton(title: "使用条款(EULA)", url: AboutLinks.eula)
             }
+            Button("视频增强许可") { showsEnhancementLicenses = true }
+                .font(.footnote)
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
         }
     }
 
@@ -139,14 +174,14 @@ struct AboutPage: View {
             #if os(iOS)
                 VStack(alignment: .center, spacing: 6) {
                     Text("Copyright © 2026 Youduohong. All rights reserved.")
-                        .f12r()
+                        .font(.caption)
 //                    Text("粤ICP备2022030744号-6A")
-//                        .f12r()
+//                        .font(.caption)
 //                        .foregroundStyle(.blue)
                 }
             #else
                 Text("Copyright © 2026 Youduohong. All rights reserved.")
-                    .f12r()
+                    .font(.caption)
             #endif
         }
         .buttonStyle(.plain)
@@ -158,7 +193,7 @@ struct AboutPage: View {
             openExternal(url)
         } label: {
             Text(title)
-                .f12r()
+                .font(.caption)
                 .foregroundStyle(.blue)
         }
         .buttonStyle(.plain)

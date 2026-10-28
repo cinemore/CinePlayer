@@ -18,6 +18,8 @@ struct ContentView: View {
         }
         #elseif os(tvOS)
         TVOSPlayerHostView()
+        #elseif os(visionOS)
+        VisionPlayerHostView()
         #else
         PlayerRootView()
         #endif
@@ -27,12 +29,14 @@ struct ContentView: View {
 #if os(iOS)
 private struct IOSPlayerTabHostView: View {
     @EnvironmentObject private var sessionStore: PlayerSessionStore
+    @EnvironmentObject private var playerModel: VideoPlayerModel
 
     private var isPlayerPresented: Binding<Bool> {
         Binding(
             get: { sessionStore.currentSource != nil },
             set: { isPresented in
                 if !isPresented {
+                    playerModel.close()
                     sessionStore.close()
                 }
             }

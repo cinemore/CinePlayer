@@ -1,22 +1,40 @@
 {
-  "originHash" : "a8df0c532bb66e0ba71e82df66c1cf95218f39071449f9ae4517981974465db0",
+  "originHash" : "3b6d6dec0577abbc87d34703ee948c78cdfb960eb555aee5fb463366ab7c9a1f",
   "pins" : [
     {
       "identity" : "anime4k-metal",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:cinemore/anime4k-metal.git",
+      "location" : "https://github.com/cinemore/anime4k-metal.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "3dbffcfdd329f0882fc39300a95791f9d2285aae"
+        "revision" : "63ac7006941b5b517a7dbce485b3c6095cec576c",
+        "version" : "0.1.4"
+      }
+    },
+    {
+      "identity" : "artcnn-metal",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cinemore/artcnn-metal.git",
+      "state" : {
+        "revision" : "8a94c5604a37f89f6db4db1036f9577a9f59666c",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "fsr-metal",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cinemore/fsr-metal.git",
+      "state" : {
+        "revision" : "3d27afa8e4b9e62a0f0295bd6ed796bf01929035",
+        "version" : "0.1.0"
       }
     },
     {
       "identity" : "rife-metal",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:cinemore/rife-metal.git",
+      "location" : "https://github.com/cinemore/rife-metal.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "728d28e9c0ac963dabda2f5b20210167a63ec06b"
+        "revision" : "ac6408022eb6bc1a53181f5b2716a9f5ded507c2",
+        "version" : "0.1.8"
       }
     },
     {
@@ -24,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
-        "version" : "1.7.1"
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     }
   ],

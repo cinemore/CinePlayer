@@ -6,6 +6,7 @@ protocol PlaySettingParityAdapting: ObservableObject {
     var skipBackwardSeconds: Int { get set }
     var skipForwardSeconds: Int { get set }
     var longPressSpeedUpEnabled: Bool { get set }
+    var longPressPlaybackRate: Float { get set }
 
     func bind(sessionStore: PlayerSessionStore)
 }
@@ -37,6 +38,9 @@ final class PlaySettingParityAdapter: PlaySettingParityAdapting {
     }
 
     private weak var sessionStore: PlayerSessionStore?
+    @Published var longPressPlaybackRate = PlayerControlConfig.default.longPressPlaybackRate {
+        didSet { applyIfNeeded { $0.longPressPlaybackRate = longPressPlaybackRate } }
+    }
     private var cancellables = Set<AnyCancellable>()
     private var syncingFromStore = false
 
@@ -63,6 +67,7 @@ final class PlaySettingParityAdapter: PlaySettingParityAdapting {
         skipBackwardSeconds = config.skipBackwardSeconds
         skipForwardSeconds = config.skipForwardSeconds
         longPressSpeedUpEnabled = config.longPressSpeedUpEnabled
+        longPressPlaybackRate = config.longPressPlaybackRate
         syncingFromStore = false
     }
 

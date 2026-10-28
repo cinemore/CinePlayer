@@ -111,6 +111,12 @@ struct SiderContanierView<Content: View>: View {
                 }
                 .offset(x: offset.width, y: offset.height)
                 .allowsHitTesting(show)
+                #if os(macOS)
+                .modifier(MacPlayerFormKeyboardScope(isPresented: show))
+                #else
+                .accessibilityHidden(!show)
+                .disabled(!show)
+                #endif
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: show)
         }
         .frame(

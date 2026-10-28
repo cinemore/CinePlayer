@@ -19,6 +19,7 @@ struct ControllerPanelViewMacOS: View {
 
     @State private var containerWidth: CGFloat = 900
     @State private var isFullScreen = false
+    @State private var scrubPlayback = PlayerScrubPlaybackSession()
 
     private var config: PlayerControlConfig {
         sessionStore.controlConfig
@@ -90,7 +91,8 @@ struct ControllerPanelViewMacOS: View {
             if isPictureInPictureSupported && !isFullScreen {
                 groupIconButton(
                     icon: playerCoordinator.isPictureInPictureActive
-                        ? "pip.exit" : "pip.enter"
+                        ? "pip.exit" : "pip.enter",
+                    title: "画中画"
                 ) {
                     playerCoordinator.controller?.togglePictureInPicture()
                 }
@@ -101,7 +103,8 @@ struct ControllerPanelViewMacOS: View {
                 groupIconButton(
                     icon: playerCoordinator.isScaleAspectFill
                         ? "rectangle.arrowtriangle.2.inward"
-                        : "rectangle.arrowtriangle.2.outward"
+                        : "rectangle.arrowtriangle.2.outward",
+                    title: "缩放"
                 ) {
                     playerCoordinator.isScaleAspectFill.toggle()
                 }
@@ -110,7 +113,8 @@ struct ControllerPanelViewMacOS: View {
             groupIconButton(
                 icon: isFullScreen
                     ? "arrow.down.right.and.arrow.up.left"
-                    : "arrow.up.left.and.arrow.down.right"
+                    : "arrow.up.left.and.arrow.down.right",
+                title: "全屏"
             ) {
                 toggleFullScreen()
             }
@@ -119,7 +123,8 @@ struct ControllerPanelViewMacOS: View {
                 groupIconButton(
                     icon: windowController.isFloating
                         ? "lock.rectangle.on.rectangle.fill"
-                        : "lock.rectangle.on.rectangle"
+                        : "lock.rectangle.on.rectangle",
+                    title: "置顶"
                 ) {
                     windowController.toggleWindowLevel()
                 }
@@ -131,18 +136,18 @@ struct ControllerPanelViewMacOS: View {
 
     private var settingsButtonGroup: some View {
         HStack(spacing: 8) {
-            groupIconButton(icon: "info.circle") {
+            groupIconButton(icon: "info.circle", title: "媒体信息") {
                 playerMaskModel.hideMask()
                 playerControlModel.hideContainer()
                 playerControlModel.showMediaInfoCard.toggle()
             }
 
-            groupIconButton(icon: "wand.and.rays") {
+            groupIconButton(icon: "wand.and.rays", title: "视频增强") {
                 playerControlModel.hideContainer()
                 playerControlModel.showEnhancementContainer = true
             }
 
-            groupIconButton(icon: "gearshape") {
+            groupIconButton(icon: "gearshape", title: "播放设置") {
                 playerControlModel.hideContainer()
                 playerControlModel.showSettingContainer = true
             }
@@ -155,6 +160,15 @@ struct ControllerPanelViewMacOS: View {
         HStack {
             Spacer()
             VStack(spacing: 8) {
+                if let controller = playerCoordinator.controller {
+                    HStack {
+                        PlayerNetworkSpeed(controller: controller)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .modifier(GlassEffectModifier(cornerRadius: 14, material: .regularMaterial))
+                        Spacer()
+                    }
+                }
                 PlayerSliderView(
                     coordinator: playerCoordinator,
                     progress: playerCoordinator.progress,
@@ -162,10 +176,10 @@ struct ControllerPanelViewMacOS: View {
                         if editing {
                             playerMaskModel.showMask()
                             playerMaskModel.pauseTimer()
-                            playerCoordinator.controller?.pause()
+                            scrubPlayback.begin(controller: playerCoordinator.controller)
                         } else {
                             playerMaskModel.restartTimer()
-                            playerCoordinator.controller?.seek(time: TimeInterval(seconds))
+                            scrubPlayback.commit(time: TimeInterval(seconds), controller: playerCoordinator.controller)
                         }
                     }
                 )
@@ -218,20 +232,20 @@ struct ControllerPanelViewMacOS: View {
         HStack(spacing: 8) {
             playbackSpeedButton
 
-            groupIconButton(icon: "captions.bubble") {
+            groupIconButton(icon: "captions.bubble", title: "字幕") {
                 playerControlModel.hideContainer()
                 playerControlModel.showSubtitleContainer = true
             }
 
             if hasMultipleAudioTracks {
-                groupIconButton(icon: "waveform") {
+                groupIconButton(icon: "waveform", title: "音轨") {
                     playerControlModel.hideContainer()
                     playerControlModel.showAudioContainer = true
                 }
             }
 
             if hasMultipleVideoTracks {
-                groupIconButton(icon: "video.fill") {
+                groupIconButton(icon: "video.fill", title: "视频轨道") {
                     playerControlModel.hideContainer()
                     playerControlModel.showVideoTrackContainer = true
                 }
@@ -258,20 +272,24 @@ struct ControllerPanelViewMacOS: View {
                 Text("\(playerCoordinator.playbackRate.playbackRateText)x")
                     .brightness(0.2)
                     .foregroundColor(.white)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.title3.weight(.semibold))
                     .frame(height: 44)
                     .frame(minWidth: 44)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
             }
         }
-        .buttonStyle(.plain)
+        .playerControlButtonStyle()
+        .accessibilityLabel("播放速度")
+        .accessibilityValue(Text(verbatim: "\(playerCoordinator.playbackRate.playbackRateText)x"))
+        .help("播放速度")
     }
 
     private var playControlButtonGroup: some View {
         HStack(spacing: 16) {
             groupIconButton(
                 icon: "gobackward.\(config.skipBackwardSeconds)",
+                title: "后退",
                 size: 36,
                 font: .system(size: 20, weight: .semibold),
                 useGlassEffect: true
@@ -282,15 +300,17 @@ struct ControllerPanelViewMacOS: View {
 
             groupIconButton(
                 icon: playerCoordinator.playbackState == .playing ? "pause.fill" : "play.fill",
+                title: playerCoordinator.playbackState == .playing ? "暂停" : "播放",
                 size: 48,
                 font: .system(size: 30, weight: .semibold),
                 useGlassEffect: true
             ) {
-                playerCoordinator.controller?.switchPlayPause()
+                playerCoordinator.controller?.togglePlaybackFromControls()
             }
 
             groupIconButton(
                 icon: "goforward.\(config.skipForwardSeconds)",
+                title: "前进",
                 size: 36,
                 font: .system(size: 20, weight: .semibold),
                 useGlassEffect: true
@@ -303,6 +323,7 @@ struct ControllerPanelViewMacOS: View {
 
     private func groupIconButton(
         icon: String,
+        title: LocalizedStringKey,
         size: CGFloat = 44,
         font: Font = .system(size: 20, weight: .semibold),
         useGlassEffect: Bool = false,
@@ -318,6 +339,8 @@ struct ControllerPanelViewMacOS: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(title))
+        .help(Text(title))
         .if(useGlassEffect) {
             $0.modifier(GlassEffectModifier(cornerRadius: size / 2, material: .regularMaterial))
         }
@@ -336,31 +359,12 @@ struct ControllerPanelViewMacOS: View {
     }
 
     private func toggleFullScreen() {
-        // 如果窗口处于悬浮锁定状态，先恢复为普通层级
-        if windowController.isFloating {
-            windowController.toggleWindowLevel()
-        }
-
-        let wasPlaying = playerCoordinator.playbackState == .playing
-        if wasPlaying {
-            playerCoordinator.controller?.pause()
-        }
-
-        if let window = NSApplication.shared.keyWindow {
-            window.toggleFullScreen(nil)
-        }
-
-        syncFullScreenState()
-
-        if wasPlaying {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                playerCoordinator.controller?.play()
-            }
-        }
+        if windowController.isFloating { windowController.toggleWindowLevel() }
+        windowController.playbackWindow?.toggleFullScreen(nil)
     }
 
     private func syncFullScreenState() {
-        if let window = NSApplication.shared.keyWindow {
+        if let window = windowController.playbackWindow {
             isFullScreen = window.styleMask.contains(.fullScreen)
         } else {
             isFullScreen = false

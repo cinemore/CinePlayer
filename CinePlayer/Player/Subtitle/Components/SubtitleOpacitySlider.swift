@@ -17,18 +17,18 @@ import SwiftUI
             VStack(spacing: 8) {
                 HStack {
                     Text(title)
-                        .f14r()
+                        .font(.body)
                         .foregroundColor(.white)
                     Spacer()
                     Text(value, format: .percent.precision(.fractionLength(0)))
-                        .f14m()
+                        .font(.body.weight(.medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
 
                 HStack(spacing: 12) {
                     // 透明度图标
                     Image(systemName: "circle.fill")
-                        .f12r()
+                        .font(.caption)
                         .foregroundColor(.white.opacity(0.3))
 
                     // 滑块
@@ -38,7 +38,7 @@ import SwiftUI
 
                     // 不透明图标
                     Image(systemName: "circle.fill")
-                        .f12r()
+                        .font(.caption)
                         .foregroundColor(.white)
                 }
             }

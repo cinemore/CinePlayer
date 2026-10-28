@@ -146,15 +146,27 @@ struct PlaybackHistoryListView: View {
     #if os(tvOS) || os(visionOS)
     private var gridBody: some View {
         GeometryReader { geo in
+            #if os(visionOS)
+            // 沿用主仓库横向卡片的密度：小窗保持可读宽度，宽窗再增加列数。
+            let hPad: CGFloat = geo.size.width >= 466 ? 20 : 16
+            let spacing: CGFloat = 13
+            let availableWidth = max(0, geo.size.width - hPad * 2)
+            let compactWidth = (availableWidth - spacing) / 2
+            let minimumWidth = min(180, max(137.5, compactWidth))
+            let calculatedCount = max(1, min(10, Int(floor((availableWidth + spacing) / (minimumWidth + spacing)))))
+            let columnCount = compactWidth >= 137.5 && compactWidth <= 180 ? 2 : calculatedCount
+            let cardWidth = min(260, max(0, (availableWidth - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)))
+            #else
             let hPad: CGFloat = 80
             let spacing: CGFloat = 40
             let columnCount = 4
             let cardWidth = (geo.size.width - hPad * 2 - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)
+            #endif
 
             ScrollView {
                 LazyVGrid(
                     columns: Array(
-                        repeating: GridItem(.flexible(), spacing: spacing, alignment: .top),
+                        repeating: GridItem(.fixed(cardWidth), spacing: spacing, alignment: .top),
                         count: columnCount
                     ),
                     spacing: spacing
@@ -166,7 +178,13 @@ struct PlaybackHistoryListView: View {
                 .padding(.horizontal, hPad)
                 .padding(.bottom, hPad)
             }
+            #if os(visionOS)
+            .scrollInputBehavior(.enabled, for: .look(axes: .vertical))
+            #endif
         }
+        #if os(visionOS)
+        .navigationTitle("历史记录")
+        #endif
         .overlay {
             if records.isEmpty {
                 ContentUnavailableView(
@@ -197,19 +215,39 @@ struct PlaybackHistoryListView: View {
                 historyCardImage(for: record, cardWidth: cardWidth)
 
                 Text(historyDisplayTitle(for: record))
-                    .font(.system(size: 25, weight: .medium))
+                    #if os(visionOS)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    #else
+                    .font(.headline)
                     .foregroundStyle(.white)
+                    #endif
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(record.playedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.system(size: 23, weight: .medium))
+                    #if os(visionOS)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    #else
+                    .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.5))
+                    #endif
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(width: cardWidth)
+            #if os(visionOS)
+            .padding(6)
+            .cardHoverEffect(cornerRadius: 18)
+            .padding(-6)
+            #endif
         }
+        #if os(visionOS)
+        .buttonStyle(.plain)
+        #else
         .buttonStyle(.borderless)
+        #endif
         .contextMenu {
             Button(role: .destructive) {
                 PlaybackHistoryRepository.delete(record, in: modelContext)
@@ -259,7 +297,7 @@ struct PlaybackHistoryListView: View {
                     HStack {
                         Spacer()
                         Text("\(record.initialPlaybackTime.toString(for: .minOrHour)) / \(record.totalDuration.toString(for: .minOrHour))")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.caption.weight(.semibold).monospacedDigit())
                             .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 16)
@@ -327,18 +365,18 @@ struct PlaybackHistoryListView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(historyDisplayTitle(for: record))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.body.weight(.medium))
                     .lineLimit(2)
                     .truncationMode(usesMiddleTruncation(for: record) ? .middle : .tail)
                     .multilineTextAlignment(.leading)
 
                 Text(record.playedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.system(size: 11, weight: .regular))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
                 Text("\(record.initialPlaybackTime.toString(for: .minOrHour))/\(record.totalDuration.toString(for: .minOrHour))")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }

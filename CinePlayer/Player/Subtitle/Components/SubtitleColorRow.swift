@@ -119,7 +119,7 @@ import SwiftUI
             VStack(spacing: 8) {
                 HStack {
                     Text(title)
-                        .f14r()
+                        .font(.body)
                         .foregroundColor(.white)
                     Spacer()
                 }
@@ -239,7 +239,7 @@ import SwiftUI
         private var clearIcon: some View {
             if isClearColor {
                 Image(systemName: "square.split.diagonal.2x2")
-                    .f12r()
+                    .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }
         }
@@ -257,7 +257,7 @@ import SwiftUI
             VStack(spacing: 8) {
                 HStack {
                     Text(title)
-                        .f14r()
+                        .font(.body)
                         .foregroundColor(.white)
                     Spacer()
                 }
@@ -317,7 +317,7 @@ import SwiftUI
         private var clearIcon: some View {
             if colorOption == .clear {
                 Image(systemName: "square.split.diagonal.2x2")
-                    .f12r()
+                    .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }
         }

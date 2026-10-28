@@ -106,7 +106,7 @@ private extension GestureController {
     }
 
     func handlePlayPause() {
-        playerCoordinator.controller?.switchPlayPause()
+        playerCoordinator.controller?.togglePlaybackFromControls()
     }
 
     func handleSelect() {

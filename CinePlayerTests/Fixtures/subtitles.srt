@@ -1,0 +1,7 @@
+1
+00:00:00,000 --> 00:00:05,000
+CinePlayer local subtitle regression
+
+2
+00:00:05,000 --> 00:00:20,000
+Seek, switch tracks, and close safely.

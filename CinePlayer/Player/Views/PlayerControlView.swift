@@ -99,6 +99,7 @@ struct PlayerControlView: View {
 
     #if os(macOS)
         @EnvironmentObject private var windowController: PlayerWindowController
+        @StateObject private var macKeyboardFocus = MacPlayerKeyboardFocus()
         /// 是否已经为当前视频应用过一次窗口布局（避免每次 seek / 状态变化都重置用户手动调整过的窗口大小）
         @State private var hasAppliedMacWindowLayout = false
     #endif
@@ -109,6 +110,10 @@ struct PlayerControlView: View {
     @State private var didRequestHistoryThumbnail = false
     @State private var lastHistoryProgressSecond = -1
     @State private var lastHistoryDurationSecond = -1
+    @State private var translationRefreshTask: Task<Void, Never>?
+    #if os(visionOS)
+        @StateObject private var visionScrubState = PlayerSliderScrubState()
+    #endif
 
     #if !os(tvOS) && !os(visionOS)
         @State private var showLanguagePackDownloadSheet = false
@@ -143,10 +148,8 @@ struct PlayerControlView: View {
                                             playerMaskModel.showMask()
                                         }
 
-                                    PlayerMediaInfoCardView {
-                                        playerControlModel.showMediaInfoCard = false
-                                        playerMaskModel.showMask()
-                                    }
+                                    MediaInfoCardInPlayerView(showMediaInfo: $playerControlModel.showMediaInfoCard)
+                                        .environmentObject(playerModel)
                                     .environmentObject(playerModel.playerCoordinator)
                                     .padding(.horizontal, 16)
                                 }
@@ -246,12 +249,15 @@ struct PlayerControlView: View {
                         loadingOrErrorOverlay
                     }
             #else
-                // 其它平台保持现有布局不变
-                ZStack {
-                    playerSurface(geometry: geometry)
+                // 视频与控制层共用稳定身份，折叠设备由系统分配两个区域。
+                playerSurface(geometry: geometry)
+                    .modifier(PlayerArrangementModifier { hasSeparateControls in
+                        GeometryReader { geometry in
+                            ZStack {
 
-                    if playerMaskModel.isMaskShow {
-                        controlOverlay(geometry: geometry)
+                    #if !os(visionOS)
+                    if playerMaskModel.isMaskShow || hasSeparateControls {
+                        controlOverlay(geometry: geometry, hasSeparateControls: hasSeparateControls)
                             .transition(.opacity)
                     }
 
@@ -263,13 +269,12 @@ struct PlayerControlView: View {
                                 playerMaskModel.showMask()
                             }
 
-                        PlayerMediaInfoCardView {
-                            playerControlModel.showMediaInfoCard = false
-                            playerMaskModel.showMask()
-                        }
+                        MediaInfoCardInPlayerView(showMediaInfo: $playerControlModel.showMediaInfoCard)
+                                        .environmentObject(playerModel)
                         .environmentObject(playerModel.playerCoordinator)
                     }
 
+                    #if !os(tvOS)
                     SiderView(geometry: geometry)
                         .environmentObject(sessionStore)
                         .environmentObject(playerModel)
@@ -277,6 +282,8 @@ struct PlayerControlView: View {
                         .environmentObject(playerMaskModel)
                         .environmentObject(playerModel.playerCoordinator)
                         .environmentObject(playerModel.config.subtitleStyle)
+                    #endif
+                    #endif
 
                     if !isLoadingOrErrorOverlayVisible,
                         toastModel.showContainer,
@@ -309,7 +316,14 @@ struct PlayerControlView: View {
                     }
 
                     loadingOrErrorOverlay
-                }
+                            }
+                        }
+                    })
+                    #if os(visionOS)
+                    .modifier(VisionPlayerPresentation(geometry: geometry, sessionStore: sessionStore,
+                        playerModel: playerModel, controls: playerControlModel, mask: playerMaskModel, toast: toastModel,
+                        scrubState: visionScrubState, isInitializing: isPlayerInitializing))
+                    #endif
                 .background(.black)
                 .onAppear {
                     brightness = PlatformServices.screenBrightness(default: brightness)
@@ -352,23 +366,13 @@ struct PlayerControlView: View {
                 }
             }
             .onExitCommand {
-                if tvOSPlaybackControlModel.isSeeking {
-                    tvOSPlaybackControlModel.cancelSeeking(
-                        progress: playerModel.playerCoordinator.progress
-                    ) {
-                        playerModel.playerCoordinator.controller?.play()
-                    }
-                    return
+                tvOSPlaybackControlModel.handleExitCommand(
+                    controls: playerControlModel, mask: playerMaskModel,
+                    coordinator: playerModel.playerCoordinator
+                ) {
+                    playerModel.close()
+                    sessionStore.close()
                 }
-
-                if playerMaskModel.isMaskShow {
-                    playerMaskModel.enableAutoHide()
-                    playerMaskModel.hideMask()
-                    return
-                }
-
-                playerModel.close()
-                sessionStore.close()
             }
         #endif
         .navigationTitle("")
@@ -406,10 +410,34 @@ struct PlayerControlView: View {
                 )
             }
         #endif
-        .compatibleOnChange(of: sessionStore.controlConfig.subtitleTranslateMode) { newMode in
-            handleSubtitleTranslateModeChange(newMode)
+        .compatibleOnChange(of: sessionStore.controlConfig) { oldValue, newValue in
+            if oldValue.subtitleTranslateMode != newValue.subtitleTranslateMode
+                || oldValue.subtitleTranslationTargetLanguage != newValue.subtitleTranslationTargetLanguage
+                || oldValue.subtitleTranslationOnTop != newValue.subtitleTranslationOnTop {
+                handleSubtitleTranslateModeChange(newValue.subtitleTranslateMode)
+            }
+        }
+        .onDisappear {
+            translationRefreshTask?.cancel()
+            playerControlModel.cancelSubtitleLoad()
+        }
+        .compatibleOnChange(of: playerModel.playerCoordinator.videoTrack?.streamIndex) { _ in
+            playerModel.refreshEnhancementForSelectedVideoTrack()
+        }
+        .compatibleOnChange(of: playerControlModel.showMediaInfoCard) { shown in
+            #if !os(visionOS)
+            if shown { playerMaskModel.hideMask() } else { playerMaskModel.showMask() }
+            #endif
+        }
+        .environment(\.usesPlayerPanelTypography, true)
+        .environment(\.usesVisionPlayerTypography, true)
+        .overlay(alignment: .topLeading) {
+            if playerModel.isPlaybackInfoPinned {
+                PlayerPlaybackInfoHUD(coordinator: playerModel.playerCoordinator)
+            }
         }
         #if os(macOS)
+            .modifier(MacPlayerKeyboardFocusObserver(focus: macKeyboardFocus))
             .environmentObject(windowController)
         #endif
     }
@@ -423,6 +451,9 @@ struct PlayerControlView: View {
                 )
                 .onPlaybackStateChanged { status in
                     if status == .ready || status == .playing {
+                        #if os(visionOS)
+                        if isPlayerInitializing { playerMaskModel.showMask() }
+                        #endif
                         isPlayerInitializing = false
                         let playbackTime =
                             playerModel.playerCoordinator.controller?.currentPlaybackTime
@@ -432,14 +463,15 @@ struct PlayerControlView: View {
                             // 只在当前视频第一次 ready / playing 时根据视频尺寸调整窗口，
                             // 后续 seek 或状态切换不再修改用户手动调整过的窗口大小
                             if !hasAppliedMacWindowLayout {
-                                if let track = playerModel.playerCoordinator.controller?.videoTrack
+                                if let controller = playerModel.playerCoordinator.controller,
+                                   let window = windowController.playbackWindow
                                 {
-                                    let size = track.naturalSize
+                                    let size = controller.videoNaturalSize
                                     if size.width > 0, size.height > 0 {
                                         hasAppliedMacWindowLayout = true
                                         DispatchQueue.main.async {
                                             PlatformServices.configureMacPlayerWindowForVideo(
-                                                naturalSize: size)
+                                                naturalSize: size, window: window)
                                         }
                                     }
                                 }
@@ -447,36 +479,7 @@ struct PlayerControlView: View {
                         #endif
 
                         if status == .ready {
-                            #if !os(tvOS)
-                                if let track = playerModel.playerCoordinator.controller?.videoTrack
-                                {
-                                    let size = track.naturalSize
-                                    let width = Int(size.width)
-                                    let height = Int(size.height)
-                                    let isHDR = track.dynamicRange != .sdr
-                                    if width > 0, height > 0 {
-                                        PlayerEnhancementModel.shared
-                                            .updateAvailabilityForCurrentVideo(
-                                                width: width,
-                                                height: height,
-                                                isHDR: isHDR
-                                            )
-                                    } else {
-                                        PlayerEnhancementModel.shared
-                                            .updateAvailabilityForCurrentVideo(
-                                                width: nil,
-                                                height: nil
-                                            )
-                                    }
-                                } else {
-                                    PlayerEnhancementModel.shared.updateAvailabilityForCurrentVideo(
-                                        width: nil,
-                                        height: nil
-                                    )
-                                }
-                            #endif
-                            playerModel.playerCoordinator.controller?
-                                .prewarmScrubThumbnailSession()
+                            playerModel.refreshEnhancementCapabilities()
                             handleHistoryThumbnailIfNeededOnReady()
                         }
                     }
@@ -515,6 +518,12 @@ struct PlayerControlView: View {
                     isPlayerInitializing = false
                     toastModel.show(.networkError(message: "播放出错，请重试或检查网络"), duration: .infinity)
                 }
+                #if os(macOS) || os(visionOS)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("显示播放控制")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { playerMaskModel.disableAutoHide() }
+                #endif
                 #if os(macOS)
                     .onTapGesture(count: 2) {
                         // 如果窗口处于悬浮锁定状态，先恢复为普通层级
@@ -522,19 +531,15 @@ struct PlayerControlView: View {
                             windowController.toggleWindowLevel()
                         }
 
-                        if let window = NSApplication.shared.keyWindow {
-                            let wasPlaying = playerModel.playerCoordinator.playbackState == .playing
-                            if wasPlaying {
-                                playerModel.playerCoordinator.controller?.pause()
-                            }
-                            window.toggleFullScreen(nil)
-                            if wasPlaying {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    playerModel.playerCoordinator.controller?.play()
-                                }
-                            }
-                        }
+                        windowController.playbackWindow?.toggleFullScreen(nil)
                     }
+                #endif
+                #if os(visionOS)
+                .onTapGesture {
+                    guard !isPlayerInitializing else { return }
+                    playerControlModel.showPlaybackSpeedContainer = false
+                    playerMaskModel.toggleMask()
+                }
                 #endif
                 .ignoresSafeArea()
             } else {
@@ -580,22 +585,6 @@ struct PlayerControlView: View {
                 }
             #endif
 
-            #if os(visionOS)
-                // visionOS 没有 GestureController，面板自动隐藏后需要一个透明的
-                // 点击层把控件重新唤出。面板显示时不渲染，避免与面板内的 Button
-                // 争抢点击事件。
-                if !playerMaskModel.isMaskShow {
-                    Color.black.opacity(0.001)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            // 用户主动点击唤起面板，关闭自动隐藏避免打断操作；
-                            // 后续面板空白处点击会触发 hideMask() 并恢复自动隐藏。
-                            playerMaskModel.disableAutoHide()
-                        }
-                        .ignoresSafeArea()
-                }
-            #endif
-
             #if os(macOS)
                 MacInteractionLayer(
                     onMouseMoved: {
@@ -606,17 +595,17 @@ struct PlayerControlView: View {
                             playerMaskModel.showMask()
                         }
                     },
-                    onKeyDown: { event in
-                        handleMacKeyDown(event)
-                    }
+                    onKeyDown: { event in handleMacKeyDown(event) },
+                    keyboardFocus: macKeyboardFocus,
+                    onWindowAttached: { window in windowController.attach(to: window) }
                 )
                 .ignoresSafeArea()
             #endif
         }
     }
 
-    private func controlOverlay(geometry: GeometryProxy) -> some View {
-        platformPanel(geometry: geometry)
+    private func controlOverlay(geometry: GeometryProxy, hasSeparateControls: Bool = false) -> some View {
+        platformPanel(geometry: geometry, hasSeparateControls: hasSeparateControls)
             .environmentObject(sessionStore)
             .environmentObject(playerModel)
             .environmentObject(playerModel.playerCoordinator)
@@ -644,15 +633,15 @@ struct PlayerControlView: View {
     }
 
     @ViewBuilder
-    private func platformPanel(geometry: GeometryProxy) -> some View {
+    private func platformPanel(geometry: GeometryProxy, hasSeparateControls: Bool = false) -> some View {
         #if os(iOS)
-            ControllerPanelViewIOS(geometry: geometry)
+            ControllerPanelViewIOS(geometry: geometry, hasSeparateControls: hasSeparateControls)
         #elseif os(macOS)
             ControllerPanelViewMacOS(geometry: geometry)
         #elseif os(tvOS)
             ControllerPanelViewTvOS(geometry: geometry)
         #elseif os(visionOS)
-            ControllerPanelViewVision(geometry: geometry)
+            ControllerPanelViewVision(scrubState: visionScrubState, isInitializing: isPlayerInitializing)
         #else
             EmptyView()
         #endif
@@ -704,7 +693,7 @@ struct PlayerControlView: View {
                         Image(systemName: "wifi.exclamationmark")
                             .font(.system(size: 40))
                             .foregroundStyle(.red)
-                        Text(message)
+                        Text(LocalizedStringKey(message))
                             .font(.headline)
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
@@ -718,7 +707,7 @@ struct PlayerControlView: View {
                             .controlSize(.large)
                             .tint(.white)
                         Text(loadingOrErrorOverlayMessage)
-                            .f14m()
+                            .font(.body.weight(.medium))
                             .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 24)
@@ -751,6 +740,12 @@ struct PlayerControlView: View {
             return
         }
         if resetPlayerState {
+            #if os(tvOS)
+            _ = tvOSPlaybackControlModel.finishSeeking()
+            #endif
+            translationRefreshTask?.cancel()
+            playerControlModel.cancelSubtitleLoad()
+            playerControlModel.currentSubtitlePath = ""
             isPlayerInitializing = true
             didEnsureHistoryRecord = false
             didRequestHistoryThumbnail = false
@@ -831,15 +826,16 @@ struct PlayerControlView: View {
         didRequestHistoryThumbnail = true
         let captureTime = duration / 2
         let targetSize = CGSize(width: 320, height: 180)
+        let mediaID = controller.mediaIdentifier
 
         Task { @MainActor in
-            guard
-                let result = await controller.requestScrubThumbnail(
+            let result = await controller.requestScrubThumbnail(
                     time: captureTime,
                     targetPointSize: targetSize,
                     scale: 1
                 )
-            else {
+            guard controller.mediaIdentifier == mediaID, sessionStore.currentSource?.id == source.id else { return }
+            guard let result else {
                 // 本次抓取失败（可能缩略图会话尚未就绪），允许后续 onTimeChanged 重试
                 didRequestHistoryThumbnail = false
                 return
@@ -853,8 +849,20 @@ struct PlayerControlView: View {
     }
 
     private func handleSubtitleTranslateModeChange(_ mode: SubtitleTranslateMode) {
-        playerModel.applySubtitleTranslationSettings(mode: mode)
-        refreshSubtitleForTranslationModeChange()
+        translationRefreshTask?.cancel()
+        let settings = sessionStore.controlConfig
+        let controller = playerModel.playerCoordinator.controller
+        let mediaID = controller?.mediaIdentifier
+        translationRefreshTask = Task { @MainActor in
+            await playerModel.applySubtitleTranslationSettings(settings)
+            guard !Task.isCancelled, controller?.mediaIdentifier == mediaID,
+                  sessionStore.controlConfig == settings else { return }
+            await controller?.setSubtitleTranslationMode(mode)
+            guard !Task.isCancelled, controller?.mediaIdentifier == mediaID else { return }
+            if let controller {
+                controller.seek(time: max(controller.currentPlaybackTime - 2, 0), playbackBehavior: .restorePreviousState)
+            }
+        }
     }
 
     #if !os(tvOS) && !os(visionOS)
@@ -923,6 +931,7 @@ struct PlayerControlView: View {
                             return
                         }
                         if status == .installed {
+                            playerModel.translationRuntime.languageAvailabilityRevision &+= 1
                             subtitleTranslationLog(
                                 .debug,
                                 "[LanguagePackPolicy] sheet dismissed after install pair=\(pair.from)->\(pair.to) status=\(statusText), keep mode=\(sessionStore.controlConfig.subtitleTranslateMode)"
@@ -946,29 +955,6 @@ struct PlayerControlView: View {
             )
         }
     #endif
-
-    private func refreshSubtitleForTranslationModeChange() {
-        guard let controller = playerModel.playerCoordinator.controller else {
-            return
-        }
-
-        if !playerControlModel.currentSubtitlePath.isEmpty {
-            if let item = playerControlModel.localSubtitleItems.first(
-                where: { $0.id == playerControlModel.currentSubtitlePath }
-            ) {
-                controller.loadSubtitleFile(subtitleID: item.displayName, url: item.url)
-            }
-        } else if playerModel.playerCoordinator.subtitleTrackIndex != -1 {
-            let selectedIndex = playerModel.playerCoordinator.subtitleTrackIndex
-            controller.loadSubtitleTrack(subtitlesTrackIndex: selectedIndex)
-        } else {
-            return
-        }
-
-        let currentTime = controller.currentPlaybackTime
-        let seekTime = max(currentTime - 2, 0)
-        controller.seek(time: seekTime)
-    }
 
     /// 与 cinemore-apple 一致：仅 .error 时 toast；错误时结束初始化态并常驻提示以便用户可点关闭
     private func handleBufferingStatus(_ status: BufferState) {
@@ -1006,25 +992,25 @@ struct PlayerControlView: View {
         let fallbackMessage: String
         switch type {
         case .timeout:
-            fallbackMessage = "网络超时，请稍后重试"
+            fallbackMessage = String(localized: "网络超时，请稍后重试")
         case .connectionRefused:
-            fallbackMessage = "连接被拒绝，请检查线路"
+            fallbackMessage = String(localized: "连接被拒绝，请检查线路")
         case .dnsResolution:
-            fallbackMessage = "域名解析失败，请检查网络"
+            fallbackMessage = String(localized: "域名解析失败，请检查网络")
         case .httpClientError:
-            fallbackMessage = "请求异常，请稍后重试"
+            fallbackMessage = String(localized: "请求异常，请稍后重试")
         case .httpServerError:
-            fallbackMessage = "服务器异常，请稍后重试"
+            fallbackMessage = String(localized: "服务器异常，请稍后重试")
         case .networkUnreachable:
-            fallbackMessage = "当前网络不可用"
+            fallbackMessage = String(localized: "当前网络不可用")
         case .temporaryFailure:
-            fallbackMessage = "网络波动，正在重试"
+            fallbackMessage = String(localized: "网络波动，正在重试")
         case .permanentFailure:
-            fallbackMessage = "播放失败，请更换线路"
+            fallbackMessage = String(localized: "播放失败，请更换线路")
         case .unknown:
-            fallbackMessage = "发生未知网络错误"
+            fallbackMessage = String(localized: "发生未知网络错误")
         @unknown default:
-            fallbackMessage = "发生网络错误"
+            fallbackMessage = String(localized: "发生网络错误")
         }
 
         let text = message.isEmpty ? fallbackMessage : message
@@ -1033,41 +1019,32 @@ struct PlayerControlView: View {
     }
 
     #if os(macOS)
-        private func handleMacKeyDown(_ event: NSEvent) {
+        private func handleMacKeyDown(_ event: NSEvent) -> Bool {
+            guard event.window === windowController.playbackWindow else { return false }
+            let coordinator = playerModel.playerCoordinator
             switch event.keyCode {
-            case 49:  // Space
-                playerModel.playerCoordinator.controller?.switchPlayPause()
-            case 123:  // Left Arrow
-                playerModel.playerCoordinator.controller?.skip(
-                    interval: -controlConfig.skipBackwardSeconds)
+            case 49:
+                coordinator.controller?.togglePlaybackFromControls()
+            case 123:
+                coordinator.controller?.skip(interval: -controlConfig.skipBackwardSeconds)
                 toastModel.show(.skip(seconds: -controlConfig.skipBackwardSeconds))
-            case 124:  // Right Arrow
-                playerModel.playerCoordinator.controller?.skip(
-                    interval: controlConfig.skipForwardSeconds)
+            case 124:
+                coordinator.controller?.skip(interval: controlConfig.skipForwardSeconds)
                 toastModel.show(.skip(seconds: controlConfig.skipForwardSeconds))
-            case 126:  // Up Arrow
-                let next = min(
-                    playerModel.playerCoordinator.playbackRate
-                        + controlConfig.macOSPlaybackRateStep, 6.0)
-                playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
-                toastModel.show(
-                    .playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
-            case 125:  // Down Arrow
-                let next = max(
-                    playerModel.playerCoordinator.playbackRate
-                        - controlConfig.macOSPlaybackRateStep, 0.25)
-                playerModel.playerCoordinator.playbackRate = next.rounded(to: 2)
-                toastModel.show(
-                    .playbackRateChanged(num: playerModel.playerCoordinator.playbackRate))
-            case 53:  // Esc
-                if let window = NSApplication.shared.keyWindow,
-                    window.styleMask.contains(.fullScreen)
-                {
-                    window.toggleFullScreen(nil)
-                }
-            default:
-                break
+            case 126:
+                let step: Float = coordinator.playbackRate >= 2 ? 1 : controlConfig.macOSPlaybackRateStep
+                coordinator.playbackRate = min(6, coordinator.playbackRate + step).rounded(to: 2)
+                toastModel.show(.playbackRateChanged(num: coordinator.playbackRate))
+            case 125:
+                let step: Float = coordinator.playbackRate > 2 ? 1 : controlConfig.macOSPlaybackRateStep
+                coordinator.playbackRate = max(0.25, coordinator.playbackRate - step).rounded(to: 2)
+                toastModel.show(.playbackRateChanged(num: coordinator.playbackRate))
+            case 53:
+                guard let window = event.window, window.styleMask.contains(.fullScreen) else { return false }
+                window.toggleFullScreen(nil)
+            default: return false
             }
+            return true
         }
     #endif
 }

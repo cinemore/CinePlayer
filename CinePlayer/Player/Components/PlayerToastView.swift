@@ -201,7 +201,7 @@ struct PlayerToastView: View {
                     Image(systemName: "wifi.exclamationmark")
                         .playerToastIconFont()
                         .foregroundStyle(.red)
-                    Text(message)
+                    Text(LocalizedStringKey(message))
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
                 }
@@ -232,6 +232,6 @@ struct PlayerToastView: View {
             Image(systemName: icon)
             Text(text)
         }
-        .f17s()
+        .font(.headline)
     }
 }

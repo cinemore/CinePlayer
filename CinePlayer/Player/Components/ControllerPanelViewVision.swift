@@ -1,145 +1,193 @@
 import CinePlayerSDK
+import AVFoundation
 import SwiftUI
 
 #if os(visionOS)
-@MainActor
+/// 系统 Ornament 中的三行控制栏；播放器业务仍由独立会话提供。
 struct ControllerPanelViewVision: View {
-    var geometry: GeometryProxy
-
+    @ObservedObject var scrubState: PlayerSliderScrubState
+    var isInitializing: Bool
     @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerModel: VideoPlayerModel
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @EnvironmentObject private var toastModel: PlayerToastModel
+    @State private var leadingControlsWidth: CGFloat = 0
+    @State private var trailingControlsWidth: CGFloat = 0
 
-    private var config: PlayerControlConfig {
-        sessionStore.controlConfig
+    private var sideControlsWidth: CGFloat {
+        max(leadingControlsWidth, trailingControlsWidth)
     }
 
     var body: some View {
-        ZStack {
-            // 点击面板空白处收起控件，与 iOS 上 singleTap 行为一致。
-            // 放在 ZStack 最底层，让上层 Button / Slider 优先接管自身点击。
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.56),
-                    Color.clear,
-                    Color.black.opacity(0.64)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .contentShape(Rectangle())
-            .onTapGesture {
-                playerMaskModel.hideMask()
-            }
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                topBar
-                    .padding(.horizontal, 40)
-                    .padding(.top, max(geometry.safeAreaInsets.top, 32))
-
-                Spacer()
-
-                bottomBar
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, max(geometry.safeAreaInsets.bottom, 32))
-            }
-        }
-    }
-
-    private var topBar: some View {
-        HStack(spacing: 10) {
-            PlayerCloseButton {
-                playerModel.close()
-                sessionStore.close()
-            }
-
-            PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
-
-            Spacer()
-
-            actionButton(icon: "wand.and.rays") {
-                playerControlModel.hideContainer()
-                playerControlModel.showEnhancementContainer = true
-            }
-
-            actionButton(icon: "info.circle") {
-                playerMaskModel.hideMask()
-                playerControlModel.hideContainer()
-                playerControlModel.showMediaInfoCard.toggle()
-            }
-        }
-    }
-
-    private var bottomBar: some View {
         VStack(spacing: 12) {
-            PlayerSliderView(
-                coordinator: playerCoordinator,
-                progress: playerCoordinator.progress,
-                onProgressEditingChanged: { editing, seconds in
-                    if editing {
-                        playerMaskModel.pauseTimer()
-                        playerCoordinator.controller?.pause()
-                    } else {
-                        playerMaskModel.restartTimer()
-                        playerCoordinator.controller?.seek(time: TimeInterval(seconds))
+            HStack(spacing: 12) {
+                control("关闭", icon: "xmark") { playerModel.close(); sessionStore.close() }
+                PlayerTitleView(title: sessionStore.currentSource?.displayName ?? "")
+                if !isInitializing {
+                    if let controller = playerCoordinator.controller {
+                        PlayerNetworkSpeed(controller: controller)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                    }
+                    control("媒体信息", icon: "info.circle", isSelected: playerControlModel.showMediaInfoCard) {
+                        playerControlModel.showPlaybackSpeedContainer = false
+                        playerControlModel.showMediaInfoCard.toggle()
                     }
                 }
-            )
-            .frame(height: 36)
-
-            HStack(spacing: 12) {
-                actionButton(icon: "gobackward.\(config.skipBackwardSeconds)") {
-                    playerCoordinator.controller?.skip(interval: -config.skipBackwardSeconds)
-                    toastModel.show(.skip(seconds: -config.skipBackwardSeconds))
+            }
+            if !isInitializing {
+                PlayerSliderView(coordinator: playerCoordinator, progress: playerCoordinator.progress,
+                                 scrubState: scrubState, onProgressEditingChanged: scrub)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) {
+                        leadingControls
+                            .frame(minWidth: sideControlsWidth, maxWidth: .infinity, alignment: .leading)
+                        transportControls
+                        trackControls
+                            .frame(minWidth: sideControlsWidth, maxWidth: .infinity, alignment: .trailing)
+                    }
+                    VStack(spacing: 12) {
+                        transportControls
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 12) {
+                                leadingControls
+                                Spacer()
+                                trackControls
+                            }
+                            VStack(spacing: 12) {
+                                leadingControls
+                                trackControls
+                            }
+                        }
+                    }
                 }
-
-                actionButton(icon: playerCoordinator.playbackState == .playing ? "pause.fill" : "play.fill") {
-                    playerCoordinator.controller?.switchPlayPause()
-                }
-
-                actionButton(icon: "goforward.\(config.skipForwardSeconds)") {
-                    playerCoordinator.controller?.skip(interval: config.skipForwardSeconds)
-                    toastModel.show(.skip(seconds: config.skipForwardSeconds))
-                }
-
-                Spacer(minLength: 0)
-
-                actionButton(icon: "music.note") {
-                    playerControlModel.hideContainer()
-                    playerControlModel.showAudioContainer = true
-                }
-
-                actionButton(icon: "film") {
-                    playerControlModel.hideContainer()
-                    playerControlModel.showVideoTrackContainer = true
-                }
-
-                actionButton(icon: "speedometer") {
-                    playerControlModel.hideContainer()
-                    playerControlModel.showPlaybackSpeedContainer = true
-                }
-
-                actionButton(icon: "rectangle.arrowtriangle.2.inward") {
-                    playerCoordinator.isScaleAspectFill.toggle()
-                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .onDisappear { scrubState.reset() }
+        .onChange(of: isInitializing) { _, initializing in
+            if initializing {
+                scrubState.reset()
             }
         }
     }
 
-    private func actionButton(icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .f14m()
-                .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
-                .contentShape(Rectangle())
+    private var leadingControls: some View {
+        HStack(spacing: 8) {
+            control("播放设置", icon: "gearshape", isSelected: playerControlModel.showSettingContainer) {
+                playerControlModel.toggleVisionPanel(.settings)
+            }
+            control("视频增强", icon: "wand.and.rays", isSelected: playerControlModel.showEnhancementContainer) {
+                playerControlModel.toggleVisionPanel(.enhancement)
+            }
         }
-        .buttonStyle(.plain)
-        .modifier(GlassEffectModifier(cornerRadius: 20))
+        .fixedSize(horizontal: true, vertical: false)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { leadingControlsWidth = $0 }
+    }
+    private var transportControls: some View {
+        HStack(spacing: 8) {
+            Button {
+                playerCoordinator.controller?.skip(interval: -max(1, sessionStore.controlConfig.skipBackwardSeconds))
+            } label: {
+                playerSkipLabel(seconds: max(1, sessionStore.controlConfig.skipBackwardSeconds), forward: false)
+            }
+            .visionPlayerControlStyle()
+            .accessibilityLabel("后退")
+            control(playerCoordinator.playbackState == .playing ? "暂停" : "播放",
+                    icon: playerCoordinator.playbackState == .playing ? "pause.fill" : "play.fill") {
+                playerCoordinator.controller?.togglePlaybackFromControls()
+            }
+            Button {
+                playerCoordinator.controller?.skip(interval: max(1, sessionStore.controlConfig.skipForwardSeconds))
+            } label: {
+                playerSkipLabel(seconds: max(1, sessionStore.controlConfig.skipForwardSeconds), forward: true)
+            }
+            .visionPlayerControlStyle()
+            .accessibilityLabel("前进")
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .disabled(playerCoordinator.controller == nil)
+    }
+    private var trackControls: some View {
+        HStack(spacing: 8) {
+            VisionPlaybackSpeedButton()
+            control("字幕", icon: "captions.bubble", isSelected: playerControlModel.showSubtitleContainer) {
+                playerControlModel.toggleVisionPanel(.subtitle)
+            }
+            if (playerCoordinator.controller?.tracks(mediaType: .audio).count ?? 0) > 1 {
+                control("音轨", icon: "waveform", isSelected: playerControlModel.showAudioContainer) {
+                    playerControlModel.toggleVisionPanel(.audio)
+                }
+            }
+            if (playerCoordinator.controller?.videoTracks.count ?? 0) > 1 {
+                control("视频轨道", icon: "video", isSelected: playerControlModel.showVideoTrackContainer) {
+                    playerControlModel.toggleVisionPanel(.videoTrack)
+                }
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { trailingControlsWidth = $0 }
+    }
+    private func control(_ title: LocalizedStringKey, icon: String, isSelected: Bool = false,
+                         action: @escaping () -> Void) -> some View {
+        Button(action: action) { Label(title, systemImage: icon) }
+            .visionPlayerControlStyle(isSelected: isSelected)
+            .accessibilityLabel(Text(title))
+    }
+    private func scrub(_ editing: Bool, seconds: Int) {
+        if editing {
+            playerMaskModel.showMask()
+            playerCoordinator.controller?.pause()
+        } else if let target = scrubState.end() {
+            guard let controller = playerCoordinator.controller else {
+                scrubState.reset()
+                return
+            }
+            // 与主仓库一致：定位后恢复播放，目标时间保留到当前 seek 回执。
+            controller.seek(time: TimeInterval(target.time)) { [scrubState] _ in
+                Task { @MainActor in scrubState.complete(generation: target.generation) }
+            }
+        }
+    }
+}
+
+/// 每个候选布局由实际点击的按钮呈现 Popover，避免 ViewThatFits 同时呈现多个弹窗。
+private struct VisionPlaybackSpeedButton: View {
+    @EnvironmentObject private var controls: PlayerControlModel
+    @EnvironmentObject private var coordinator: CinePlayer.Coordinator
+    @EnvironmentObject private var mask: PlayerMaskModel
+    @State private var isPopoverPresented = false
+
+    var body: some View {
+        Button { isPopoverPresented.toggle() } label: {
+            if coordinator.playbackRate == 1 {
+                Label("播放速度", systemImage: "barometer")
+            } else {
+                Text(verbatim: "\(coordinator.playbackRate.playbackRateText)x")
+                    .monospacedDigit()
+            }
+        }
+        .visionPlayerControlStyle()
+        .accessibilityLabel("播放速度")
+        .accessibilityValue(Text(verbatim: "\(coordinator.playbackRate.playbackRateText)x"))
+        .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
+            SiderPlaybackSpeedView()
+                .environmentObject(controls)
+                .environmentObject(coordinator)
+                .environmentObject(mask)
+        }
+        .onChange(of: isPopoverPresented) { _, presented in
+            controls.showPlaybackSpeedContainer = presented
+        }
+        .onChange(of: controls.showPlaybackSpeedContainer) { _, presented in
+            if !presented { isPopoverPresented = false }
+        }
+        .onDisappear {
+            if isPopoverPresented { controls.showPlaybackSpeedContainer = false }
+        }
     }
 }
 #endif

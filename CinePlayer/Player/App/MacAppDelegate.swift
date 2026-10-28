@@ -32,15 +32,15 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
     func openURLFromMenuOrDock() {
         DispatchQueue.main.async { [weak self] in
             let alert = NSAlert()
-            alert.messageText = "打开URL"
-            alert.informativeText = "请输入要播放的视频地址（例如 http 或 https 链接）。"
+            alert.messageText = String(localized: "打开 URL")
+            alert.informativeText = String(localized: "请输入要播放的视频地址（例如 http 或 https 链接）。")
 
             let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
             input.placeholderString = "https://example.com/video.m3u8"
             alert.accessoryView = input
 
-            alert.addButton(withTitle: "打开")
-            alert.addButton(withTitle: "取消")
+            alert.addButton(withTitle: String(localized: "打开"))
+            alert.addButton(withTitle: String(localized: "取消"))
 
             let response = alert.runModal()
             guard response == .alertFirstButtonReturn else { return }
@@ -73,7 +73,7 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         let openFileItem = NSMenuItem(
-            title: "打开文件…",
+            title: String(localized: "打开文件…"),
             action: #selector(handleDockOpenFile),
             keyEquivalent: ""
         )
@@ -81,7 +81,7 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(openFileItem)
 
         let openURLItem = NSMenuItem(
-            title: "打开URL…",
+            title: String(localized: "打开URL…"),
             action: #selector(handleDockOpenURL),
             keyEquivalent: ""
         )

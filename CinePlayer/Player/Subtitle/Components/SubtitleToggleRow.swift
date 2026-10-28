@@ -8,7 +8,7 @@ struct SubtitleToggleRow: View {
     var body: some View {
         HStack {
             Text(title)
-                .f14r()
+                .font(.body)
                 .foregroundColor(.white)
 
             Spacer()

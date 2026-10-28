@@ -15,6 +15,8 @@ jobs:
 
     env:
       ASSET_NAME: CinePlayer-macOS-${{ github.ref_name }}.zip
+      FRAMEWORKS_URL: ${{ vars.CINEPLAYER_FRAMEWORKS_URL }}
+      FRAMEWORKS_SHA256: ${{ vars.CINEPLAYER_FRAMEWORKS_SHA256 }}
 
     steps:
       - name: Checkout
@@ -23,16 +25,19 @@ jobs:
       - name: Use HTTPS for GitHub Swift packages
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Download prebuilt frameworks
         run: |
           set -euo pipefail
 
-          curl -L \
-            -o Frameworks.zip \
-            "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/latest/download/Frameworks.zip"
+          : "${FRAMEWORKS_URL:?Configure CINEPLAYER_FRAMEWORKS_URL with the matching SDK bundle URL}"
+          : "${FRAMEWORKS_SHA256:?Configure CINEPLAYER_FRAMEWORKS_SHA256 with its SHA-256}"
+          curl --fail --location --retry 3 -o Frameworks.zip "${FRAMEWORKS_URL}"
+          printf '%s  Frameworks.zip\n' "${FRAMEWORKS_SHA256}" | shasum -a 256 -c -
           unzip -q Frameworks.zip
-          test -d Frameworks/CinePlayerSDK.xcframework
-          test -d Frameworks/CineFFmpeg.xcframework
+          bun scripts/verify-frameworks.ts
 
       - name: Build Release for macOS
         run: |
@@ -45,6 +50,7 @@ jobs:
             -destination 'generic/platform=macOS' \
             -derivedDataPath build/DerivedData \
             -skipPackagePluginValidation \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             build
 

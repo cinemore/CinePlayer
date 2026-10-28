@@ -9,8 +9,7 @@ struct SiderSettingView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("播放设置")
-                .f17s()
-                .padding()
+                .playerPanelTitleStyle()
 
             PlaySettingPage(adapter: playSettingAdapter, hideBackground: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

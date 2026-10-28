@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C12720000000000000000001 /* ArtCNNMetal in Frameworks */ = {isa = PBXBuildFile; productRef = C12720000000000000000003 /* ArtCNNMetal */; };
+		C12710000000000000000001 /* FSRMetal in Frameworks */ = {isa = PBXBuildFile; productRef = C12710000000000000000003 /* FSRMetal */; };
 		DA31DF242F4F633B008767DD /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF002F4F633B008767DD /* AVKit.framework */; };
 		DA31DF252F4F633B008767DD /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF012F4F633B008767DD /* CoreMedia.framework */; };
 		DA31DF262F4F633B008767DD /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31DF022F4F633B008767DD /* CoreVideo.framework */; };
@@ -43,9 +45,13 @@
 		DA31E35C2F4F7182008767DD /* libdav1d.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3432F4F7182008767DD /* libdav1d.xcframework */; };
 		DA31E35D2F4F7182008767DD /* libavcodec.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E33E2F4F7182008767DD /* libavcodec.xcframework */; };
 		DA31E35E2F4F7182008767DD /* libfribidi.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA31E3462F4F7182008767DD /* libfribidi.xcframework */; };
-		DA88E0E92FA45A710028FD87 /* RifeMetal in Frameworks */ = {isa = PBXBuildFile; productRef = DA88E0E82FA45A710028FD87 /* RifeMetal */; };
+		DA88E0E92FA45A710028FD87 /* RifeMetal in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, macos, xros); productRef = DA88E0E82FA45A710028FD87 /* RifeMetal */; };
 		DAA4A0012FCB000100000001 /* Anime4KMetal in Frameworks */ = {isa = PBXBuildFile; productRef = DAA4A0032FCB000100000001 /* Anime4KMetal */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1273000000000000000000B = {isa = PBXContainerItemProxy; containerPortal = DA31DD542F4F4375008767DD; proxyType = 1; remoteGlobalIDString = DA31DD5B2F4F4375008767DD; remoteInfo = CinePlayer; };
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		DA31DE012F4F633B008767DD /* Embed Frameworks */ = {
@@ -61,6 +67,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C12730000000000000000008 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CinePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA31DD5C2F4F4375008767DD /* CinePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CinePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA31DF002F4F633B008767DD /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		DA31DF012F4F633B008767DD /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -111,6 +118,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C12730000000000000000007 = {isa = PBXFileSystemSynchronizedRootGroup; path = CinePlayerTests; sourceTree = "<group>"; };
 		DA31DD5E2F4F4375008767DD /* CinePlayer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -122,6 +130,7 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C12730000000000000000004 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		DA31DD592F4F4375008767DD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -144,6 +153,8 @@
 				DA31E3552F4F7182008767DD /* libdovi.xcframework in Frameworks */,
 				DA88E0E92FA45A710028FD87 /* RifeMetal in Frameworks */,
 				DAA4A0012FCB000100000001 /* Anime4KMetal in Frameworks */,
+				C12710000000000000000001 /* FSRMetal in Frameworks */,
+				C12720000000000000000001 /* ArtCNNMetal in Frameworks */,
 				DA31E3562F4F7182008767DD /* libavfilter.xcframework in Frameworks */,
 				DA31E3572F4F7182008767DD /* libswscale.xcframework in Frameworks */,
 				DA31E3582F4F7182008767DD /* libuavs3d.xcframework in Frameworks */,
@@ -175,6 +186,7 @@
 			children = (
 				DA31DE502F4F633B008767DD /* Frameworks */,
 				DA31DD5E2F4F4375008767DD /* CinePlayer */,
+				C12730000000000000000007 /* CinePlayerTests */,
 				DA31DD5D2F4F4375008767DD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -183,6 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				DA31DD5C2F4F4375008767DD /* CinePlayer.app */,
+				C12730000000000000000008 /* CinePlayerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -233,6 +246,20 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C12730000000000000000001 /* CinePlayerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C12730000000000000000002;
+			buildPhases = (C12730000000000000000003, C12730000000000000000004, C12730000000000000000005);
+			buildRules = ();
+			dependencies = (C12730000000000000000006);
+			fileSystemSynchronizedGroups = (C12730000000000000000007);
+			name = CinePlayerTests;
+			packageProductDependencies = ();
+			productName = CinePlayerTests;
+			productReference = C12730000000000000000008;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+
 		DA31DD5B2F4F4375008767DD /* CinePlayer */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DA31DD6A2F4F4376008767DD /* Build configuration list for PBXNativeTarget "CinePlayer" */;
@@ -253,6 +280,8 @@
 			packageProductDependencies = (
 				DA88E0E82FA45A710028FD87 /* RifeMetal */,
 				DAA4A0032FCB000100000001 /* Anime4KMetal */,
+				C12710000000000000000003 /* FSRMetal */,
+				C12720000000000000000003 /* ArtCNNMetal */,
 			);
 			productName = CinePlayer;
 			productReference = DA31DD5C2F4F4375008767DD /* CinePlayer.app */;
@@ -289,6 +318,7 @@
 				fi,
 				fr,
 				de,
+				el,
 				he,
 				hi,
 				it,
@@ -296,34 +326,42 @@
 				ko,
 				pl,
 				"pt-BR",
+				"pt-PT",
 				hu,
 				id,
 				ro,
 				ru,
+				sk,
+				sv,
 				uk,
 				th,
 				tr,
 				vi,
 				es,
 				nl,
+				nb,
 			);
 			mainGroup = DA31DD532F4F4375008767DD;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */,
 				DAA4A0022FCB000100000001 /* XCRemoteSwiftPackageReference "anime4k-metal" */,
+				C12710000000000000000002 /* XCRemoteSwiftPackageReference "fsr-metal" */,
+				C12720000000000000000002 /* XCRemoteSwiftPackageReference "artcnn-metal" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DA31DD5D2F4F4375008767DD /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				C12730000000000000000001 /* CinePlayerTests */,
 				DA31DD5B2F4F4375008767DD /* CinePlayer */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C12730000000000000000005 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		DA31DD5A2F4F4375008767DD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -334,6 +372,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C12730000000000000000003 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		DA31DD582F4F4375008767DD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -343,7 +382,62 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		C12730000000000000000006 = {isa = PBXTargetDependency; target = DA31DD5B2F4F4375008767DD; targetProxy = C1273000000000000000000B; };
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		C12730000000000000000009 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx appletvos appletvsimulator xros xrsimulator";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+				SWIFT_VERSION = 6.0;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = ("$(inherited)", "$(BUILT_PRODUCTS_DIR)");
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@loader_path/Frameworks", "@executable_path/Frameworks", "@executable_path/../Frameworks");
+				TARGETED_DEVICE_FAMILY = "1,2,3,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CinePlayer.app/CinePlayer";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/CinePlayer.app/Contents/MacOS/CinePlayer";
+			};
+			name = Debug;
+		};
+		C1273000000000000000000A = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx appletvos appletvsimulator xros xrsimulator";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+				SWIFT_VERSION = 6.0;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = ("$(inherited)", "$(BUILT_PRODUCTS_DIR)");
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@loader_path/Frameworks", "@executable_path/Frameworks", "@executable_path/../Frameworks");
+				TARGETED_DEVICE_FAMILY = "1,2,3,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CinePlayer.app/CinePlayer";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/CinePlayer.app/Contents/MacOS/CinePlayer";
+			};
+			name = Release;
+		};
+
 		DA31DD6B2F4F4376008767DD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -397,6 +491,7 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
+					"-weak-lhvf",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -471,6 +566,7 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
+					"-weak-lhvf",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.com.cinemore.cineplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -619,6 +715,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C12730000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (C12730000000000000000009, C1273000000000000000000A); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		DA31DD572F4F4375008767DD /* Build configuration list for PBXProject "CinePlayer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -640,25 +737,37 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C12720000000000000000002 /* XCRemoteSwiftPackageReference "artcnn-metal" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cinemore/artcnn-metal.git";
+			requirement = {kind = exactVersion; version = 0.1.0; };
+		};
+		C12710000000000000000002 /* XCRemoteSwiftPackageReference "fsr-metal" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cinemore/fsr-metal.git";
+			requirement = {kind = exactVersion; version = 0.1.0; };
+		};
 		DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:cinemore/rife-metal.git";
+			repositoryURL = "https://github.com/cinemore/rife-metal.git";
 			requirement = {
-				branch = main;
-				kind = branch;
+				version = 0.1.8;
+				kind = exactVersion;
 			};
 		};
 		DAA4A0022FCB000100000001 /* XCRemoteSwiftPackageReference "anime4k-metal" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:cinemore/anime4k-metal.git";
+			repositoryURL = "https://github.com/cinemore/anime4k-metal.git";
 			requirement = {
-				branch = main;
-				kind = branch;
+				version = 0.1.4;
+				kind = exactVersion;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C12720000000000000000003 /* ArtCNNMetal */ = {isa = XCSwiftPackageProductDependency; package = C12720000000000000000002; productName = ArtCNNMetal; };
+		C12710000000000000000003 /* FSRMetal */ = {isa = XCSwiftPackageProductDependency; package = C12710000000000000000002; productName = FSRMetal; };
 		DA88E0E82FA45A710028FD87 /* RifeMetal */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DA88E0E72FA45A710028FD87 /* XCRemoteSwiftPackageReference "rife-metal" */;

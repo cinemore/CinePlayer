@@ -1,3 +1,4 @@
+import CinePlayerSDK
 //
 //  SubtitlePositionSlider.swift
 //  Cinemore
@@ -19,11 +20,11 @@ import SwiftUI
             VStack(spacing: 8) {
                 HStack {
                     Text(title)
-                        .f14r()
+                        .font(.body)
                         .foregroundColor(.white)
                     Spacer()
                     Text("\(Int(value))")
-                        .f14r()
+                        .font(.body)
                         .foregroundColor(.white.opacity(0.6))
                 }
 
@@ -33,12 +34,15 @@ import SwiftUI
                         value = max(range.lowerBound, value - step)
                     } label: {
                         Image(systemName: iconLeft)
-                            .f14m()
+                            .font(.body.weight(.medium))
                             .foregroundColor(.white)
                             .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("减少\(title)")
+                    .accessibilityLabel(
+                        String(format: String(localized: "减少%@"), locale: .current, title)
+                    )
 
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
@@ -77,12 +81,15 @@ import SwiftUI
                         value = min(range.upperBound, value + step)
                     } label: {
                         Image(systemName: iconRight)
-                            .f14m()
+                            .font(.body.weight(.medium))
                             .foregroundColor(.white)
                             .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("增加\(title)")
+                    .accessibilityLabel(
+                        String(format: String(localized: "增加%@"), locale: .current, title)
+                    )
                 }
             }
             .padding(.horizontal, 16)

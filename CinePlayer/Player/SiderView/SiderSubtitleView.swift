@@ -7,14 +7,13 @@ struct SiderSubtitleView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $playerControlModel.subtitleTab) {
+            AdaptiveSegmentedPicker("字幕", selection: $playerControlModel.subtitleTab) {
                 Text("内封字幕").tag(0)
                 Text("外部字幕").tag(1)
                 Text("字幕调整").tag(2)
             }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .padding(.bottom, 20)
+            .padding(.bottom)
+            .padding(.horizontal)
 
             if playerControlModel.subtitleTab == 0 {
                 EmbeddedSubtitleView()
@@ -25,7 +24,6 @@ struct SiderSubtitleView: View {
             }
         }
         .padding(.top)
-        .padding(.horizontal)
     }
 }
 #else
@@ -33,9 +31,9 @@ struct SiderSubtitleView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("字幕")
-                .f17s()
+                .font(.headline)
             Text("tvOS 使用系统焦点交互，不展示分段字幕面板。")
-                .f12r()
+                .font(.caption)
                 .foregroundStyle(.white.opacity(0.65))
         }
         .padding()

@@ -1,3 +1,5 @@
+import CinePlayerSDK
+import AVFoundation
 //
 //  SiderAudioSettingView.swift
 //  Cinemore
@@ -6,8 +8,6 @@
 //
 
 import SwiftUI
-import CinePlayerSDK
-import AVFoundation
 
 // MARK: 音频设置
 
@@ -18,32 +18,29 @@ struct SiderAudioSettingView: View {
     @State private var selectionScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
+        let tracks = audioTracks
         VStack(alignment: .leading, spacing: 0) {
             Text("音轨")
-                .f17s()
-                .padding()
+                .playerPanelTitleStyle()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(audioTracks, id: \.streamIndex) { audioTrack in
-                        let isSelected = audioTrack.streamIndex == selectedTrackIndex
-                        AudioTrackRowView(
-                            isSelected: isSelected,
-                            profileName: audioTrack.profileName,
-                            language: audioTrack.language,
-                            codecName: audioTrack.codecName,
-                            channelDescription: audioTrack.audioChannelLayoutDescription.isEmpty ? nil : audioTrack.audioChannelLayoutDescription,
-                            audioDescriptorSampleRate: audioTrack.audioSampleRate > 0 ? audioTrack.audioSampleRate : nil,
-                            bitRate: audioTrack.bitRate,
-                            streamIndex: audioTrack.streamIndex
-                        ) {
-                            selectAudioTrack(audioTrack)
-                        }
+            #if !os(tvOS)
+                PlayerTrackSelectionList {
+                    ForEach(tracks, id: \.streamIndex) { audioTrack in
+                        trackRow(audioTrack)
+                            .nativeSelectionRow
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
-            }
+            #else
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 12) {
+                        ForEach(tracks, id: \.streamIndex) { audioTrack in
+                            trackRow(audioTrack)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+            #endif
         }
         .onAppear {
             pendingAudioTrackIndex = nil
@@ -57,6 +54,21 @@ struct SiderAudioSettingView: View {
                 pendingAudioTrackIndex = nil
                 selectionScheduler.cancel()
             }
+        }
+    }
+
+    private func trackRow(_ audioTrack: FFmpegStreamAsset) -> AudioTrackRowView {
+        AudioTrackRowView(
+            isSelected: audioTrack.streamIndex == selectedTrackIndex,
+            profileName: audioTrack.profileName,
+            language: audioTrack.language,
+            codecName: audioTrack.codecName,
+            channelDescription: audioTrack.audioChannelLayoutDescription,
+            audioDescriptorSampleRate: audioTrack.audioSampleRate,
+            bitRate: audioTrack.bitRate,
+            streamIndex: audioTrack.streamIndex
+        ) {
+            selectAudioTrack(audioTrack)
         }
     }
 
@@ -74,7 +86,9 @@ struct SiderAudioSettingView: View {
     }
 
     private func selectAudioTrack(_ audioTrack: FFmpegStreamAsset) {
-        guard selectedTrackIndex != audioTrack.streamIndex else { return }
+        guard selectedTrackIndex != audioTrack.streamIndex else {
+            return
+        }
         pendingAudioTrackIndex = audioTrack.streamIndex
         selectionScheduler.schedule {
             playerCoordinator.controller?.select(track: audioTrack)

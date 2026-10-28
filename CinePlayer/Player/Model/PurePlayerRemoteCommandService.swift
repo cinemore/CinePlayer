@@ -87,7 +87,7 @@ final class PurePlayerRemoteCommandService: ObservableObject {
         commandCenter.skipBackwardCommand.preferredIntervals = [skipBackwardInterval]
 
         playToken = commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.playerModel?.playerCoordinator.controller?.play()
+            self?.playerModel?.playerCoordinator.controller?.playFromControls()
             self?.refreshNowPlayingInfo()
             return .success
         }
@@ -97,7 +97,7 @@ final class PurePlayerRemoteCommandService: ObservableObject {
             return .success
         }
         toggleToken = commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.playerModel?.playerCoordinator.controller?.switchPlayPause()
+            self?.playerModel?.playerCoordinator.controller?.togglePlaybackFromControls()
             self?.refreshNowPlayingInfo()
             return .success
         }
@@ -117,7 +117,7 @@ final class PurePlayerRemoteCommandService: ObservableObject {
             guard let positionEvent = event as? MPChangePlaybackPositionCommandEvent else {
                 return .commandFailed
             }
-            self?.playerModel?.playerCoordinator.controller?.seek(time: positionEvent.positionTime)
+            self?.playerModel?.playerCoordinator.controller?.seek(time: positionEvent.positionTime, playbackBehavior: .restorePreviousState)
             self?.refreshNowPlayingInfo()
             return .success
         }

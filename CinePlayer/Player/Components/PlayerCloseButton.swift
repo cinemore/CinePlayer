@@ -8,7 +8,7 @@ struct PlayerCloseButton: View {
             Image(systemName: "xmark")
                 .brightness(0.2)
                 .foregroundColor(.white)
-                .f20m()
+                .font(.title3.weight(.medium))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

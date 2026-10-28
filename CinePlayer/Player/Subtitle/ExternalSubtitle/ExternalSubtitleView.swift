@@ -1,7 +1,7 @@
+#if !os(tvOS)
 import CinePlayerSDK
 import SwiftUI
 import UniformTypeIdentifiers
-
 #if os(macOS)
 import AppKit
 #endif
@@ -10,147 +10,96 @@ struct ExternalSubtitleView: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerControlModel: PlayerControlModel
     @State private var subtitleCommandScheduler = DeferredMainActorCommandScheduler()
-
+    @State private var importControlBottom: CGFloat?
+    @Namespace private var formCoordinateSpace
     #if os(iOS) || os(visionOS)
     @State private var showFileImporter = false
     #endif
 
     var body: some View {
-        VStack(spacing: 20) {
-            HStack {
-                Text("开启")
-                    .f16b()
-                    .foregroundColor(.white)
-                Spacer()
-                Toggle(
-                    isOn: Binding(
-                        get: { !playerControlModel.currentSubtitlePath.isEmpty },
-                        set: { newValue in
-                            if newValue {
-                                if let current = localSubtitleItems.first(where: {
-                                    $0.id == playerControlModel.currentSubtitlePath
-                                }) {
-                                    playSubtitle(current)
-                                } else if let first = localSubtitleItems.first {
-                                    playSubtitle(first)
+        let showsEmpty = playerControlModel.localSubtitleItems.isEmpty
+        Form {
+            Section {
+                Toggle("开启", isOn: Binding(
+                    get: { !playerControlModel.currentSubtitlePath.isEmpty },
+                    set: { enabled in
+                        if enabled, let item = playerControlModel.localSubtitleItems.first { playSubtitle(item) }
+                        else { playerControlModel.clearSubtitle(controller: playerCoordinator.controller) }
+                    }
+                ))
+                .toggleStyle(.switch)
+                .disabled(showsEmpty)
+                .accessibilityIdentifier("player.subtitle.externalEnabled")
+                #if !os(tvOS)
+                if PurePlayerUIPolicy.allowsLocalSubtitleImport {
+                    Button("从本机导入", systemImage: "doc.badge.plus") { openLocalSubtitleFilePicker() }
+                        .accessibilityIdentifier("player.subtitle.importLocal")
+                        .onGeometryChange(for: CGFloat?.self) { [formCoordinateSpace] geometry in
+                            showsEmpty ? geometry.frame(in: .named(formCoordinateSpace)).maxY : nil
+                        } action: { importControlBottom = $0 }
+                }
+                #endif
+            }
+            if !showsEmpty {
+                Section {
+                    ForEach(playerControlModel.localSubtitleItems) { item in
+                        HStack {
+                            ExternalSubtitleRowView(isSelected: Binding(
+                                get: { playerControlModel.currentSubtitlePath == item.id },
+                                set: { selected in
+                                    if selected { playSubtitle(item) }
+                                    else { playerControlModel.clearSubtitle(controller: playerCoordinator.controller) }
                                 }
-                            } else {
-                                playerControlModel.currentSubtitlePath = ""
-                                subtitleCommandScheduler.schedule {
-                                    playerCoordinator.controller?.clearSubtitle()
-                                }
+                            ), subtitleName: item.displayName, subtitleLanguage: "", subtitleSize: item.sizeDescription)
+                            if playerControlModel.pendingLocalSubtitleID == item.id {
+                                ProgressView().controlSize(.small)
                             }
                         }
-                    )
-                ) {}
-                #if !os(tvOS)
-                    .toggleStyle(.switch)
-                #endif
-                .labelsHidden()
-                #if os(iOS)
-                    .scaleEffect(0.8)
-                    .offset(x: 2)
-                #endif
-            }
-
-            HStack(spacing: 20) {
-                if PurePlayerUIPolicy.allowsLocalSubtitleImport {
-                    Button {
-                        openLocalSubtitleFilePicker()
-                    } label: {
-                        Text("导入")
-                            .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                Spacer()
-            }
-
-            if localSubtitleItems.isEmpty {
-                ScrollView(showsIndicators: false) {
-                    VStack {
-                        Spacer(minLength: 24)
-                        Text("尚未导入外部字幕")
-                            .f12r()
-                            .foregroundStyle(.white.opacity(0.65))
-                        Spacer(minLength: 0)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 16)
-                }
-            } else {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(localSubtitleItems) { item in
-                            subtitleRowView(item: item)
+                        .contextMenu {
+                            Button("删除", systemImage: "trash", role: .destructive) {
+                                playerControlModel.removeLocalSubtitle(item, controller: playerCoordinator.controller)
+                            }
                         }
                     }
                 }
             }
         }
-        .onAppear {
-            subtitleCommandScheduler.cancel()
-        }
-        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { isShown in
-            if !isShown {
-                subtitleCommandScheduler.cancel()
+        .modifier(PlayerPanelFormModifier())
+        .scrollContentBackground(.hidden)
+        .coordinateSpace(name: formCoordinateSpace)
+        .overlay(alignment: .topLeading) {
+            if showsEmpty, let importControlBottom {
+                Text("尚未导入外部字幕")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                    .padding(.top, max(0, importControlBottom))
+                    .allowsHitTesting(false)
+                    .accessibilityIdentifier("player.subtitle.emptyState")
             }
+        }
+        .onAppear { subtitleCommandScheduler.cancel() }
+        .onDisappear { subtitleCommandScheduler.cancel() }
+        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { visible in
+            if !visible { subtitleCommandScheduler.cancel() }
+        }
+        .alert("字幕", isPresented: Binding(
+            get: { playerControlModel.subtitleOperationError != nil },
+            set: { if !$0 { playerControlModel.subtitleOperationError = nil } }
+        )) {
+            Button("好", role: .cancel) { playerControlModel.subtitleOperationError = nil }
+        } message: {
+            Text(LocalizedStringKey(playerControlModel.subtitleOperationError ?? ""))
         }
         #if os(iOS) || os(visionOS)
-        .fileImporter(
-            isPresented: $showFileImporter,
-            allowedContentTypes: subtitleContentTypes,
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case let .success(urls):
-                if let url = urls.first {
-                    let hasAccess = url.startAccessingSecurityScopedResource()
-                    defer {
-                        if hasAccess {
-                            url.stopAccessingSecurityScopedResource()
-                        }
-                    }
-                    importSubtitles(urls: [url])
-                }
-            case .failure:
-                break
+        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: subtitleContentTypes, allowsMultipleSelection: false) { result in
+            if case let .success(urls) = result, let url = urls.first {
+                let hasAccess = url.startAccessingSecurityScopedResource()
+                defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
+                importSubtitles(urls: [url])
             }
         }
         #endif
-    }
-
-    private var localSubtitleItems: [PlayerControlModel.LocalSubtitleItem] {
-        playerControlModel.localSubtitleItems
-    }
-
-    @ViewBuilder
-    private func subtitleRowView(item: PlayerControlModel.LocalSubtitleItem) -> some View {
-        let isSelected = playerControlModel.currentSubtitlePath == item.id
-        Button {
-            playSubtitle(item)
-        } label: {
-            ExternalSubtitleRowView(
-                isSelected: isSelected,
-                subtitleName: item.displayName,
-                subtitleLanguage: "",
-                subtitleSize: item.sizeDescription
-            )
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(
-                        isSelected ? .white : .white.opacity(0.2),
-                        lineWidth: 1
-                    )
-            }
-            .contentShape(Rectangle())
-            .roundedCorner(8)
-            .id(item.id)
-        }
-        .buttonStyle(.plain)
     }
 
     private var subtitleContentTypes: [UTType] {
@@ -174,12 +123,8 @@ struct ExternalSubtitleView: View {
     }
 
     private func playSubtitle(_ item: PlayerControlModel.LocalSubtitleItem) {
-        playerControlModel.currentSubtitlePath = item.id
         subtitleCommandScheduler.schedule {
-            playerCoordinator.controller?.loadSubtitleFile(
-                subtitleID: item.displayName,
-                url: item.url
-            )
+            playerControlModel.selectLocalSubtitle(item, controller: playerCoordinator.controller)
         }
     }
 
@@ -208,7 +153,7 @@ struct ExternalSubtitleView: View {
             return .init(
                 id: destinationURL.path,
                 url: destinationURL,
-                displayName: destinationURL.lastPathComponent,
+                displayName: url.lastPathComponent,
                 sizeDescription: ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
             )
         } catch {
@@ -236,3 +181,4 @@ struct ExternalSubtitleView: View {
     }
 
 }
+#endif

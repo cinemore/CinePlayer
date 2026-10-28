@@ -1,3 +1,4 @@
+import CinePlayerSDK
 //
 //  SiderVideoTrackView.swift
 //  Cinemore
@@ -6,7 +7,6 @@
 //
 
 import SwiftUI
-import CinePlayerSDK
 
 // MARK: 视频轨道设置
 
@@ -17,33 +17,29 @@ struct SiderVideoTrackView: View {
     @State private var selectionScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
+        let tracks = videoTracks
         VStack(alignment: .leading, spacing: 0) {
             Text("视频轨道")
-                .f17s()
-                .padding()
+                .playerPanelTitleStyle()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(videoTracks, id: \.streamIndex) { videoTrack in
-                        let isSelected = videoTrack.streamIndex == selectedTrackIndex
-                        VideoTrackRowView(
-                            isSelected: isSelected,
-                            profileName: videoTrack.profileName,
-                            language: videoTrack.language,
-                            codecName: videoTrack.codecName,
-                            resolution: videoTrack.naturalSize,
-                            frameRate: videoTrack.nominalFrameRate,
-                            bitRate: videoTrack.bitRate,
-                            dynamicRange: videoTrack.dynamicRange != .sdr ? videoTrack.dynamicRange.description : nil,
-                            streamIndex: videoTrack.streamIndex
-                        ) {
-                            selectVideoTrack(videoTrack)
-                        }
+            #if !os(tvOS)
+                PlayerTrackSelectionList {
+                    ForEach(tracks, id: \.streamIndex) { videoTrack in
+                        trackRow(videoTrack)
+                            .nativeSelectionRow
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
-            }
+            #else
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 12) {
+                        ForEach(tracks, id: \.streamIndex) { videoTrack in
+                            trackRow(videoTrack)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+            #endif
         }
         .onAppear {
             pendingVideoTrackIndex = nil
@@ -57,6 +53,22 @@ struct SiderVideoTrackView: View {
                 pendingVideoTrackIndex = nil
                 selectionScheduler.cancel()
             }
+        }
+    }
+
+    private func trackRow(_ videoTrack: FFmpegStreamAsset) -> VideoTrackRowView {
+        VideoTrackRowView(
+            isSelected: videoTrack.streamIndex == selectedTrackIndex,
+            profileName: videoTrack.profileName,
+            language: videoTrack.language,
+            codecName: videoTrack.codecName,
+            resolution: videoTrack.naturalSize,
+            frameRate: videoTrack.nominalFrameRate,
+            bitRate: videoTrack.bitRate,
+            dynamicRange: videoTrack.dynamicRange != .sdr ? videoTrack.dynamicRange.description : nil,
+            streamIndex: videoTrack.streamIndex
+        ) {
+            selectVideoTrack(videoTrack)
         }
     }
 
@@ -74,7 +86,9 @@ struct SiderVideoTrackView: View {
     }
 
     private func selectVideoTrack(_ videoTrack: FFmpegStreamAsset) {
-        guard selectedTrackIndex != videoTrack.streamIndex else { return }
+        guard selectedTrackIndex != videoTrack.streamIndex else {
+            return
+        }
         pendingVideoTrackIndex = videoTrack.streamIndex
         selectionScheduler.schedule {
             playerCoordinator.controller?.select(track: videoTrack)

@@ -1,9 +1,9 @@
-import Anime4KMetal
 import CinePlayerSDK
+import Anime4KMetal
 import CoreVideo
 import Foundation
 
-#if !os(tvOS)
+#if canImport(Metal)
     nonisolated enum Anime4KHostBridge {
         private final class EngineStore: @unchecked Sendable {
             let lock = NSLock()
@@ -42,7 +42,7 @@ import Foundation
         }
     }
 
-    nonisolated final class Anime4KSingleFrameProcessor: VideoFrameProcessor, @unchecked Sendable {
+    final nonisolated class Anime4KSingleFrameProcessor: VideoFrameProcessor, @unchecked Sendable {
         private let interpolator: Anime4KInterpolator
         private let preset: Anime4KPreset
         private let abCompareEnabled: Bool
@@ -72,6 +72,7 @@ import Foundation
                     maxOutputHeight: maxOutputHeight,
                     abCompareEnabled: abCompareEnabled
                 )
+                VideoFrameAttachments.copyDisplayGeometry(from: ctx.pixelBuffer, to: enhanced)
                 return .replace(pixelBuffer: enhanced)
             } catch {
                 return .passthrough

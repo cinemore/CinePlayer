@@ -1,5 +1,10 @@
 import SwiftUI
 import Foundation
+
+extension String {
+    /// 长文件名保留自然换行能力，不把字幕行撑出侧板。
+    var forceCharWrapping: String { map(String.init).joined(separator: "\u{200B}") }
+}
 #if canImport(UIKit)
 import UIKit
 #elseif canImport(AppKit)

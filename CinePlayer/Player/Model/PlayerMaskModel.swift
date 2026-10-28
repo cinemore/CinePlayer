@@ -20,7 +20,10 @@ class PlayerMaskModel: ObservableObject {
     // MARK: Lifecycle
 
     init() {
-        startTimer()
+        // visionOS 由用户再次点击视频收起面板，不创建自动隐藏计时器。
+        #if !os(visionOS)
+            startTimer()
+        #endif
     }
 
     deinit {

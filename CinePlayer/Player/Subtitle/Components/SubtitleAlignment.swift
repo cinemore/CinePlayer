@@ -1,3 +1,4 @@
+import CinePlayerSDK
 //
 //  SubtitleAlignment.swift
 //  Cinemore
@@ -6,7 +7,6 @@
 //
 
 import SwiftUI
-import CinePlayerSDK
 
 struct SubtitleHorizontalAlignment: View {
     @EnvironmentObject var subtitleStyle: SubtitleStyleModel
@@ -14,8 +14,8 @@ struct SubtitleHorizontalAlignment: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                Text("水平对齐")
-                    .f14r()
+                Text(String(localized: "水平对齐"))
+                    .font(.body)
                     .foregroundColor(.white)
                 Spacer()
             }
@@ -28,7 +28,7 @@ struct SubtitleHorizontalAlignment: View {
                         subtitleStyle.textPosition.horizontalAlign = alignment
                     } label: {
                         Text(alignment.displayName)
-                            .f14m()
+                            .font(.body.weight(.medium))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
@@ -38,6 +38,7 @@ struct SubtitleHorizontalAlignment: View {
                                     : Color.white.opacity(0.1)
                             )
                             .roundedCorner(6)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -58,8 +59,8 @@ struct SubtitleVerticalAlignment: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                Text("垂直对齐")
-                    .f14r()
+                Text(String(localized: "垂直对齐"))
+                    .font(.body)
                     .foregroundColor(.white)
                 Spacer()
             }
@@ -72,7 +73,7 @@ struct SubtitleVerticalAlignment: View {
                         subtitleStyle.textPosition.verticalAlign = alignment
                     } label: {
                         Text(alignment.displayName)
-                            .f14m()
+                            .font(.body.weight(.medium))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
@@ -82,6 +83,7 @@ struct SubtitleVerticalAlignment: View {
                                     : Color.white.opacity(0.1)
                             )
                             .roundedCorner(6)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -101,10 +103,10 @@ struct SubtitleVerticalAlignment: View {
 extension HorizontalAlignment {
     var displayName: String {
         switch self {
-        case .leading: "左对齐"
-        case .center: "居中"
-        case .trailing: "右对齐"
-        default: "居中"
+        case .leading: String(localized: "左对齐")
+        case .center: String(localized: "居中")
+        case .trailing: String(localized: "右对齐")
+        default: String(localized: "居中")
         }
     }
 }
@@ -112,10 +114,10 @@ extension HorizontalAlignment {
 extension VerticalAlignment {
     var displayName: String {
         switch self {
-        case .top: "顶部"
-        case .center: "居中"
-        case .bottom: "底部"
-        default: "底部"
+        case .top: String(localized: "顶部")
+        case .center: String(localized: "居中")
+        case .bottom: String(localized: "底部")
+        default: String(localized: "底部")
         }
     }
 }

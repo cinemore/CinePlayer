@@ -1,3 +1,4 @@
+import CinePlayerSDK
 //
 //  SubtitleAdjustmentView.swift
 //  Cinemore
@@ -5,7 +6,7 @@
 //  Created by lf on 2024/12/25.
 //
 
-import CinePlayerSDK
+import Combine
 import SwiftUI
 
 // MARK: 字幕调整
@@ -54,320 +55,70 @@ import SwiftUI
         @State private var envIsImageSubtitle = false
 
         var body: some View {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    // MARK: - 时间偏移调整
+            // 在 EnvironmentObject 模式下持续观察当前字幕样式。
+            let style = useParameterMode ? paramSubtitleStyle : envSubtitleStyle
+            let canShow = useParameterMode ? paramCanShowSubtitleStyle! : envCanShowSubtitleStyle
+            let isImage = useParameterMode ? paramIsImageSubtitle! : envIsImageSubtitle
 
-                    VStack(spacing: 12) {
-                        SubtitleTimeOffsetInput(
-                            value: useParameterMode
-                                ? paramSubtitleDelay!
-                                : Binding(
-                                    get: { playerCoordinator.subtitleDelay },
-                                    set: { playerCoordinator.subtitleDelay = $0 }
-                                )
-                        )
-                    }
+            Form {
+                // MARK: - 时间偏移调整
 
-                    // MARK: - HDR 字幕增强控制（对所有字幕类型都适用）
-
-                    let effectiveCanShow =
-                        useParameterMode ? paramCanShowSubtitleStyle! : envCanShowSubtitleStyle
-                    let effectiveIsImage =
-                        useParameterMode ? paramIsImageSubtitle! : envIsImageSubtitle
-                    // 在 EnvironmentObject 模式下，使用 @EnvironmentObject 绑定的 subtitleStyle 以确保 UI 更新
-                    let effectiveSubtitleStyle =
-                        useParameterMode
-                        ? paramSubtitleStyle
-                        : envSubtitleStyle
-
-                    VStack(spacing: 12) {
-                        VStack(spacing: 8) {
-                            SubtitleBrightnessSlider(
-                                title: "字幕亮度",
-                                value: Binding(
-                                    get: { effectiveSubtitleStyle.boostHDRbrightness },
-                                    set: { effectiveSubtitleStyle.boostHDRbrightness = $0 }
-                                )
+                Section {
+                    SubtitleTimeOffsetInput(
+                        value: useParameterMode
+                            ? paramSubtitleDelay!
+                            : Binding(
+                                get: { playerCoordinator.subtitleDelay },
+                                set: { playerCoordinator.subtitleDelay = $0 }
                             )
-                        }
-                    }
+                    )
+                }
 
-                    if effectiveCanShow {
-                        // MARK: - 字幕样式总开关
+                // MARK: - HDR 字幕增强控制（对所有字幕类型都适用）
 
-                        SubtitleToggleRow(
-                            title: "字幕样式",
-                            isOn: Binding(
-                                get: {
-                                    effectiveIsImage
-                                        ? effectiveSubtitleStyle.enableBitmapCustomization
-                                        : effectiveSubtitleStyle
-                                            .overwriteSubtitleStyle
-                                },
-                                set: {
-                                    if effectiveIsImage {
-                                        effectiveSubtitleStyle.enableBitmapCustomization = $0
-                                    } else {
-                                        effectiveSubtitleStyle.overwriteSubtitleStyle = $0
-                                    }
-                                }
-                            )
-                        )
+                Section {
+                    SubtitleFormSlider(
+                        title: "字幕亮度",
+                        value: Binding(
+                            get: { style.boostHDRbrightness },
+                            set: { style.boostHDRbrightness = $0 }
+                        ),
+                        range: 0 ... 1,
+                        lowerLabel: "0%", upperLabel: "100%",
+                        valueLabel: Double(style.boostHDRbrightness).formatted(.percent.precision(.fractionLength(0)))
+                    )
+                }
 
-                        // 根据字幕类型显示不同的调整控件
-                        if effectiveIsImage {
-                            // 图片字幕调整控件
-                            if effectiveSubtitleStyle.enableBitmapCustomization {
-                                SubtitleBitmapControls()
-                                    .environmentObject(effectiveSubtitleStyle)
-                            }
-                        } else {
-                            // 文字字幕调整控件
-                            if effectiveSubtitleStyle.overwriteSubtitleStyle {
-                                // MARK: - 字体大小调整
+                if canShow {
+                    // MARK: - 字幕样式总开关
 
-                                VStack(spacing: 12) {
-                                    SubtitleSectionHeader(title: "字体大小")
-
-                                    SubtitleAdjustmentRow(
-                                        title: "\(Int(effectiveSubtitleStyle.textFontSize))"
-                                    ) {
-                                        Stepper(
-                                            value: Binding(
-                                                get: { effectiveSubtitleStyle.textFontSize },
-                                                set: { effectiveSubtitleStyle.textFontSize = $0 }
-                                            ),
-                                            in: 9...64,
-                                            step: 1.0,
-                                            label: { EmptyView() }
-                                        )
-                                    }
-                                }
-
-                                // MARK: - 字体样式
-
-                                VStack(spacing: 12) {
-                                    SubtitleSectionHeader(title: "字体样式")
-
-                                    VStack(spacing: 8) {
-                                        // 粗体开关
-                                        SubtitleToggleRow(
-                                            title: "粗体",
-                                            isOn: Binding(
-                                                get: { effectiveSubtitleStyle.textBold },
-                                                set: { effectiveSubtitleStyle.textBold = $0 }
-                                            )
-                                        )
-
-                                        // 斜体开关
-                                        SubtitleToggleRow(
-                                            title: "斜体",
-                                            isOn: Binding(
-                                                get: { effectiveSubtitleStyle.textItalic },
-                                                set: { effectiveSubtitleStyle.textItalic = $0 }
-                                            )
-                                        )
-
-                                        SubtitleAdjustmentRow(
-                                            title:
-                                                "字间距: \(Int(effectiveSubtitleStyle.letterSpacing))"
-                                        ) {
-                                            Stepper(
-                                                value: Binding(
-                                                    get: { effectiveSubtitleStyle.letterSpacing },
-                                                    set: {
-                                                        effectiveSubtitleStyle.letterSpacing = $0
-                                                    }
-                                                ),
-                                                in: 0...20,
-                                                step: 1
-                                            ) { EmptyView() }
-                                        }
-                                    }
-                                }
-
-                                // MARK: - 位置调整
-
-                                VStack(spacing: 12) {
-                                    SubtitleSectionHeader(title: "位置调整")
-
-                                    VStack(spacing: 12) {
-                                        // 水平位置选择
-                                        SubtitleHorizontalAlignment()
-                                            .environmentObject(effectiveSubtitleStyle)
-
-                                        // 垂直对齐选择
-                                        SubtitleVerticalAlignment()
-                                            .environmentObject(effectiveSubtitleStyle)
-
-                                        // 垂直位置调整
-                                        if effectiveSubtitleStyle.textPosition.verticalAlign == .top
-                                            || effectiveSubtitleStyle.textPosition.verticalAlign
-                                                == .bottom
-                                        {
-                                            SubtitlePositionSlider(
-                                                title: "垂直位置",
-                                                value: Binding(
-                                                    get: {
-                                                        Double(
-                                                            effectiveSubtitleStyle.textPosition
-                                                                .verticalMargin)
-                                                    },
-                                                    set: {
-                                                        effectiveSubtitleStyle.textPosition
-                                                            .verticalMargin = CGFloat($0)
-                                                    }
-                                                ),
-                                                range: 0...100,
-                                                iconLeft: effectiveSubtitleStyle.textPosition
-                                                    .verticalAlign == .bottom
-                                                    ? "arrow.down" : "arrow.up",
-                                                iconRight: effectiveSubtitleStyle.textPosition
-                                                    .verticalAlign == .bottom
-                                                    ? "arrow.up" : "arrow.down"
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // MARK: - 颜色设置
-
-                                VStack(spacing: 12) {
-                                    SubtitleSectionHeader(title: "颜色设置")
-
-                                    VStack(spacing: 8) {
-                                        // 文字颜色
-                                        SubtitleColorRow(
-                                            title: "文字颜色",
-                                            color: Binding(
-                                                get: { effectiveSubtitleStyle.textColor },
-                                                set: { effectiveSubtitleStyle.textColor = $0 }
-                                            )
-                                        )
-
-                                        // 文字透明度
-                                        SubtitleOpacitySlider(
-                                            title: "文字透明度",
-                                            value: Binding(
-                                                get: { effectiveSubtitleStyle.textColorOpacity },
-                                                set: {
-                                                    effectiveSubtitleStyle.textColorOpacity = $0
-                                                }
-                                            )
-                                        )
-                                    }
-                                }
-
-                                VStack(spacing: 12) {
-                                    SubtitleSectionHeader(title: "边框和阴影")
-
-                                    HStack {
-                                        Text("样式")
-                                            .f14r()
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        Picker(
-                                            "",
-                                            selection: Binding(
-                                                get: { effectiveSubtitleStyle.borderStyle },
-                                                set: { effectiveSubtitleStyle.borderStyle = $0 }
-                                            )
-                                        ) {
-                                            Text("边框").tag(1)
-                                            Text("底色").tag(3)
-                                        }
-                                        .pickerStyle(.segmented)
-                                        .labelsHidden()
-                                        .fixedSize()
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-
-                                    VStack(spacing: 8) {
-                                        SubtitleColorRow(
-                                            title: "边框颜色",
-                                            color: Binding(
-                                                get: { effectiveSubtitleStyle.outlineColor },
-                                                set: { effectiveSubtitleStyle.outlineColor = $0 }
-                                            )
-                                        )
-
-                                        // 边框透明度
-                                        SubtitleOpacitySlider(
-                                            title: "边框透明度",
-                                            value: Binding(
-                                                get: { effectiveSubtitleStyle.outlineColorOpacity },
-                                                set: {
-                                                    effectiveSubtitleStyle.outlineColorOpacity = $0
-                                                }
-                                            )
-                                        )
-
-                                        SubtitleAdjustmentRow(
-                                            title:
-                                                "边框宽度: \(Int(effectiveSubtitleStyle.outlineWidth))"
-                                        ) {
-                                            Stepper(
-                                                value: Binding(
-                                                    get: { effectiveSubtitleStyle.outlineWidth },
-                                                    set: {
-                                                        effectiveSubtitleStyle.outlineWidth = $0
-                                                    }
-                                                ),
-                                                in: 0...10,
-                                                step: 1
-                                            ) { EmptyView() }
-                                        }
-                                    }
-
-                                    // 阴影颜色
-                                    VStack(spacing: 8) {
-                                        SubtitleColorRow(
-                                            title: "阴影颜色",
-                                            color: Binding(
-                                                get: { effectiveSubtitleStyle.shadowColor },
-                                                set: { effectiveSubtitleStyle.shadowColor = $0 }
-                                            )
-                                        )
-
-                                        // 阴影透明度
-                                        SubtitleOpacitySlider(
-                                            title: "阴影透明度",
-                                            value: Binding(
-                                                get: { effectiveSubtitleStyle.shadowColorOpacity },
-                                                set: {
-                                                    effectiveSubtitleStyle.shadowColorOpacity = $0
-                                                }
-                                            )
-                                        )
-
-                                        SubtitleAdjustmentRow(
-                                            title:
-                                                "阴影宽度: \(Int(effectiveSubtitleStyle.shadowWidth))"
-                                        ) {
-                                            Stepper(
-                                                value: Binding(
-                                                    get: { effectiveSubtitleStyle.shadowWidth },
-                                                    set: { effectiveSubtitleStyle.shadowWidth = $0 }
-                                                ),
-                                                in: 0...10,
-                                                step: 1
-                                            ) { EmptyView() }
-                                        }
-                                    }
+                    Section {
+                        Toggle("字幕样式", isOn: Binding(
+                            get: { isImage ? style.enableBitmapCustomization : style.overwriteSubtitleStyle },
+                            set: {
+                                if isImage {
+                                    style.enableBitmapCustomization = $0
+                                } else {
+                                    style.overwriteSubtitleStyle = $0
                                 }
                             }
+                        ))
+                    }
+
+                    // 根据字幕类型显示不同的调整控件。
+                    if isImage {
+                        if style.enableBitmapCustomization {
+                            SubtitleBitmapControls()
+                                .environmentObject(style)
                         }
+                    } else if style.overwriteSubtitleStyle {
+                        SubtitleTextFormControls(style: style)
                     }
                 }
-                .padding(.bottom, 24)
-                .padding(.horizontal, 2)
             }
+            .modifier(PlayerPanelFormModifier())
+            .scrollContentBackground(.hidden)
+            .toggleStyle(.switch)
             .onAppear {
                 // 如果是参数模式，不需要从 EnvironmentObject 获取
                 if useParameterMode {
@@ -378,63 +129,177 @@ import SwiftUI
                 guard let controller = playerCoordinator.controller else {
                     return
                 }
-                guard let subtitleTrack = controller.subtitleTrack else {
+                updateStyleAvailability(controller.subtitleStyleCustomization)
+            }
+            .onReceive(
+                // 参数模式没有本地播放器，创建订阅时就必须避免读取其环境对象。
+                useParameterMode
+                    ? Empty().eraseToAnyPublisher()
+                    : playerCoordinator.controller?
+                    .$subtitleStyleCustomization
+                    .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+            ) { customization in
+                guard !useParameterMode else {
                     return
                 }
+                updateStyleAvailability(customization)
+            }
+        }
 
-                // 设置字幕类型和是否显示样式控制
-                envIsImageSubtitle = subtitleTrack.isImageSubtitle
+        private func updateStyleAvailability(_ customization: SubtitleStyleCustomization) {
+            // 外挂格式按实际解析内容识别；ASS 保留作者样式，只开放 SRT/VTT 文字调整。
+            envCanShowSubtitleStyle = customization != .unavailable
+            envIsImageSubtitle = customization == .bitmap
+        }
+    }
 
-                // ASS 字幕不显示样式控制，其他类型都显示
-                if !subtitleTrack.isASS {
-                    envCanShowSubtitleStyle = true
+    // MARK: - 原生表单控件
+
+    /// 统一保留标题、当前数值和滑块下方的端点说明，不绘制自定义滑轨或刻度。
+    struct SubtitleFormSlider<Value: BinaryFloatingPoint>: View where Value.Stride: BinaryFloatingPoint {
+        let title: LocalizedStringKey
+        @Binding var value: Value
+        let range: ClosedRange<Value>
+        var step: Value.Stride?
+        let lowerLabel: String
+        let upperLabel: String
+        let valueLabel: String
+
+        var body: some View {
+            VStack(alignment: .leading) {
+                LabeledContent(title, value: valueLabel)
+                if let step {
+                    Slider(value: $value, in: range, step: step) {
+                        Text(title)
+                    }
+                    .labelsHidden()
+                } else {
+                    Slider(value: $value, in: range) {
+                        Text(title)
+                    }
+                    .labelsHidden()
                 }
+                HStack {
+                    Text(lowerLabel)
+                    Spacer()
+                    Text(upperLabel)
+                }
+                .playerPanelFormFont(.footnote)
+                .foregroundStyle(.secondary)
             }
         }
     }
 
-    // MARK: - 子组件
-
-    struct SubtitleSectionHeader: View {
-        let title: String
+    private struct SubtitleTextFormControls: View {
+        @ObservedObject var style: SubtitleStyleModel
 
         var body: some View {
-            HStack {
-                Text(title.uppercased())
-                    .f13m()
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-        }
-    }
+            // MARK: - 字体大小和字体样式
 
-    struct SubtitleAdjustmentRow<Trailing: View>: View {
-        let title: String
-        let trailing: () -> Trailing
-
-        init(title: String, @ViewBuilder trailing: @escaping () -> Trailing) {
-            self.title = title
-            self.trailing = trailing
-        }
-
-        var body: some View {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .f14r()
-                        .foregroundColor(.white)
+            Section("字体样式") {
+                Stepper(value: $style.textFontSize, in: 9 ... 64, step: 1) {
+                    HStack {
+                        Text("字体大小")
+                        Spacer()
+                        Text("\(Int(style.textFontSize))")
+                    }
                 }
-
-                Spacer()
-
-                trailing()
+                Toggle("粗体", isOn: $style.textBold)
+                Toggle("斜体", isOn: $style.textItalic)
+                Stepper(value: $style.letterSpacing, in: 0 ... 20, step: 1) {
+                    HStack {
+                        Text("字间距")
+                        Spacer()
+                        Text("\(Int(style.letterSpacing))")
+                    }
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+
+            // MARK: - 位置调整
+
+            Section("位置调整") {
+                PlayerPanelPicker("水平对齐", selection: Binding(
+                    get: {
+                        style.textPosition.horizontalAlign == .leading ? 0
+                            : style.textPosition.horizontalAlign == .trailing ? 2 : 1
+                    },
+                    set: {
+                        style.textPosition.horizontalAlign = $0 == 0 ? .leading : $0 == 2 ? .trailing : .center
+                    }
+                )) {
+                    Text(HorizontalAlignment.leading.displayName).tag(0)
+                    Text(HorizontalAlignment.center.displayName).tag(1)
+                    Text(HorizontalAlignment.trailing.displayName).tag(2)
+                }
+                PlayerPanelPicker("垂直对齐", selection: Binding(
+                    get: {
+                        style.textPosition.verticalAlign == .top ? 0
+                            : style.textPosition.verticalAlign == .bottom ? 2 : 1
+                    },
+                    set: {
+                        style.textPosition.verticalAlign = $0 == 0 ? .top : $0 == 2 ? .bottom : .center
+                    }
+                )) {
+                    Text(VerticalAlignment.top.displayName).tag(0)
+                    Text(VerticalAlignment.center.displayName).tag(1)
+                    Text(VerticalAlignment.bottom.displayName).tag(2)
+                }
+                // 居中对齐时不显示垂直边距。
+                if style.textPosition.verticalAlign == .top || style.textPosition.verticalAlign == .bottom {
+                    SubtitleFormSlider(
+                        title: "垂直位置",
+                        value: $style.textPosition.verticalMargin,
+                        range: 0 ... 100,
+                        lowerLabel: "0", upperLabel: "100",
+                        valueLabel: "\(Int(style.textPosition.verticalMargin))"
+                    )
+                }
+            }
+
+            // MARK: - 颜色设置
+
+            Section("颜色设置") {
+                ColorPicker("文字颜色", selection: $style.textColor)
+                opacitySlider("文字透明度", value: $style.textColorOpacity)
+            }
+
+            // MARK: - 边框和阴影
+
+            Section("边框和阴影") {
+                PlayerPanelPicker("样式", selection: $style.borderStyle) {
+                    // 字幕文件可能携带预设之外的值，保留原值并提供对应选项。
+                    if style.borderStyle != 1, style.borderStyle != 3 {
+                        Text("原始样式").tag(style.borderStyle)
+                    }
+                    Text("边框").tag(1)
+                    Text("底色").tag(3)
+                }
+                ColorPicker("边框颜色", selection: $style.outlineColor)
+                opacitySlider("边框透明度", value: $style.outlineColorOpacity)
+                Stepper(value: $style.outlineWidth, in: 0 ... 10, step: 1) {
+                    HStack {
+                        Text("边框宽度")
+                        Spacer()
+                        Text("\(Int(style.outlineWidth))")
+                    }
+                }
+                ColorPicker("阴影颜色", selection: $style.shadowColor)
+                opacitySlider("阴影透明度", value: $style.shadowColorOpacity)
+                Stepper(value: $style.shadowWidth, in: 0 ... 10, step: 1) {
+                    HStack {
+                        Text("阴影宽度")
+                        Spacer()
+                        Text("\(Int(style.shadowWidth))")
+                    }
+                }
+            }
+        }
+
+        private func opacitySlider(_ title: LocalizedStringKey, value: Binding<Double>) -> some View {
+            SubtitleFormSlider(
+                title: title, value: value, range: 0 ... 1, step: 0.05,
+                lowerLabel: "0%", upperLabel: "100%",
+                valueLabel: value.wrappedValue.formatted(.percent.precision(.fractionLength(0)))
             )
         }
     }

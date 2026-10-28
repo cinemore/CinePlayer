@@ -8,6 +8,8 @@ enum TVOSControlFocusItem: Hashable {
     case audioMenu
     case videoMenu
     case playbackRateMenu
+    case mediaInfoMenu
+    case enhancementMenu
     case scaleButton
     case progressSlider
     case rewindButton
@@ -30,6 +32,7 @@ struct TVOSProgressSliderView: View {
                 progress: playerCoordinator.progress,
                 isHovering: isFocused,
                 isSeeking: playbackControlModel.isSeeking,
+                showsSeekingThumbnail: playbackControlModel.showsSeekingThumbnail,
                 seekingPreviewTime: playbackControlModel.previewCurrentTime,
                 seekingTotalTime: playbackControlModel.previewTotalTime,
                 onProgressEditingChanged: { _, _ in }
@@ -48,7 +51,7 @@ struct TVOSProgressSliderView: View {
 
             if playbackControlModel.showSeekingHint {
                 Text("按选择键跳转")
-                    .font(.system(size: 31, weight: .bold))
+                    .font(.headline.weight(.bold))
                     .frame(maxWidth: .infinity)
                     .transition(.opacity)
             }
@@ -65,7 +68,8 @@ struct TVOSProgressSliderView: View {
                 playbackControlModel.seekBackward(
                     seconds: seekSeconds,
                     wasPlaying: playerCoordinator.playbackState == .playing,
-                    progress: playerCoordinator.progress
+                    progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
                 ) {
                     playerCoordinator.controller?.pause()
                 }
@@ -75,7 +79,8 @@ struct TVOSProgressSliderView: View {
                 playbackControlModel.seekForward(
                     seconds: seekSeconds,
                     wasPlaying: playerCoordinator.playbackState == .playing,
-                    progress: playerCoordinator.progress
+                    progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
                 ) {
                     playerCoordinator.controller?.pause()
                 }
@@ -94,7 +99,8 @@ struct TVOSProgressSliderView: View {
                 playbackControlModel.seekBackward(
                     seconds: 5,
                     wasPlaying: playerCoordinator.playbackState == .playing,
-                    progress: playerCoordinator.progress
+                    progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
                 ) {
                     playerCoordinator.controller?.pause()
                 }
@@ -102,7 +108,8 @@ struct TVOSProgressSliderView: View {
                 playbackControlModel.seekForward(
                     seconds: 5,
                     wasPlaying: playerCoordinator.playbackState == .playing,
-                    progress: playerCoordinator.progress
+                    progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
                 ) {
                     playerCoordinator.controller?.pause()
                 }
@@ -121,7 +128,8 @@ struct TVOSProgressSliderView: View {
             playbackControlModel.seekBackward(
                 seconds: 5,
                 wasPlaying: playerCoordinator.playbackState == .playing,
-                progress: playerCoordinator.progress
+                progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
             ) {
                 playerCoordinator.controller?.pause()
             }
@@ -129,7 +137,8 @@ struct TVOSProgressSliderView: View {
             playbackControlModel.seekForward(
                 seconds: 5,
                 wasPlaying: playerCoordinator.playbackState == .playing,
-                progress: playerCoordinator.progress
+                progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
             ) {
                 playerCoordinator.controller?.pause()
             }
@@ -144,16 +153,14 @@ struct TVOSProgressSliderView: View {
 
     private func handleSelect() {
         if playbackControlModel.isSeeking {
-            playbackControlModel.performSeek { targetTime in
-                playerCoordinator.controller?.seek(time: targetTime)
-            } onEnd: {
-                playerCoordinator.controller?.play()
+            playbackControlModel.performSeek { targetTime, resumePlayback in
+                playerCoordinator.controller?.seek(time: targetTime, playbackBehavior: resumePlayback ? .resumePlayback : .pausePlayback)
             }
         }
     }
 
     private func handlePlayPause() {
-        playerCoordinator.controller?.switchPlayPause()
+        playerCoordinator.controller?.togglePlaybackFromControls()
     }
 
     private func handleLongPress(_ event: TVRemoteLongPressEvent) {
@@ -165,7 +172,8 @@ struct TVOSProgressSliderView: View {
             playbackControlModel.startLongPressSeeking(
                 direction: direction,
                 wasPlaying: playerCoordinator.playbackState == .playing,
-                progress: playerCoordinator.progress
+                progress: playerCoordinator.progress,
+                    controller: playerCoordinator.controller
             ) {
                 playerCoordinator.controller?.pause()
             }

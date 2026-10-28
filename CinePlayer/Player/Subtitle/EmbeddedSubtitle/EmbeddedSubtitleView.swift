@@ -1,3 +1,4 @@
+#if !os(tvOS)
 import CinePlayerSDK
 import AVFoundation
 import SwiftUI
@@ -7,180 +8,98 @@ struct EmbeddedSubtitleView: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerModel: VideoPlayerModel
-    @State private var pendingSubtitleTrackIndex: Int32? = nil
+    @State private var pendingSubtitleTrackIndex: Int32?
     @State private var subtitleCommandScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
-        Group {
-            if !subtitleTracks.isEmpty {
-                VStack(spacing: 12) {
-                    HStack(spacing: 12) {
-                        Text("开启")
-                            .f16b()
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle(
-                            isOn: Binding(
-                                get: { selectedTrackIndex != -1 && playerControlModel.currentSubtitlePath.isEmpty },
-                                set: { newValue in
-                                    updateToggleState(newValue)
-                                }
-                            )
-                        ) {}
-                        #if !os(tvOS)
-                            .toggleStyle(.switch)
-                        #endif
-                        .labelsHidden()
-                        #if os(iOS)
-                            .scaleEffect(0.8)
-                            .offset(x: 2)
-                        #endif
-                    }
-
-                    HStack(spacing: 12) {
-                        Text("翻译")
-                            .f16b()
-                            .foregroundColor(.white)
-
-                        if isAppleTranslationEnabled {
-                            Button {
-                                playerModel.restartSubtitleTranslationService()
-                            } label: {
-                                Text("重启")
-                                    .f12r()
-                                    .foregroundStyle(.white.opacity(0.9))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(.white.opacity(0.12), in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        Spacer(minLength: 0)
-
-                        Picker("", selection: translationModeBinding) {
-                            ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
-                                Text(mode.displayName).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .labelsHidden()
-                        .fixedSize(horizontal: true, vertical: false)
-                        .layoutPriority(1)
-                    }
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 12) {
-                            ForEach(subtitleTracks, id: \.streamIndex) { subtitleTrack in
-                                let isSelected = selectedTrackIndex == subtitleTrack.streamIndex
-                                    && playerControlModel.currentSubtitlePath.isEmpty
-                                Button {
-                                    selectSubtitleTrack(subtitleTrack)
-                                } label: {
-                                    EmbeddedSubtitleRowView(
-                                        isSelected: isSelected,
-                                        language: subtitleTrack.language,
-                                        title: subtitleTrack.title,
-                                        codecName: subtitleTrack.codecName
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                                .id(subtitleTrack.streamIndex)
-                            }
-                        }
-                        .padding(.top, 16)
-                        .padding(.bottom, 16)
+        Form {
+            Section {
+                Toggle("开启", isOn: Binding(
+                    get: { selectedTrackIndex != -1 && playerControlModel.currentSubtitlePath.isEmpty },
+                    set: updateToggleState
+                ))
+                .toggleStyle(.switch)
+                PlayerPanelPicker("翻译", selection: setting(\.subtitleTranslateMode)) {
+                    ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
                     }
                 }
-            } else {
-                ScrollView(showsIndicators: false) {
-                    VStack {
-                        Spacer(minLength: 24)
-                        Text("当前媒体无内封字幕")
-                            .f12r()
-                            .foregroundStyle(.white.opacity(0.65))
-                        Spacer(minLength: 0)
+                .disabled(!SubtitleTranslationRouter.isAvailable)
+                if sessionStore.controlConfig.subtitleTranslateMode.needsTranslation {
+                    PlayerPanelPicker("目标语言", selection: setting(\.subtitleTranslationTargetLanguage)) {
+                        Text("跟随系统").tag("")
+                        ForEach(PlayerControlConfig.subtitleTranslationTargetLanguages, id: \.self) { language in
+                            Text(Locale.current.localizedString(forIdentifier: language) ?? language).tag(language)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 16)
+                    if sessionStore.controlConfig.subtitleTranslateMode == .bilingual {
+                        PlayerPanelPicker("译文位置", selection: setting(\.subtitleTranslationOnTop)) {
+                            Text("上方").tag(true)
+                            Text("下方").tag(false)
+                        }
+                    }
+                    if SubtitleTranslationRouter.isAvailable {
+                        Button("重启 Apple 翻译") { playerModel.restartSubtitleTranslationService() }
+                    }
+                }
+            }
+            Section {
+                if subtitleTracks.isEmpty {
+                    Text("当前媒体无内封字幕").foregroundStyle(.secondary)
+                }
+                ForEach(subtitleTracks, id: \.streamIndex) { track in
+                    EmbeddedSubtitleRowView(isSelected: Binding(
+                        get: { selectedTrackIndex == track.streamIndex && playerControlModel.currentSubtitlePath.isEmpty },
+                        set: { selected in
+                            if selected { selectSubtitleTrack(track) } else { updateToggleState(false) }
+                        }
+                    ), language: track.language, title: track.title, codecName: track.codecName)
                 }
             }
         }
-        .onAppear {
-            pendingSubtitleTrackIndex = nil
-            subtitleCommandScheduler.cancel()
+        .modifier(PlayerPanelFormModifier())
+        .scrollContentBackground(.hidden)
+        .onAppear { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
+        .onDisappear { subtitleCommandScheduler.cancel() }
+        .compatibleOnChange(of: playerCoordinator.subtitleTrackIndex) { _ in pendingSubtitleTrackIndex = nil }
+        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { visible in
+            if !visible { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
         }
-        .compatibleOnChange(of: playerCoordinator.subtitleTrackIndex) { _ in
-            pendingSubtitleTrackIndex = nil
+        .compatibleOnChange(of: playerControlModel.currentSubtitlePath) { path in
+            if !path.isEmpty { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
         }
-        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { isShown in
-            if !isShown {
-                pendingSubtitleTrackIndex = nil
-                subtitleCommandScheduler.cancel()
-            }
-        }
-        .compatibleOnChange(of: playerControlModel.currentSubtitlePath) { newPath in
-            if !newPath.isEmpty {
-                pendingSubtitleTrackIndex = nil
-                subtitleCommandScheduler.cancel()
-            }
-        }
+    }
+
+    private func setting<Value>(_ keyPath: WritableKeyPath<PlayerControlConfig, Value>) -> Binding<Value> {
+        Binding(get: { sessionStore.controlConfig[keyPath: keyPath] }, set: { value in
+            var config = sessionStore.controlConfig
+            config[keyPath: keyPath] = value
+            sessionStore.controlConfig = config
+        })
     }
 
     private var subtitleTracks: [FFmpegStreamAsset] {
-        guard let controller = playerCoordinator.controller else {
-            return []
-        }
-        return controller.sortByLanguageTracks(mediaType: .subtitle)
+        playerCoordinator.controller?.sortByLanguageTracks(mediaType: .subtitle) ?? []
     }
-
     private var selectedTrackIndex: Int32 {
         pendingSubtitleTrackIndex ?? playerCoordinator.subtitleTrackIndex
     }
-
-    private var translationModeBinding: Binding<SubtitleTranslateMode> {
-        Binding(
-            get: {
-                sessionStore.controlConfig.subtitleTranslateMode
-            },
-            set: { newValue in
-                var config = sessionStore.controlConfig
-                guard config.subtitleTranslateMode != newValue else {
-                    return
-                }
-                config.subtitleTranslateMode = newValue
-                sessionStore.controlConfig = config
-            }
-        )
-    }
-
-    private var isAppleTranslationEnabled: Bool {
-        sessionStore.controlConfig.subtitleTranslateMode.needsTranslation
-    }
-
-    private func updateToggleState(_ newValue: Bool) {
-        if newValue {
-            if let firstTrack = subtitleTracks.first {
-                selectSubtitleTrack(firstTrack)
-            }
+    private func updateToggleState(_ enabled: Bool) {
+        if enabled {
+            if let first = subtitleTracks.first { selectSubtitleTrack(first) }
         } else if playerControlModel.currentSubtitlePath.isEmpty {
             pendingSubtitleTrackIndex = -1
             subtitleCommandScheduler.schedule {
-                playerCoordinator.controller?.clearSubtitle()
+                playerControlModel.clearSubtitle(controller: playerCoordinator.controller)
             }
         }
     }
-
-    private func selectSubtitleTrack(_ subtitleTrack: FFmpegStreamAsset) {
-        guard selectedTrackIndex != subtitleTrack.streamIndex
-            || !playerControlModel.currentSubtitlePath.isEmpty
-        else { return }
-        pendingSubtitleTrackIndex = subtitleTrack.streamIndex
-        playerControlModel.currentSubtitlePath = ""
+    private func selectSubtitleTrack(_ track: FFmpegStreamAsset) {
+        guard selectedTrackIndex != track.streamIndex || !playerControlModel.currentSubtitlePath.isEmpty else { return }
+        pendingSubtitleTrackIndex = track.streamIndex
         subtitleCommandScheduler.schedule {
-            playerCoordinator.controller?.loadSubtitleTrack(
-                subtitlesTrackIndex: subtitleTrack.streamIndex
-            )
+            playerControlModel.selectEmbeddedSubtitle(track.streamIndex, controller: playerCoordinator.controller)
         }
     }
 }
+#endif

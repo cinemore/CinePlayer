@@ -1,3 +1,4 @@
+#if !os(tvOS)
 import SwiftUI
 
 #if os(iOS)
@@ -116,3 +117,4 @@ struct SiderView: View {
         }
     }
 }
+#endif

@@ -60,7 +60,7 @@ struct PlayerOpenView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
-                #if !os(tvOS)
+                #if !os(tvOS) && !os(visionOS)
                     backgroundLayer
                 #endif
 
@@ -127,7 +127,8 @@ struct PlayerOpenView: View {
         Button {
             navigationPath.append(.history)
         } label: {
-            Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+            Label("历史记录", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                .labelStyle(.iconOnly)
         }
     }
 
@@ -192,14 +193,18 @@ struct PlayerOpenView: View {
     private static let openControlCornerRadius: CGFloat = 16
 
     private var urlPlayContainer: some View {
-        #if os(tvOS) || os(visionOS)
+        #if os(visionOS)
+            urlTextField
+                .textFieldStyle(.roundedBorder)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        #elseif os(tvOS)
             urlTextField
                 .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
         #else
             HStack(alignment: .center, spacing: 8) {
                 urlTextField
                     .textFieldStyle(.plain)
-                    .font(.system(size: 15, weight: .regular))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 16)
 
@@ -229,6 +234,13 @@ struct PlayerOpenView: View {
 
     private var urlTextField: some View {
         TextField("输入视频 URL", text: $urlInput)
+            .autocorrectionDisabled()
+            #if canImport(UIKit)
+            .textInputAutocapitalization(.never)
+            #endif
+            #if os(iOS) || os(visionOS)
+            .keyboardType(.URL)
+            #endif
             .focused($isURLFieldFocused)
             .submitLabel(.go)
             .onSubmit {
@@ -240,7 +252,16 @@ struct PlayerOpenView: View {
     }
 
     private var playURLButton: some View {
-        #if os(tvOS) || os(visionOS)
+        #if os(visionOS)
+            Button("播放", systemImage: "play.fill") {
+                guard let url = resolveInputURL(urlInput) else { return }
+                openMedia(url: url)
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+        #elseif os(tvOS)
             Button(action: {
                 guard let url = resolveInputURL(urlInput) else { return }
                 openMedia(url: url)
@@ -282,7 +303,7 @@ struct PlayerOpenView: View {
                 .fill(Color.primary.opacity(0.2))
                 .frame(height: 1)
             Text("或")
-                .font(.system(size: 13, weight: .medium))
+                .font(.footnote.weight(.medium))
                 .foregroundStyle(.primary.opacity(0.72))
             Capsule()
                 .fill(Color.primary.opacity(0.2))
@@ -293,13 +314,20 @@ struct PlayerOpenView: View {
     }
 
     private var openFileButton: some View {
+        #if os(visionOS)
+        Button("打开文件", systemImage: "folder") {
+            showFileImporter = true
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        #else
         Button(action: {
             showFileImporter = true
         }) {
             ZStack {
                 Color.blue
                 Text("打开文件")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.headline)
                     .foregroundStyle(.white)
             }
             .frame(width: 240, height: 44)
@@ -312,13 +340,14 @@ struct PlayerOpenView: View {
             )
         }
         .buttonStyle(.plain)
+        #endif
     }
 
     private var bottomHint: some View {
         VStack {
             Spacer()
             Text("拖动视频文件到窗口播放")
-                .font(.system(size: 12, weight: .regular))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .padding(.horizontal, 16)

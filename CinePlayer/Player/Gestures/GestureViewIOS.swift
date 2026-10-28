@@ -258,6 +258,14 @@ struct GestureViewIOS: View {
             brightness = PlatformServices.screenBrightness()
             volume = AVAudioSession.sharedInstance().outputVolume
         }
+        .onDisappear {
+            singleTapTimer?.invalidate()
+            longPressTimer?.invalidate()
+            doubleTapEndTimer?.invalidate()
+            longPressComplete = true
+            if isLongPressing { action?(.longPressEnded) }
+            isLongPressing = false
+        }
     }
 }
 #endif

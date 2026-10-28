@@ -7,6 +7,8 @@ struct SubtitleTracksMenu: View {
     @EnvironmentObject private var sessionStore: PlayerSessionStore
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
     @EnvironmentObject private var playerControlModel: PlayerControlModel
+    @EnvironmentObject private var playerModel: VideoPlayerModel
+    @State private var showsSubtitleAdjustment = false
 
     var body: some View {
         Menu {
@@ -24,30 +26,34 @@ struct SubtitleTracksMenu: View {
 
             Divider()
 
-            Menu {
-                ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
-                    Button {
-                        updateSubtitleTranslationMode(mode)
-                    } label: {
-                        HStack {
-                            Text(mode.displayName)
-                            Spacer()
-                            if sessionStore.controlConfig.subtitleTranslateMode == mode {
-                                Image(systemName: "checkmark")
+            Button("字幕设置", systemImage: "textformat") { showsSubtitleAdjustment = true }
+
+            if SubtitleTranslationRouter.isAvailable {
+                Menu {
+                    ForEach(SubtitleTranslateMode.allCases, id: \.self) { mode in
+                        Button {
+                            updateSubtitleTranslationMode(mode)
+                        } label: {
+                            HStack {
+                                Text(mode.displayName)
+                                Spacer()
+                                if sessionStore.controlConfig.subtitleTranslateMode == mode {
+                                    Image(systemName: "checkmark")
+                                }
                             }
                         }
                     }
-                }
-            } label: {
-                Label {
-                    HStack {
-                        Text("字幕翻译")
-                        Spacer()
-                        Text(sessionStore.controlConfig.subtitleTranslateMode.displayName)
-                            .foregroundColor(.secondary)
+                } label: {
+                    Label {
+                        HStack {
+                            Text("字幕翻译")
+                            Spacer()
+                            Text(sessionStore.controlConfig.subtitleTranslateMode.displayName)
+                                .foregroundColor(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "globe")
                     }
-                } icon: {
-                    Image(systemName: "globe")
                 }
             }
 
@@ -93,6 +99,19 @@ struct SubtitleTracksMenu: View {
         }
         .frame(width: 68, height: 68)
         .buttonBorderShape(.circle)
+        .accessibilityLabel("字幕")
+        .sheet(isPresented: $showsSubtitleAdjustment) {
+            NavigationStack {
+                TVSubtitleAdjustmentView(coordinator: playerCoordinator, style: playerModel.config.subtitleStyle)
+                    .navigationTitle("字幕设置")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("完成") { showsSubtitleAdjustment = false }
+                        }
+                    }
+            }
+            .frame(idealWidth: 960, idealHeight: 800)
+        }
     }
 
     private var subtitleTracks: [FFmpegStreamAsset] {
@@ -107,23 +126,15 @@ struct SubtitleTracksMenu: View {
     }
 
     private func selectEmbeddedSubtitle(_ subtitleTrack: FFmpegStreamAsset) {
-        playerControlModel.currentSubtitlePath = ""
-        playerCoordinator.controller?.loadSubtitleTrack(
-            subtitlesTrackIndex: subtitleTrack.streamIndex
-        )
+        playerControlModel.selectEmbeddedSubtitle(subtitleTrack.streamIndex, controller: playerCoordinator.controller)
     }
 
     private func selectLocalSubtitle(_ item: PlayerControlModel.LocalSubtitleItem) {
-        playerControlModel.currentSubtitlePath = item.id
-        playerCoordinator.controller?.loadSubtitleFile(
-            subtitleID: item.displayName,
-            url: item.url
-        )
+        playerControlModel.selectLocalSubtitle(item, controller: playerCoordinator.controller)
     }
 
     private func clearSubtitle() {
-        playerControlModel.currentSubtitlePath = ""
-        playerCoordinator.controller?.clearSubtitle()
+        playerControlModel.clearSubtitle(controller: playerCoordinator.controller)
     }
 
     private func updateSubtitleTranslationMode(_ mode: SubtitleTranslateMode) {
@@ -140,7 +151,7 @@ struct SubtitleTracksMenu: View {
         if let language = subtitleTrack.language {
             info += language
         } else {
-            info += "未知语言"
+            info += String(localized: "未知语言")
         }
 
         if let title = subtitleTrack.title {
@@ -255,7 +266,7 @@ struct VideoTracksMenu: View {
         let width = Int(videoTrack.naturalSize.width)
         let height = Int(videoTrack.naturalSize.height)
         let resolution = width > 0 && height > 0 ? "\(width)x\(height)" : nil
-        let title = videoTrack.language ?? "默认视频轨"
+        let title = videoTrack.language ?? String(localized: "默认视频轨")
 
         var info = title
         if let resolution {
@@ -268,32 +279,55 @@ struct VideoTracksMenu: View {
 
 struct PlaybackRateMenu: View {
     @EnvironmentObject private var playerCoordinator: CinePlayer.Coordinator
+    @EnvironmentObject private var playerMaskModel: PlayerMaskModel
     @EnvironmentObject private var toastModel: PlayerToastModel
-
-    private let playbackRates: [Float] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+    @State private var showsSpeed = false
 
     var body: some View {
-        Menu {
-            ForEach(playbackRates, id: \.self) { value in
-                Button {
-                    playerCoordinator.playbackRate = value
-                    toastModel.show(.playbackRateChanged(num: value))
-                } label: {
-                    HStack {
-                        let text = "\(value.playbackRateText) x"
-                        Text(text).tag(value)
-                        Spacer()
-                        if playerCoordinator.playbackRate == value {
-                            Image(systemName: "checkmark")
-                        }
+        Button {
+            playerMaskModel.disableAutoHide()
+            showsSpeed = true
+        } label: {
+            Text(verbatim: "\(playerCoordinator.playbackRate.playbackRateText) x")
+        }
+        .accessibilityLabel("播放速度")
+        .buttonBorderShape(.capsule)
+        .sheet(isPresented: $showsSpeed) {
+            NavigationStack {
+                VStack(spacing: 32) {
+                    HStack(spacing: 48) {
+                        Button {
+                            setRate(playerCoordinator.playbackRate - (playerCoordinator.playbackRate > 2 ? 1 : 0.05))
+                        } label: { Image(systemName: "minus").frame(width: 68, height: 68) }
+                        .accessibilityLabel("降低播放速度")
+                        .disabled(playerCoordinator.playbackRate <= 0.25)
+                        Text("\(playerCoordinator.playbackRate.formatted(.number.precision(.fractionLength(2))))×")
+                            .font(.title).monospacedDigit().frame(maxWidth: .infinity)
+                        Button {
+                            setRate(playerCoordinator.playbackRate + (playerCoordinator.playbackRate >= 2 ? 1 : 0.05))
+                        } label: { Image(systemName: "plus").frame(width: 68, height: 68) }
+                        .accessibilityLabel("提高播放速度")
+                        .disabled(playerCoordinator.playbackRate >= 6)
+                    }
+                    .buttonStyle(.bordered)
+                    Button("正常速度") { setRate(1) }
+                }
+                .padding(64)
+                .navigationTitle("播放速度")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("完成") { showsSpeed = false }
                     }
                 }
             }
-        } label: {
-            let text = "\(playerCoordinator.playbackRate.playbackRateText) x"
-            Text(text)
+            .frame(idealWidth: 960, idealHeight: 432)
         }
-        .buttonBorderShape(.capsule)
+    }
+
+    private func setRate(_ value: Float) {
+        let rate = min(6, max(0.25, value.rounded(to: 2)))
+        playerCoordinator.playbackRate = rate
+        toastModel.show(.playbackRateChanged(num: rate))
     }
 }
 
