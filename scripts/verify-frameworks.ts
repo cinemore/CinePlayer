@@ -27,6 +27,8 @@ if (await manifest.exited !== 0) {
         ["throwing subtitle loading", /func loadSubtitleFile[^\n]*async throws/],
         ["subtitle translation mode", /func setSubtitleTranslationMode/],
         ["seek playback behavior", /case restorePreviousState/],
+        ["system audio path preference", /var systemAudioPathEnabled/],
+        ["runtime system audio path switching", /func setSystemAudioPathEnabled/],
         ["frame render lookahead", /renderLookahead/],
         ["output backpressure", /func reserveOutputForNextFrame/],
         ["display geometry attachments", /enum VideoFrameAttachments/],

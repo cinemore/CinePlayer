@@ -411,6 +411,9 @@ struct PlayerControlView: View {
             }
         #endif
         .compatibleOnChange(of: sessionStore.controlConfig) { oldValue, newValue in
+            if oldValue.systemAudioPathEnabled != newValue.systemAudioPathEnabled {
+                playerModel.applySystemAudioPathPreferenceToActivePlayer(newValue.systemAudioPathEnabled)
+            }
             if oldValue.subtitleTranslateMode != newValue.subtitleTranslateMode
                 || oldValue.subtitleTranslationTargetLanguage != newValue.subtitleTranslationTargetLanguage
                 || oldValue.subtitleTranslationOnTop != newValue.subtitleTranslationOnTop {

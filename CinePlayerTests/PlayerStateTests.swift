@@ -39,6 +39,35 @@ struct PlayerStateTests {
         #expect(restored.subtitleTranslateMode == (SubtitleTranslationRouter.isAvailable ? .bilingual : .off))
     }
 
+    @Test func systemAudioPathPreferenceSurvivesSessionsAndConfiguresPendingPlayback() throws {
+        let name = "CinePlayerTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = PlayerSessionStore(defaults: defaults)
+        let adapter = PlaySettingParityAdapter()
+        adapter.bind(sessionStore: store)
+        #expect(adapter.systemAudioPathEnabled)
+
+        adapter.systemAudioPathEnabled = false
+        let restored = PlayerSessionStore(defaults: defaults)
+        #expect(!restored.controlConfig.systemAudioPathEnabled)
+        let model = VideoPlayerModel()
+        defer { model.close() }
+        let url = try #require(URL(string: "https://example.invalid/system-audio.mp4"))
+        model.open(url: url, controlConfig: restored.controlConfig)
+        #expect(!model.config.systemAudioPathEnabled)
+        #expect(model.playerCoordinator.controller == nil)
+
+        model.applySystemAudioPathPreferenceToActivePlayer(true)
+        #expect(model.config.systemAudioPathEnabled)
+        model.close()
+        model.open(url: url, controlConfig: restored.controlConfig)
+        #expect(!model.config.systemAudioPathEnabled)
+
+        adapter.systemAudioPathEnabled = true
+        #expect(PlayerSessionStore(defaults: defaults).controlConfig.systemAudioPathEnabled)
+    }
+
     @Test func historyRetainsResumePositionWithoutDuplicateRecords() throws {
         let container = try ModelContainer(for: PlaybackHistoryRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))

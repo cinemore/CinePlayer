@@ -5,6 +5,7 @@ nonisolated struct PlayerControlConfig: Equatable, Sendable {
     var skipForwardSeconds: Int = 10
     var skipBackwardSeconds: Int = 10
     var longPressSpeedUpEnabled: Bool = true
+    var systemAudioPathEnabled: Bool = true
     var subtitleTranslateMode: SubtitleTranslateMode = .off
     var subtitleTranslationTargetLanguage = ""
     var subtitleTranslationOnTop = true

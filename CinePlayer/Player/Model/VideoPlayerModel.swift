@@ -54,6 +54,7 @@ final class VideoPlayerModel: ObservableObject {
         newConfig.url = url
         newConfig.startTime = max(0, startTime)
         newConfig.autoPlay = true
+        newConfig.systemAudioPathEnabled = controlConfig.systemAudioPathEnabled
         configureSubtitleTranslate(for: newConfig, mode: controlConfig.subtitleTranslateMode)
         configureDolbyVisionFEL(for: newConfig)
         configureFrameCallback(for: newConfig)
@@ -83,6 +84,15 @@ final class VideoPlayerModel: ObservableObject {
         PlayerEnhancementModel.shared.resetVideoEnhancementForNewVideoSession()
         #endif
         config = .init()
+    }
+
+    /// 活跃播放器交由内核切换音频通路，保留进度及播放／暂停意图。
+    func applySystemAudioPathPreferenceToActivePlayer(_ enabled: Bool) {
+        guard let controller = playerCoordinator.controller else {
+            config.systemAudioPathEnabled = enabled
+            return
+        }
+        controller.setSystemAudioPathEnabled(enabled)
     }
 
     func applySubtitleTranslationSettings(_ settings: PlayerControlConfig) async {

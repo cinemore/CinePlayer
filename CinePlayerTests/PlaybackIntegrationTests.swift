@@ -10,6 +10,41 @@ import UIKit
 @testable import CinePlayer
 
 extension PlayerStateTests {
+    @Test func systemAudioPathPreferenceReachesActiveController() async throws {
+        let bundle = Bundle(for: FixtureBundle.self)
+        let videoURL = try #require(bundle.url(forResource: "playback", withExtension: "mp4"))
+        let model = VideoPlayerModel()
+        var settings = PlayerControlConfig.default
+        settings.systemAudioPathEnabled = false
+        model.open(url: videoURL, controlConfig: settings)
+        let host = try PlaybackSurfaceHost(view: model.playerCoordinator.makeView(config: model.config))
+        defer { model.close(); host.close() }
+        let controller = try #require(model.playerCoordinator.controller)
+        try await waitUntil { controller.isItemReadyToPlay && controller.playbackState == .playing }
+        #expect(!controller.config.systemAudioPathEnabled)
+
+        controller.pause()
+        try await waitUntil { controller.playbackState == .paused }
+        let mediaID = controller.mediaIdentifier
+        let pausedTime = controller.currentPlaybackTime
+        model.applySystemAudioPathPreferenceToActivePlayer(true)
+        #expect(controller.config.systemAudioPathEnabled)
+        #expect(model.config.systemAudioPathEnabled)
+        #expect(controller.mediaIdentifier == mediaID)
+        #expect(controller.playbackState == .paused)
+        #expect(abs(controller.currentPlaybackTime - pausedTime) < 1)
+
+        controller.play()
+        try await waitUntil { controller.playbackState == .playing }
+        model.applySystemAudioPathPreferenceToActivePlayer(false)
+        #expect(!controller.config.systemAudioPathEnabled)
+        #expect(controller.playbackState == .playing)
+        model.open(url: videoURL, controlConfig: settings)
+        try await waitUntil { controller.isItemReadyToPlay && controller.playbackState == .playing }
+        #expect(controller.mediaIdentifier != mediaID)
+        #expect(!controller.config.systemAudioPathEnabled)
+    }
+
     @Test func playbackTracksSubtitlesSeekReplaceAndShutdown() async throws {
         let bundle = Bundle(for: FixtureBundle.self)
         let videoURL = try #require(bundle.url(forResource: "playback", withExtension: "mp4"))

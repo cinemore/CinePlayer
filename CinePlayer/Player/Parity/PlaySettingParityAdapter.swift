@@ -7,6 +7,7 @@ protocol PlaySettingParityAdapting: ObservableObject {
     var skipForwardSeconds: Int { get set }
     var longPressSpeedUpEnabled: Bool { get set }
     var longPressPlaybackRate: Float { get set }
+    var systemAudioPathEnabled: Bool { get set }
 
     func bind(sessionStore: PlayerSessionStore)
 }
@@ -41,6 +42,9 @@ final class PlaySettingParityAdapter: PlaySettingParityAdapting {
     @Published var longPressPlaybackRate = PlayerControlConfig.default.longPressPlaybackRate {
         didSet { applyIfNeeded { $0.longPressPlaybackRate = longPressPlaybackRate } }
     }
+    @Published var systemAudioPathEnabled = PlayerControlConfig.default.systemAudioPathEnabled {
+        didSet { applyIfNeeded { $0.systemAudioPathEnabled = systemAudioPathEnabled } }
+    }
     private var cancellables = Set<AnyCancellable>()
     private var syncingFromStore = false
 
@@ -68,6 +72,7 @@ final class PlaySettingParityAdapter: PlaySettingParityAdapting {
         skipForwardSeconds = config.skipForwardSeconds
         longPressSpeedUpEnabled = config.longPressSpeedUpEnabled
         longPressPlaybackRate = config.longPressPlaybackRate
+        systemAudioPathEnabled = config.systemAudioPathEnabled
         syncingFromStore = false
     }
 

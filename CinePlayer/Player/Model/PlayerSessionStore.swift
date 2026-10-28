@@ -18,6 +18,7 @@ final class PlayerSessionStore: ObservableObject {
         static let skipBackwardSeconds = "player.control.skipBackwardSeconds"
         static let longPressSpeedUpEnabled = "player.control.longPressSpeedUpEnabled"
         static let longPressPlaybackRate = "player.control.longPressPlaybackRate"
+        static let systemAudioPathEnabled = "player.control.systemAudioPathEnabled"
         static let subtitleTranslateMode = "player.control.subtitleTranslateMode"
         static let subtitleTranslationTargetLanguage = "player.control.subtitleTranslationTargetLanguage"
         static let subtitleTranslationOnTop = "player.control.subtitleTranslationOnTop"
@@ -37,6 +38,7 @@ final class PlayerSessionStore: ObservableObject {
         if defaults.object(forKey: StorageKey.longPressPlaybackRate) != nil {
             config.longPressPlaybackRate = min(4, max(1.5, defaults.float(forKey: StorageKey.longPressPlaybackRate)))
         }
+        config.systemAudioPathEnabled = defaults.object(forKey: StorageKey.systemAudioPathEnabled) as? Bool ?? true
         if SubtitleTranslationRouter.isAvailable,
            let value = defaults.string(forKey: StorageKey.subtitleTranslateMode),
            let mode = SubtitleTranslateMode(rawValue: value) {
@@ -57,6 +59,7 @@ final class PlayerSessionStore: ObservableObject {
                 d.set(cfg.skipBackwardSeconds, forKey: StorageKey.skipBackwardSeconds)
                 d.set(cfg.longPressSpeedUpEnabled, forKey: StorageKey.longPressSpeedUpEnabled)
                 d.set(cfg.longPressPlaybackRate, forKey: StorageKey.longPressPlaybackRate)
+                d.set(cfg.systemAudioPathEnabled, forKey: StorageKey.systemAudioPathEnabled)
                 d.set(cfg.subtitleTranslateMode.rawValue, forKey: StorageKey.subtitleTranslateMode)
                 d.set(cfg.subtitleTranslationTargetLanguage, forKey: StorageKey.subtitleTranslationTargetLanguage)
                 d.set(cfg.subtitleTranslationOnTop, forKey: StorageKey.subtitleTranslationOnTop)

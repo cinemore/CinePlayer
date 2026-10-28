@@ -45,6 +45,11 @@ struct PlaySettingPage: View {
                     PlaySettingPicker("右键前进", selection: $adapter.skipForwardSeconds)
                 #endif
             }
+            Section {
+                Toggle("系统音频通路", isOn: $adapter.systemAudioPathEnabled)
+            } footer: {
+                Text("优先使用系统播放器播放杜比音频，支持杜比全景声。如遇音视频不同步，可关闭此选项。")
+            }
             #if os(visionOS)
                 Section("沉浸模式") {
                     Picker("沉浸风格", selection: visionSettings.immersionStyleBinding) {

@@ -12697,6 +12697,209 @@
         }
       }
     },
+    "优先使用系统播放器播放杜比音频，支持杜比全景声。如遇音视频不同步，可关闭此选项。" : {
+      "comment" : "系统音频通路开关的页脚说明；杜比全景声的品牌名称为 Dolby Atmos。",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يفضّل استخدام مشغّل النظام لتشغيل صوت Dolby، مع دعم Dolby Atmos. إذا لم يتزامن الصوت والفيديو، يمكنك إيقاف هذا الخيار."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioritza el reproductor del sistema per reproduir àudio Dolby, amb suport per a Dolby Atmos. Si l’àudio i el vídeo no estan sincronitzats, pots desactivar aquesta opció."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upřednostňuje systémový přehrávač pro zvuk Dolby s podporou Dolby Atmos. Pokud zvuk a obraz nejsou synchronizované, můžete tuto možnost vypnout."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foretrækker systemets afspiller til Dolby-lyd med understøttelse af Dolby Atmos. Slå denne indstilling fra, hvis lyd og video ikke er synkroniseret."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bevorzugt den Systemplayer für Dolby-Audio mit Unterstützung für Dolby Atmos. Wenn Bild und Ton nicht synchron sind, kannst du diese Option deaktivieren."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προτιμά το πρόγραμμα αναπαραγωγής του συστήματος για ήχο Dolby, με υποστήριξη Dolby Atmos. Αν ο ήχος και το βίντεο δεν είναι συγχρονισμένα, μπορείτε να απενεργοποιήσετε αυτή την επιλογή."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefers the system player for Dolby audio, with Dolby Atmos support. Turn this option off if audio and video are out of sync."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioriza el reproductor del sistema para reproducir audio Dolby, con compatibilidad con Dolby Atmos. Si el audio y el vídeo no están sincronizados, puedes desactivar esta opción."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käyttää ensisijaisesti järjestelmän soitinta Dolby-äänelle ja tukee Dolby Atmosia. Jos ääni ja kuva eivät ole synkronissa, voit poistaa tämän asetuksen käytöstä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privilégie le lecteur système pour l’audio Dolby, avec prise en charge de Dolby Atmos. Si le son et l’image sont désynchronisés, vous pouvez désactiver cette option."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מעדיף את נגן המערכת להפעלת שמע Dolby, עם תמיכה ב-Dolby Atmos. אם השמע והווידאו אינם מסונכרנים, ניתן לכבות אפשרות זו."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolby Atmos के समर्थन के साथ Dolby ऑडियो चलाने के लिए सिस्टम प्लेयर को प्राथमिकता देता है। यदि ऑडियो और वीडियो में तालमेल न हो, तो इस विकल्प को बंद कर सकते हैं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daje prednost reproduktoru sustava za Dolby zvuk, uz podršku za Dolby Atmos. Ako zvuk i slika nisu sinkronizirani, možete isključiti ovu opciju."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A rendszer lejátszóját részesíti előnyben a Dolby-hanghoz, Dolby Atmos-támogatással. Ha a hang és a kép nincs szinkronban, kikapcsolhatja ezt a beállítást."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengutamakan pemutar sistem untuk audio Dolby, dengan dukungan Dolby Atmos. Nonaktifkan opsi ini jika audio dan video tidak sinkron."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferisce il lettore di sistema per l’audio Dolby, con supporto per Dolby Atmos. Se audio e video non sono sincronizzati, puoi disattivare questa opzione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolby音声の再生にはシステムプレーヤーを優先して使用し、Dolby Atmosに対応します。映像と音声が同期しない場合は、このオプションをオフにできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolby 오디오 재생에 시스템 플레이어를 우선 사용하며 Dolby Atmos를 지원합니다. 오디오와 비디오가 동기화되지 않으면 이 옵션을 끌 수 있습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foretrekker systemets spiller for Dolby-lyd, med støtte for Dolby Atmos. Slå av dette alternativet hvis lyd og bilde ikke er synkronisert."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geeft de voorkeur aan de systeemspeler voor Dolby-audio, met ondersteuning voor Dolby Atmos. Schakel deze optie uit als beeld en geluid niet synchroon lopen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferuje odtwarzacz systemowy do dźwięku Dolby, z obsługą Dolby Atmos. Jeśli dźwięk i obraz nie są zsynchronizowane, możesz wyłączyć tę opcję."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioriza o reprodutor do sistema para áudio Dolby, com suporte a Dolby Atmos. Se o áudio e o vídeo estiverem fora de sincronia, você pode desativar esta opção."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dá preferência ao leitor do sistema para áudio Dolby, com suporte para Dolby Atmos. Se o áudio e o vídeo não estiverem sincronizados, pode desativar esta opção."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferă playerul de sistem pentru sunet Dolby, cu suport pentru Dolby Atmos. Dacă sunetul și imaginea nu sunt sincronizate, poți dezactiva această opțiune."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предпочитать системный проигрыватель для звука Dolby с поддержкой Dolby Atmos. Если звук и видео не синхронизированы, можно отключить эту опцию."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uprednostňuje systémový prehrávač pre zvuk Dolby s podporou Dolby Atmos. Ak zvuk a obraz nie sú synchronizované, môžete túto možnosť vypnúť."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föredrar systemets spelare för Dolby-ljud, med stöd för Dolby Atmos. Stäng av det här alternativet om ljud och bild inte är synkroniserade."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกใช้ตัวเล่นของระบบสำหรับเสียง Dolby เป็นหลัก พร้อมรองรับ Dolby Atmos หากเสียงและวิดีโอไม่ตรงกัน สามารถปิดตัวเลือกนี้ได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolby Atmos desteğiyle Dolby ses için sistem oynatıcısını tercih eder. Ses ve video eşzamanlı değilse bu seçeneği kapatabilirsiniz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надає перевагу системному програвачу для звуку Dolby з підтримкою Dolby Atmos. Якщо звук і відео не синхронізовані, можна вимкнути цю опцію."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ưu tiên trình phát hệ thống để phát âm thanh Dolby, hỗ trợ Dolby Atmos. Nếu âm thanh và video không đồng bộ, bạn có thể tắt tùy chọn này."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "优先使用系统播放器播放杜比音频，支持杜比全景声。如遇音视频不同步，可关闭此选项。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "優先使用系統播放器播放杜比音訊，支援杜比全景聲。如遇音訊與影片不同步，可關閉此選項。"
+          }
+        }
+      }
+    },
     "会增加发热，不保证都能稳定运行" : {
       "localizations" : {
         "ar" : {
@@ -47444,6 +47647,209 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粗體"
+          }
+        }
+      }
+    },
+    "系统音频通路" : {
+      "comment" : "播放设置开关名称，开启后优先使用系统播放器播放杜比音频。",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسار صوت النظام"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta d’àudio del sistema"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systémová zvuková cesta"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemets lydsti"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System-Audiopfad"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαδρομή ήχου συστήματος"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Audio Path"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta de audio del sistema"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestelmän äänipolku"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chemin audio système"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "נתיב שמע של המערכת"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम ऑडियो पथ"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put zvuka sustava"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendszerhang-útvonal"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jalur audio sistem"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Percorso audio di sistema"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム音声経路"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 오디오 경로"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemets lydbane"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeemaudiopad"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemowa ścieżka audio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caminho de áudio do sistema"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caminho de áudio do sistema"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cale audio de sistem"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системный аудиотракт"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systémová zvuková cesta"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemets ljudväg"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เส้นทางเสียงของระบบ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem ses yolu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системний аудіотракт"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đường âm thanh hệ thống"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统音频通路"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統音訊通路"
           }
         }
       }
