@@ -53,7 +53,7 @@ struct ControllerPanelViewIOS: View {
                 PlayerTitleView(title: titleText)
                 Spacer()
             }
-            .frame(height: 24)
+            .frame(minHeight: 24)
 
             HStack(spacing: 8) {
                 PlayerCloseButton {

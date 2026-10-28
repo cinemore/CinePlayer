@@ -23,18 +23,10 @@ struct PlaybackHistoryListView: View {
         #if os(tvOS) || os(visionOS)
         gridBody
         #else
-        List(selection: isEditing ? $selectedRecordIDs : nil) {
+        List(selection: listSelection) {
             ForEach(records) { record in
                 if isEditing {
-                    rowContent(for: record)
-                    #if os(macOS)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            toggleSelection(for: record.persistentModelID)
-                        }
-                    #else
-                        .tag(record.persistentModelID)
-                    #endif
+                    editingRow(for: record)
                         .contextMenu {
                             #if os(macOS)
                             Button("删除", role: .destructive) {
@@ -140,6 +132,34 @@ struct PlaybackHistoryListView: View {
                 isEditing = false
             }
         }
+        #endif
+    }
+
+    private var listSelection: Binding<Set<PersistentIdentifier>>? {
+        #if os(iOS)
+        isEditing ? $selectedRecordIDs : nil
+        #else
+        // macOS uses checkbox selection; native List selection replaces it on a plain click.
+        nil
+        #endif
+    }
+
+    @ViewBuilder
+    private func editingRow(for record: PlaybackHistoryRecord) -> some View {
+        #if os(macOS)
+        Button {
+            toggleSelection(for: record.persistentModelID)
+        } label: {
+            rowContent(for: record)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .selectionDisabled()
+        .accessibilityAddTraits(selectedRecordIDs.contains(record.persistentModelID) ? .isSelected : [])
+        .accessibilityValue(selectedRecordIDs.contains(record.persistentModelID) ? Text("已选择") : Text("未选择"))
+        #else
+        rowContent(for: record)
+            .tag(record.persistentModelID)
         #endif
     }
 

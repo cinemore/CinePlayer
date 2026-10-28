@@ -69,9 +69,7 @@ struct ExternalSubtitleView: View {
         .coordinateSpace(name: formCoordinateSpace)
         .overlay(alignment: .topLeading) {
             if showsEmpty, let importControlBottom {
-                Text("尚未导入外部字幕")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                PlayerEmptyStateView(accessibilityName: "尚未导入外部字幕")
                     .clipped()
                     .padding(.top, max(0, importControlBottom))
                     .allowsHitTesting(false)

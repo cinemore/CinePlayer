@@ -22,14 +22,17 @@ struct SiderVideoTrackView: View {
             Text("视频轨道")
                 .playerPanelTitleStyle()
 
-            #if !os(tvOS)
+            if tracks.isEmpty {
+                PlayerEmptyStateView()
+            } else {
+                #if !os(tvOS)
                 PlayerTrackSelectionList {
                     ForEach(tracks, id: \.streamIndex) { videoTrack in
                         trackRow(videoTrack)
                             .nativeSelectionRow
                     }
                 }
-            #else
+                #else
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         ForEach(tracks, id: \.streamIndex) { videoTrack in
@@ -39,7 +42,8 @@ struct SiderVideoTrackView: View {
                     .padding(.horizontal)
                     .padding(.bottom)
                 }
-            #endif
+                #endif
+            }
         }
         .onAppear {
             pendingVideoTrackIndex = nil

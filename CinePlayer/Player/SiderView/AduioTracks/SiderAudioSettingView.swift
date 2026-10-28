@@ -23,14 +23,17 @@ struct SiderAudioSettingView: View {
             Text("音轨")
                 .playerPanelTitleStyle()
 
-            #if !os(tvOS)
+            if tracks.isEmpty {
+                PlayerEmptyStateView()
+            } else {
+                #if !os(tvOS)
                 PlayerTrackSelectionList {
                     ForEach(tracks, id: \.streamIndex) { audioTrack in
                         trackRow(audioTrack)
                             .nativeSelectionRow
                     }
                 }
-            #else
+                #else
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         ForEach(tracks, id: \.streamIndex) { audioTrack in
@@ -40,7 +43,8 @@ struct SiderAudioSettingView: View {
                     .padding(.horizontal)
                     .padding(.bottom)
                 }
-            #endif
+                #endif
+            }
         }
         .onAppear {
             pendingAudioTrackIndex = nil

@@ -4,15 +4,11 @@ struct PlayerCloseButton: View {
     var action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: "xmark")
-                .brightness(0.2)
-                .foregroundColor(.white)
-                .font(.title3.weight(.medium))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .modifier(GlassEffectModifier(cornerRadius: 22))
+        GlassControlButton(
+            icon: "xmark",
+            accessibilityLabel: "关闭",
+            diameter: 44,
+            action: action
+        )
     }
 }

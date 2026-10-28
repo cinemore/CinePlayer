@@ -47,6 +47,7 @@ private struct IOSPlayerTabHostView: View {
         PlayerOpenView()
             .fullScreenCover(isPresented: isPlayerPresented) {
                 PlayerRootView()
+                    .modifier(PlayerPresentationAppearance())
             }
     }
 }
@@ -92,6 +93,7 @@ private struct TVOSPlayerHostView: View {
         }
         .fullScreenCover(isPresented: isPlayerPresented) {
             PlayerControlView()
+                .modifier(PlayerPresentationAppearance())
         }
     }
 }

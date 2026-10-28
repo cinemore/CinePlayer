@@ -111,6 +111,7 @@ struct SubtitleTracksMenu: View {
                     }
             }
             .frame(idealWidth: 960, idealHeight: 800)
+            .modifier(PlayerPresentationAppearance())
         }
     }
 
@@ -321,6 +322,7 @@ struct PlaybackRateMenu: View {
                 }
             }
             .frame(idealWidth: 960, idealHeight: 432)
+            .modifier(PlayerPresentationAppearance())
         }
     }
 

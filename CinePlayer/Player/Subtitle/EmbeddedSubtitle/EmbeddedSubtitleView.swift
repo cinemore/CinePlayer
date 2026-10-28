@@ -12,6 +12,25 @@ struct EmbeddedSubtitleView: View {
     @State private var subtitleCommandScheduler = DeferredMainActorCommandScheduler()
 
     var body: some View {
+        Group {
+            if subtitleTracks.isEmpty {
+                PlayerEmptyStateView(accessibilityName: "当前媒体无内封字幕")
+            } else {
+                subtitleForm
+            }
+        }
+        .onAppear { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
+        .onDisappear { subtitleCommandScheduler.cancel() }
+        .compatibleOnChange(of: playerCoordinator.subtitleTrackIndex) { _ in pendingSubtitleTrackIndex = nil }
+        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { visible in
+            if !visible { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
+        }
+        .compatibleOnChange(of: playerControlModel.currentSubtitlePath) { path in
+            if !path.isEmpty { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
+        }
+    }
+
+    private var subtitleForm: some View {
         Form {
             Section {
                 Toggle("开启", isOn: Binding(
@@ -44,9 +63,6 @@ struct EmbeddedSubtitleView: View {
                 }
             }
             Section {
-                if subtitleTracks.isEmpty {
-                    Text("当前媒体无内封字幕").foregroundStyle(.secondary)
-                }
                 ForEach(subtitleTracks, id: \.streamIndex) { track in
                     EmbeddedSubtitleRowView(isSelected: Binding(
                         get: { selectedTrackIndex == track.streamIndex && playerControlModel.currentSubtitlePath.isEmpty },
@@ -59,15 +75,6 @@ struct EmbeddedSubtitleView: View {
         }
         .modifier(PlayerPanelFormModifier())
         .scrollContentBackground(.hidden)
-        .onAppear { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
-        .onDisappear { subtitleCommandScheduler.cancel() }
-        .compatibleOnChange(of: playerCoordinator.subtitleTrackIndex) { _ in pendingSubtitleTrackIndex = nil }
-        .compatibleOnChange(of: playerControlModel.showSubtitleContainer) { visible in
-            if !visible { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
-        }
-        .compatibleOnChange(of: playerControlModel.currentSubtitlePath) { path in
-            if !path.isEmpty { pendingSubtitleTrackIndex = nil; subtitleCommandScheduler.cancel() }
-        }
     }
 
     private func setting<Value>(_ keyPath: WritableKeyPath<PlayerControlConfig, Value>) -> Binding<Value> {

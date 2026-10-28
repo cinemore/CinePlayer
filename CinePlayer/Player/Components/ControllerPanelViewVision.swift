@@ -178,6 +178,7 @@ private struct VisionPlaybackSpeedButton: View {
                 .environmentObject(controls)
                 .environmentObject(coordinator)
                 .environmentObject(mask)
+                .modifier(PlayerPresentationAppearance())
         }
         .onChange(of: isPopoverPresented) { _, presented in
             controls.showPlaybackSpeedContainer = presented

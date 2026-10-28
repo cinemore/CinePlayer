@@ -52,7 +52,7 @@ private struct PlayerNetworkSpeedContent: View {
                 .lineLimit(1)
         }
         #if os(iOS) || os(macOS)
-        .contentTextFont(.caption, weight: .medium)
+        .contentTextFont(.value, weight: .medium)
         #endif
         .fixedSize(horizontal: true, vertical: false)
     }

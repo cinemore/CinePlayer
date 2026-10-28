@@ -26,9 +26,10 @@ struct PlayerTitleView: View {
                     .truncationMode(.middle)
                     .padding(.horizontal, 40)
             }
-            // 其他平台保留紧凑标题的原字号与留白。
-            #if os(iOS) || os(macOS)
-            .contentTextFont(.caption, weight: .medium)
+            #if os(macOS)
+            .font(.title3.weight(.semibold))
+            #elseif os(iOS)
+            .font(.headline)
             #else
             .font(.caption)
             .fontWeight(.medium)

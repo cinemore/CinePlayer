@@ -35,6 +35,7 @@ struct VisionPlayerWindowView: View {
         }
         .environment(\.usesVisionPlayerTypography, true)
         .background { VisionPlayerAspectRatio(coordinator: playerModel.playerCoordinator) }
+        .modifier(PlayerPresentationAppearance())
         .task {
             guard sessionStore.currentSource != nil else { dismiss(); return }
             await immersiveCoordinator.requestOpen {

@@ -190,11 +190,23 @@ struct GlassControlButton: View {
     var action: () -> Void
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon).frame(width: diameter, height: diameter).contentShape(Circle())
+            Image(systemName: icon)
+                .brightness(0.2)
+                .foregroundStyle(.white)
+                #if os(macOS)
+                .font(.system(size: 20, weight: .semibold))
+                #else
+                .font(.system(size: 20, weight: .regular))
+                #endif
+                .frame(width: diameter, height: diameter)
+                .contentShape(Circle())
         }
-        .playerControlButtonStyle()
+        .buttonStyle(.plain)
         .playerControlHoverEffect(in: Circle())
         .modifier(GlassEffectModifier(cornerRadius: diameter / 2))
         .accessibilityLabel(Text(accessibilityLabel))
+        #if os(macOS)
+        .help(Text(accessibilityLabel))
+        #endif
     }
 }

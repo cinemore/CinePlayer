@@ -356,8 +356,6 @@ struct PlayerControlView: View {
         }
         .environmentObject(playerMaskModel)
         .background(subtitleTranslationTaskHost)
-        .environment(\.colorScheme, .dark)
-        .preferredColorScheme(.dark)
         #if os(tvOS)
             .compatibleOnChange(of: playerMaskModel.isMaskShow) { newValue in
                 if !newValue {
@@ -408,6 +406,7 @@ struct PlayerControlView: View {
                         showLanguagePackDownloadSheet = false
                     }
                 )
+                .modifier(PlayerPresentationAppearance())
             }
         #endif
         .compatibleOnChange(of: sessionStore.controlConfig) { oldValue, newValue in
@@ -439,6 +438,8 @@ struct PlayerControlView: View {
                 PlayerPlaybackInfoHUD(coordinator: playerModel.playerCoordinator)
             }
         }
+        // Keep the shared macOS window and its main app pages on their own appearance.
+        .environment(\.colorScheme, .dark)
         #if os(macOS)
             .modifier(MacPlayerKeyboardFocusObserver(focus: macKeyboardFocus))
             .environmentObject(windowController)
