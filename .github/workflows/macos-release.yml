@@ -1,158 +1,86 @@
 name: macOS Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: cineplayer-homebrew-release
+  cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build macOS app
+  homebrew:
+    name: Verify signed release and update Homebrew
+    if: ${{ !github.event.release.prerelease && startsWith(github.event.release.tag_name, 'v') }}
     runs-on: macos-26
 
     env:
-      ASSET_NAME: CinePlayer-macOS-${{ github.ref_name }}.zip
-      FRAMEWORKS_URL: ${{ vars.CINEPLAYER_FRAMEWORKS_URL }}
-      FRAMEWORKS_SHA256: ${{ vars.CINEPLAYER_FRAMEWORKS_SHA256 }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      ASSET_NAME: CinePlayer-macOS-${{ github.event.release.tag_name }}.zip
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use HTTPS for GitHub Swift packages
-        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
-
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Download prebuilt frameworks
+      - name: Download published release assets
         run: |
-          set -euo pipefail
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ASSET_NAME" --pattern "${ASSET_NAME}.sha256" \
+            --dir build/artifacts
 
-          : "${FRAMEWORKS_URL:?Configure CINEPLAYER_FRAMEWORKS_URL with the matching SDK bundle URL}"
-          : "${FRAMEWORKS_SHA256:?Configure CINEPLAYER_FRAMEWORKS_SHA256 with its SHA-256}"
-          curl --fail --location --retry 3 -o Frameworks.zip "${FRAMEWORKS_URL}"
-          printf '%s  Frameworks.zip\n' "${FRAMEWORKS_SHA256}" | shasum -a 256 -c -
-          unzip -q Frameworks.zip
-          bun scripts/verify-frameworks.ts
+      - name: Verify signed and notarized app
+        run: bun scripts/verify-macos-release.ts "$RELEASE_TAG" build/artifacts
 
-      - name: Build Release for macOS
-        run: |
-          set -euo pipefail
-
-          xcodebuild \
-            -project CinePlayer.xcodeproj \
-            -scheme CinePlayer \
-            -configuration Release \
-            -destination 'generic/platform=macOS' \
-            -derivedDataPath build/DerivedData \
-            -skipPackagePluginValidation \
-            -onlyUsePackageVersionsFromResolvedFile \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-      - name: Package app
-        run: |
-          set -euo pipefail
-
-          APP_PATH="build/DerivedData/Build/Products/Release/CinePlayer.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "Expected app not found at $APP_PATH" >&2
-            exit 1
-          fi
-
-          mkdir -p build/artifacts
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "build/artifacts/${ASSET_NAME}"
-
-      - name: Calculate checksum
-        run: shasum -a 256 "build/artifacts/${ASSET_NAME}" | tee "build/artifacts/${ASSET_NAME}.sha256"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Checkout shared Homebrew tap
+        uses: actions/checkout@v4
         with:
-          name: CinePlayer-macOS-${{ github.ref_name }}
-          path: |
-            build/artifacts/*.zip
-            build/artifacts/*.sha256
+          repository: cinemore/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            build/artifacts/*.zip
-            build/artifacts/*.sha256
-          body: |
-            macOS build for CinePlayer.
-
-            This build is currently unsigned and not notarized. On first launch,
-            macOS Gatekeeper may show a warning. If you trust this release, open
-            it from Finder by Control-clicking the app and choosing Open.
-
-      - name: Update shared Homebrew tap
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      - name: Update CinePlayer cask
         run: |
-          set -euo pipefail
+          bun - <<'TS'
+          const version = process.env.RELEASE_TAG.slice(1);
+          const checksum = await Bun.file(`build/artifacts/${process.env.ASSET_NAME}.sha256`).text();
+          const sha256 = checksum.trim().split(/\s+/)[0];
+          await Bun.write("homebrew-tap/Casks/cineplayer.rb", `cask "cineplayer" do
+            version "${version}"
+            sha256 "${sha256}"
 
-          if [ -z "${HOMEBREW_TAP_TOKEN:-}" ]; then
-            echo "HOMEBREW_TAP_TOKEN is not configured; skipping shared tap update."
-            exit 0
-          fi
+            url "https://github.com/cinemore/CinePlayer/releases/download/v#{version}/CinePlayer-macOS-v#{version}.zip"
+            name "CinePlayer"
+            desc "Video player"
+            homepage "https://github.com/cinemore/CinePlayer"
 
-          tag="${GITHUB_REF_NAME}"
-          version="${tag#v}"
-          sha256="$(cut -d ' ' -f 1 "build/artifacts/${ASSET_NAME}.sha256")"
-          repo_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
-          asset_url="${repo_url}/releases/download/${tag}/${ASSET_NAME}"
+            app "CinePlayer.app"
+          end
+          `);
+          TS
 
-          tap_dir="$(mktemp -d)"
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/cinemore/homebrew-tap.git" "$tap_dir"
-          mkdir -p "$tap_dir/Casks"
-
-          ruby - "$tap_dir/Casks/cineplayer.rb" "$version" "$asset_url" "$sha256" <<'RUBY'
-          path, version, asset_url, sha256 = ARGV
-          cask = <<~CASK
-            cask "cineplayer" do
-              version "#{version}"
-              sha256 "#{sha256}"
-
-              url "#{asset_url}"
-              name "CinePlayer"
-              desc "Video player"
-              homepage "https://github.com/cinemore/CinePlayer"
-
-              app "CinePlayer.app"
-
-              caveats <<~EOS
-                This build is currently unsigned and not notarized. On first launch,
-                macOS Gatekeeper may show a warning. If you trust this release, open
-                it from Finder by Control-clicking the app and choosing Open.
-              EOS
-            end
-          CASK
-          File.write(path, cask)
-          RUBY
-
-          cd "$tap_dir"
+      - name: Commit and push Homebrew update
+        working-directory: homebrew-tap
+        run: |
           if [ -z "$(git status --porcelain -- Casks/cineplayer.rb)" ]; then
-            echo "Shared tap cask already points at $tag"
+            echo "Homebrew already points at $RELEASE_TAG"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/cineplayer.rb
-          git commit -m "chore: update cineplayer cask for ${tag}"
+          git commit -m "chore: update cineplayer cask for ${RELEASE_TAG}"
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then
               exit 0
             fi
-
-            echo "Tap push failed on attempt ${attempt}; rebasing onto origin/main and retrying."
             git pull --rebase origin main
           done
-
-          git push origin HEAD:main
+          exit 1

@@ -51,13 +51,11 @@ Duo device model by [Pikkme Studio](https://sketchfab.com/3d-models/iphone-duo-3
 brew install --cask cinemore/tap/cineplayer
 ```
 
-The GitHub Release build is currently unsigned and not notarized. On first
-launch, macOS Gatekeeper may show a warning. If you trust this release, open it
-from Finder by Control-clicking the app and choosing **Open**.
+Starting with v2.0.0, the macOS builds on [GitHub Releases](https://github.com/cinemore/CinePlayer/releases) are signed with Developer ID and notarized by Apple. The same universal app for Apple Silicon and Intel Macs is distributed through Homebrew.
 
 ### App Store
 
-For iPhone, iPad, Apple TV, Apple Vision Pro, and the signed App Store macOS
+For iPhone, iPad, Apple TV, Apple Vision Pro, and the App Store macOS
 build, use the App Store link above.
 
 ## 🏗 Architecture & Dependencies
@@ -118,6 +116,8 @@ Enhancement licenses ship with the app and are accessible in About → Video Enh
 To run on a real iOS device, open the `CinePlayer` iOS target in Xcode, go to **Signing & Capabilities**, and select your own **Team**. Other settings can generally stay as-is for local development.
 
 Prepare the matching `Frameworks.zip` as described in **Architecture & Dependencies**. The current SDK was compiled with Swift 6.4; validation uses Xcode 27. Swift packages are pinned in `Package.resolved`.
+
+For macOS releases, export the archive with Developer ID signing, notarize it, and staple the ticket before creating the ZIP. Attach `CinePlayer-macOS-v<version>.zip` and its `.sha256` file to a draft GitHub Release before publishing. The release workflow validates the checksum, app version, signature, and notarization ticket, then updates the Homebrew cask.
 
 The cross-platform `CinePlayerTests` scheme covers real media playback, paused seeks, tracks, subtitle failures, replacement/shutdown, thumbnails and enhancement cleanup, with additional FSR/ArtCNN GPU tests on macOS. The test scheme uses an in-memory history store.
 

@@ -51,11 +51,11 @@ Duo 机模由 [Pikkme Studio](https://sketchfab.com/3d-models/iphone-duo-3d-mode
 brew install --cask cinemore/tap/cineplayer
 ```
 
-GitHub Release 中的 macOS 构建目前尚未签名和公证。首次启动时，macOS Gatekeeper 可能会显示警告。如果你信任该版本，可以在 Finder 中按住 Control 点击应用，然后选择**打开**。
+从 v2.0.0 起，[GitHub Releases](https://github.com/cinemore/CinePlayer/releases) 中的 macOS 构建均使用 Developer ID 签名并通过 Apple 公证。Homebrew 分发同一个同时支持 Apple Silicon 和 Intel Mac 的通用应用包。
 
 ### App Store
 
-iPhone、iPad、Apple TV、Apple Vision Pro，以及已签名的 App Store macOS 版本，请使用上方 App Store 链接安装。
+iPhone、iPad、Apple TV、Apple Vision Pro，以及 App Store macOS 版本，请使用上方 App Store 链接安装。
 
 ## 🏗 项目架构与依赖
 
@@ -114,6 +114,8 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 在 iOS 真机上运行时，请在 Xcode 中打开 `CinePlayer` iOS Target 的 **Signing & Capabilities**，选择你自己的 **Team**。其他设置保持默认即可用于本地开发。
 
 构建前请先按「项目架构与依赖」中的说明准备配套 `Frameworks.zip`。当前 SDK 使用 Swift 6.4 编译，验证环境为 Xcode 27；Swift Package 版本固定在 `Package.resolved`。
+
+发布 macOS 版本时，先使用 Developer ID 签名导出归档，完成公证并附加票据，再生成 ZIP。将 `CinePlayer-macOS-v<版本号>.zip` 和对应的 `.sha256` 文件上传到 GitHub Release 草稿后发布。发布流程会校验文件哈希、应用版本、签名和公证票据，然后更新 Homebrew cask。
 
 `CinePlayerTests` 是跨平台测试 scheme，覆盖真实媒体播放、暂停定位、换轨、字幕加载失败、换片/关闭、缩略图及增强资源清理；macOS 另有 FSR/ArtCNN GPU 输出测试。测试 scheme 使用内存历史库，不写入日常播放历史。
 
