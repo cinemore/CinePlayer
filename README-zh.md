@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://cinemore.com.cn/">
-    <img src="assets/appicon-dark.png" alt="CinePlayer" width="120" height="120">
+    <img src="assets/appicon-light.webp" alt="CinePlayer" width="120" height="120">
   </a>
-  <h1>CinePlayer For Apple</h1>
-  <p><strong>次世代播放器</strong></p>
+  <h1>CinePlayer for Apple</h1>
+  <p><strong>为你的媒体打造的原生播放器</strong></p>
   <p>
     <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
   </p>
@@ -14,22 +14,29 @@
   </p>
 </div>
 
-CinePlayer 是一款基于 `CinePlayerSDK` 构建的开源播放器。`CinePlayerSDK` 作为 **[Cinemore](https://cinemore.com.cn)** 的播放核心得到了广泛的验证，现在我们将成果进行拓展。它展示了如何利用高性能内核实现极致的音视频播放体验，同时保持了应用层的灵活性和可扩展性。
+CinePlayer 是面向 iPhone、iPad、Mac、Apple TV 和 Apple Vision Pro 的独立视频播放器。打开自己的视频，调整字幕与轨道，随时从历史进度继续观看。
+
+应用层开源，基于 **[Cinemore](https://cinemore.com.cn)** 使用的 `CinePlayerSDK` 播放内核构建，提供 HDR、多声道与空间音频、蓝光原盘播放和视频增强，并使用各平台的原生交互界面。
 
 ## 📸 预览
 
 <p align="center">
-  <img src="assets/player.png" alt="CinePlayer 播放界面" width="720">
+  <a href="assets/cineplayer-overview-zh.webp"><img src="assets/cineplayer-overview-zh.webp" alt="CinePlayer 多设备合影与播放器功能总览" width="1200"></a>
 </p>
+
+播放画面为示例，请自行添加媒体；CinePlayer 不提供影视内容。视听能力依设备、系统和片源而定。
+
+Duo 机模由 [Pikkme Studio](https://sketchfab.com/3d-models/iphone-duo-3d-model-by-pikkme-studio-d2ca6bff92c141d1b1c5759b19d533e0) 制作，按 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可调整姿态与白色外观。
 
 ## ✨ 特性
 
+- **打开与续播**：本地文件、播放链接与历史进度续播；Apple TV 通过播放链接打开视频。
 - **画质与音频**：HLG、HDR10、HDR10+、杜比视界（含 RPU）；硬件解码；立体声/多声道、空间音频、杜比全景声（在支持场景下）。
 - **手势与快捷键**：iOS — 单击显隐控制、双击左右快进/快退或中间播放/暂停、长按临时倍速（播放设置中可配置快进秒数与长按倍速）；tvOS — 遥控器滑动/按键快进快退、长按连续快进；macOS — 空格播放/暂停、方向键快进/倍速、Esc 全屏、鼠标移动唤起控制层。
 - **字幕**：内嵌与本地外挂字幕；按字幕格式提供文字或图片样式调整；HDR 字幕亮度；iOS/macOS Apple 翻译、目标语言及双语上下顺序设置。
 - **轨道与媒体信息**：音视频与字幕轨道列表快速切换；媒体信息详情卡片。
 - **画面增强**：Anime4K、MetalFX、FSR、ArtCNN 超分，VideoToolbox、MetalFX、RIFE 补帧，以及杜比视界 P7 FEL 解码开关。可用选项取决于系统、设备和当前视频；FSR/ArtCNN 限 SDR、1080p 像素量及以下、最高 30 fps；RIFE 不用于 tvOS。超分支持 A/B 对比，准备期间继续显示原帧。
-- **播放体验**：进度条拖动带缩略图预览；横竖屏（iOS 旋转锁定）、画面填充、画中画、全屏、倍速调节；macOS 窗口置顶；锁屏与控制中心 Now Playing 控制。
+- **播放体验**：进度条拖动带缩略图预览、画面填充、倍速调节；iOS 横竖屏与旋转锁定；支持平台的画中画；macOS 全屏与窗口置顶；支持系统的锁屏与控制中心 Now Playing 控制。
 - **蓝光**：ISO、BDMV。
 - **平台**：iOS、macOS、tvOS、visionOS。
 - **原生界面**：tvOS 遥控器菜单和字幕调整；visionOS 独立播放窗口、Ornament 控制面板与沉浸环境；支持系统分区的 iOS 27.1 设备可分开展示画面和控制台。

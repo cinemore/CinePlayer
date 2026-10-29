@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://cinemore.com.cn/">
-    <img src="assets/appicon-dark.png" alt="CinePlayer" width="120" height="120">
+    <img src="assets/appicon-light.webp" alt="CinePlayer" width="120" height="120">
   </a>
   <h1>CinePlayer for Apple</h1>
-  <p><strong>Next-generation player</strong></p>
+  <p><strong>A native video player for your own media</strong></p>
   <p>
     <a href="README.md">English</a> · <a href="README-zh.md">简体中文</a>
   </p>
@@ -14,24 +14,34 @@
   </p>
 </div>
 
-CinePlayer is an open-source player application built on top of `CinePlayerSDK`.  
-`CinePlayerSDK` is the core playback engine used by **[Cinemore](https://cinemore.com.cn)** and has been battle-tested in production.  
-This repository demonstrates how to use a high-performance playback core to deliver a premium audio/video experience while keeping the app layer flexible and extensible.
+CinePlayer is a standalone video player for iPhone, iPad, Mac, Apple TV and Apple Vision Pro. Open your own videos, adjust subtitles and tracks, and continue from your playback history.
+
+The app layer is open source and built on `CinePlayerSDK`, the playback engine used by **[Cinemore](https://cinemore.com.cn)**. It brings HDR, multichannel and spatial audio, Blu-ray playback and video enhancement to a native interface on each platform.
 
 ## 📸 Preview
 
 <p align="center">
-  <img src="assets/player.png" alt="CinePlayer playback interface" width="720">
+  <a href="assets/cineplayer-overview-en.webp"><img src="assets/cineplayer-overview-en.webp" alt="CinePlayer device lineup and playback feature overview" width="1200"></a>
 </p>
 
-## Anime4K Enhancement
+The playback image is a demonstration. Add your own media; CinePlayer does not provide films or shows. Playback capabilities depend on the device, OS and media.
 
-<p align="center">
-  <img src="assets/anime4k-compare.png" alt="Anime4K enhancement comparison in CinePlayer" width="720">
-</p>
+Duo device model by [Pikkme Studio](https://sketchfab.com/3d-models/iphone-duo-3d-model-by-pikkme-studio-d2ca6bff92c141d1b1c5759b19d533e0), posed and finished in white under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-CinePlayer uses [anime4k-metal](https://github.com/cinemore/anime4k-metal) for
-Anime4K-style anime super-resolution and A/B comparison.
+## ✨ Features
+
+- **Open & resume**: Local files and playback URLs, with playback history to keep your place. Apple TV opens playback URLs.
+- **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
+- **Gestures & shortcuts**: iOS — single tap show/hide controls, double-tap left/right skip or center play/pause, long-press temporary speed (configurable skip seconds and long-press speed in playback settings); tvOS — remote swipe/press skip, long-press continuous seek; macOS — Space play/pause, arrow keys skip/speed, Esc fullscreen, mouse to show controls.
+- **Subtitles**: Embedded and local external subtitles; text or bitmap adjustments according to the parsed format; HDR subtitle brightness; Apple Translation on iOS/macOS with target language and bilingual ordering.
+- **Tracks & media info**: Detailed video/audio/subtitle track list with quick switching; media info card.
+- **Enhancement**: Anime4K, MetalFX, FSR and ArtCNN super-resolution; VideoToolbox, MetalFX and RIFE interpolation; Dolby Vision P7 FEL decoding preference. Availability follows the system, device and video. FSR/ArtCNN require SDR, at most 1080p pixels and 30 fps; RIFE is excluded on tvOS. Super-resolution supports A/B comparison, with original frames displayed during preparation.
+- **Playback UX**: Progress scrub with thumbnail preview, picture fill and variable speed; iOS portrait/landscape and orientation lock; picture in picture on supported platforms; macOS fullscreen and always-on-top windows; Now Playing / lock screen & Control Center control where supported.
+- **Blu-ray**: ISO and BDMV.
+- **Platforms**: iOS, macOS, tvOS, visionOS.
+- **Native controls**: tvOS remote menus and subtitle adjustments; a dedicated visionOS playback window, Ornament panels and immersive environment; separate video and console regions on supported iOS 27.1 devices.
+
+**Dolby Vision and Dolby Atmos playback are handled by Apple AVFoundation’s [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/).**
 
 ## Installation
 
@@ -49,20 +59,6 @@ from Finder by Control-clicking the app and choosing **Open**.
 
 For iPhone, iPad, Apple TV, Apple Vision Pro, and the signed App Store macOS
 build, use the App Store link above.
-
-## ✨ Features
-
-- **Image & audio**: HLG, HDR10, HDR10+, Dolby Vision (with RPU); hardware-accelerated decoding; stereo/multichannel, spatial audio, Dolby Atmos where supported.
-- **Gestures & shortcuts**: iOS — single tap show/hide controls, double-tap left/right skip or center play/pause, long-press temporary speed (configurable skip seconds and long-press speed in playback settings); tvOS — remote swipe/press skip, long-press continuous seek; macOS — Space play/pause, arrow keys skip/speed, Esc fullscreen, mouse to show controls.
-- **Subtitles**: Embedded and local external subtitles; text or bitmap adjustments according to the parsed format; HDR subtitle brightness; Apple Translation on iOS/macOS with target language and bilingual ordering.
-- **Tracks & media info**: Detailed video/audio/subtitle track list with quick switching; media info card.
-- **Enhancement**: Anime4K, MetalFX, FSR and ArtCNN super-resolution; VideoToolbox, MetalFX and RIFE interpolation; Dolby Vision P7 FEL decoding preference. Availability follows the system, device and video. FSR/ArtCNN require SDR, at most 1080p pixels and 30 fps; RIFE is excluded on tvOS. Super-resolution supports A/B comparison, with original frames displayed during preparation.
-- **Playback UX**: Progress scrub with thumbnail preview; portrait/landscape (iOS orientation lock), picture fill, PiP, fullscreen, variable playback speed; macOS window floating (always on top); Now Playing / lock screen & Control Center control.
-- **Blu-ray**: ISO and BDMV.
-- **Platforms**: iOS, macOS, tvOS, visionOS.
-- **Native controls**: tvOS remote menus and subtitle adjustments; a dedicated visionOS playback window, Ornament panels and immersive environment; separate video and console regions on supported iOS 27.1 devices.
-
-**Dolby Vision and Dolby Atmos playback are handled by Apple AVFoundation’s [AVPlayer](https://developer.apple.com/documentation/avfoundation/avplayer/).**
 
 ## 🏗 Architecture & Dependencies
 
