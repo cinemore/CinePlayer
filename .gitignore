@@ -51,6 +51,7 @@ fastlane/screenshots
 
 Frameworks/
 Frameworks.zip
+Frameworks.zip.sha256
 build
 
 ./buildServer.json

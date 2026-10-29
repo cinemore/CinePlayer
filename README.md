@@ -64,17 +64,19 @@ build, use the App Store link above.
 
 - **CinePlayerSDK**: The core playback engine of this project.  
   It is a proprietary commercial component distributed in binary form only.
-- **Frameworks**: Prebuilt SDK and third-party framework binaries are not stored in git because of their size. This branch requires the updated SDK bundle. Use the versioned download URL supplied by the maintainer and extract it into the repository root:
+- **Frameworks**: Prebuilt SDK and third-party framework binaries are distributed as [Frameworks.zip in the v2.0.0 release](https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip). Download the matching bundle and checksum, verify the download, and extract it into the repository root:
 
 ```bash
-curl --fail --location -o Frameworks.zip "$CINEPLAYER_FRAMEWORKS_URL"
+curl --fail --location -O https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip
+curl --fail --location -O https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip.sha256
+shasum -a 256 -c Frameworks.zip.sha256
 unzip Frameworks.zip
 bun scripts/verify-frameworks.ts
 ```
 
 After extraction, the repository should contain paths such as `Frameworks/CinePlayerSDK.xcframework` and `Frameworks/CineFFmpeg.xcframework`.
 
-The original `v1.0.0` bundle lacks the APIs required by this branch. The verifier checks device and simulator slices for all four platforms, shutdown, subtitle translation/loading and frame callback interfaces. Release CI requires repository variables `CINEPLAYER_FRAMEWORKS_URL` and `CINEPLAYER_FRAMEWORKS_SHA256`, rather than inferring a bundle from the latest release.
+The v2.0.0 bundle includes all 18 XCFrameworks required by this version. The verifier checks device and simulator slices for all four platforms, shutdown, subtitle translation/loading and frame callback interfaces.
 
 The app remains a standalone file/URL player with history, controls, tracks, subtitles and enhancement. Cinemore accounts, libraries, cloud storage, episodes, source switching and casting services are outside its scope.
 
@@ -117,7 +119,7 @@ To run on a real iOS device, open the `CinePlayer` iOS target in Xcode, go to **
 
 Prepare the matching `Frameworks.zip` as described in **Architecture & Dependencies**. The current SDK was compiled with Swift 6.4; validation uses Xcode 27. Swift packages are pinned in `Package.resolved`.
 
-For macOS releases, export the archive with Developer ID signing, notarize it, and staple the ticket before creating the ZIP. Attach `CinePlayer-macOS-v<version>.zip` and its `.sha256` file to a draft GitHub Release before publishing. The release workflow validates the checksum, app version, signature, and notarization ticket, then updates the Homebrew cask.
+For macOS releases, export the archive with Developer ID signing, notarize it, and staple the ticket before creating the ZIP. Run `bun scripts/verify-macos-release.ts v<version> <artifacts-directory>` locally to validate the checksum, app version, signature, and notarization ticket. Upload `CinePlayer-macOS-v<version>.zip`, the matching `Frameworks.zip`, and their `.sha256` files to GitHub Releases, then update the version and checksum in `cinemore/homebrew-tap`'s `Casks/cineplayer.rb`. Publishing and Homebrew updates are performed manually.
 
 The cross-platform `CinePlayerTests` scheme covers real media playback, paused seeks, tracks, subtitle failures, replacement/shutdown, thumbnails and enhancement cleanup, with additional FSR/ArtCNN GPU tests on macOS. The test scheme uses an in-memory history store.
 

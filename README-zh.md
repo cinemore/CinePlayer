@@ -62,17 +62,19 @@ iPhone、iPad、Apple TV、Apple Vision Pro，以及 App Store macOS 版本，�
 ### 核心播放内核 (Closed Source)
 
 * **CinePlayerSDK:** 本项目的核心播放引擎。它是一个闭源的商业组件，仅以二进制形式提供。
-* **Frameworks:** 预编译 SDK 与第三方 framework 二进制体积较大，不直接存放在 git 仓库中。本分支需要与更新后的 SDK 配套的 framework bundle；请使用维护者提供的版本固定下载地址，并解压到仓库根目录：
+* **Frameworks:** 预编译 SDK 与第三方 framework 二进制以 [v2.0.0 Release 中的 Frameworks.zip](https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip) 分发。下载配套 bundle 和校验文件，校验后解压到仓库根目录：
 
 ```bash
-curl --fail --location -o Frameworks.zip "$CINEPLAYER_FRAMEWORKS_URL"
+curl --fail --location -O https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip
+curl --fail --location -O https://github.com/cinemore/CinePlayer/releases/download/v2.0.0/Frameworks.zip.sha256
+shasum -a 256 -c Frameworks.zip.sha256
 unzip Frameworks.zip
 bun scripts/verify-frameworks.ts
 ```
 
 解压后，仓库中应包含 `Frameworks/CinePlayerSDK.xcframework`、`Frameworks/CineFFmpeg.xcframework` 等路径。
 
-旧 `v1.0.0` bundle 不满足本分支的 SDK 接口要求。校验脚本检查四个平台和模拟器 slice，以及关闭、字幕翻译、异步字幕加载、帧回调等公开接口。GitHub Release 构建需配置仓库变量 `CINEPLAYER_FRAMEWORKS_URL` 与 `CINEPLAYER_FRAMEWORKS_SHA256`；CI 不再从 latest Release 猜测 SDK 下载地址。
+v2.0.0 bundle 包含此版本所需的全部 18 个 XCFramework。校验脚本检查四个平台和模拟器 slice，以及关闭、字幕翻译、异步字幕加载、帧回调等公开接口。
 
 应用层保持独立播放器边界：本地文件、URL、历史记录、播放控制、轨道、字幕与增强；不包含 Cinemore 的账号、媒体库、云盘、剧集、资源切换或投屏服务。
 
@@ -115,7 +117,7 @@ CinePlayer 的强大功能离不开以下优秀开源项目的支持：
 
 构建前请先按「项目架构与依赖」中的说明准备配套 `Frameworks.zip`。当前 SDK 使用 Swift 6.4 编译，验证环境为 Xcode 27；Swift Package 版本固定在 `Package.resolved`。
 
-发布 macOS 版本时，先使用 Developer ID 签名导出归档，完成公证并附加票据，再生成 ZIP。将 `CinePlayer-macOS-v<版本号>.zip` 和对应的 `.sha256` 文件上传到 GitHub Release 草稿后发布。发布流程会校验文件哈希、应用版本、签名和公证票据，然后更新 Homebrew cask。
+发布 macOS 版本时，先使用 Developer ID 签名导出归档，完成公证并附加票据，再生成 ZIP。在本地运行 `bun scripts/verify-macos-release.ts v<版本号> <产物目录>`，校验文件哈希、应用版本、签名和公证票据。将 `CinePlayer-macOS-v<版本号>.zip`、配套的 `Frameworks.zip` 及各自的 `.sha256` 文件上传到 GitHub Releases，再更新 `cinemore/homebrew-tap` 仓库中 `Casks/cineplayer.rb` 的版本号和校验值。发布与 Homebrew 更新均手动完成。
 
 `CinePlayerTests` 是跨平台测试 scheme，覆盖真实媒体播放、暂停定位、换轨、字幕加载失败、换片/关闭、缩略图及增强资源清理；macOS 另有 FSR/ArtCNN GPU 输出测试。测试 scheme 使用内存历史库，不写入日常播放历史。
 
